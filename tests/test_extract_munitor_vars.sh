@@ -52,7 +52,7 @@ assert_eq "cd env release default" "staging" "${MUNITOR_CD_ENV_RELEASE}"
 assert_eq "ci_email default" "munitor-ci@koftwentytwo.com" "${MUNITOR_CI_EMAIL}"
 assert_eq "ci_name default" "Munitor CI" "${MUNITOR_CI_NAME}"
 assert_eq "npm_default_scope" "@koftwentytwo" "${MUNITOR_NPM_DEFAULT_SCOPE}"
-assert_eq "orb_slug" "KofTwentyTwo/munitor" "${MUNITOR_ORB_SLUG}"
+assert_eq "orb_slug" "kof22/munitor" "${MUNITOR_ORB_SLUG}"
 
 # --------------------------------------------------------------------------
 # node-api-minimal fixture (tests defaults)

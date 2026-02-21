@@ -5,7 +5,7 @@ version: 2.1
 # after publishing a dev:snapshot.
 
 orbs:
-  munitor: KofTwentyTwo/munitor@dev:snapshot
+  munitor: kof22/munitor@dev:snapshot
 
 workflows:
   integration-tests:

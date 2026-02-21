@@ -114,7 +114,7 @@ extract_munitor_vars() {
   local ORG_NPM_SCOPE="@koftwentytwo"
   local ORG_CI_EMAIL="munitor-ci@koftwentytwo.com"
   local ORG_CI_NAME="Munitor CI"
-  local ORG_ORB_SLUG="KofTwentyTwo/munitor"
+  local ORG_ORB_SLUG="kof22/munitor"
 
   # Core pipeline settings
   MUNITOR_PIPELINE=$(yq '.pipeline' "${config_file}")

@@ -6,7 +6,7 @@ usage:
   version: 2.1
   setup: true
   orbs:
-    munitor: KofTwentyTwo/munitor@1
+    munitor: kof22/munitor@1
   workflows:
     setup:
       jobs:

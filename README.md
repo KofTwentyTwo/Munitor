@@ -20,7 +20,7 @@ This file is identical across all repos:
 version: 2.1
 setup: true
 orbs:
-  munitor: KofTwentyTwo/munitor@1
+  munitor: kof22/munitor@1
 workflows:
   setup:
     jobs:
@@ -416,7 +416,7 @@ make test-templates   # template rendering tests
 make all              # run everything
 ```
 
-Pushes to `develop` auto-publish `KofTwentyTwo/munitor@dev:snapshot`. Production releases are tagged on `main` (`v1.2.3`).
+Pushes to `develop` auto-publish `kof22/munitor@dev:snapshot`. Production releases are tagged on `main` (`v1.2.3`).
 
 ### Architecture
 

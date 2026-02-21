@@ -79,7 +79,7 @@ This is the CircleCI config that gets generated. Use `${MUNITOR_*}` variables an
 version: 2.1
 
 orbs:
-  munitor: KofTwentyTwo/munitor@${MUNITOR_ORB_VERSION}
+  munitor: kof22/munitor@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-checks:
@@ -266,7 +266,7 @@ echo "=== python-app Template Tests ==="
 
 run_test "python-app: uses correct orb" \
   "${FIXTURES_DIR}/python-app.munitor.yml" \
-  "KofTwentyTwo/munitor@"
+  "kof22/munitor@"
 
 run_test "python-app: renders python_version" \
   "${FIXTURES_DIR}/python-app.munitor.yml" \

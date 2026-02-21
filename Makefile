@@ -1,7 +1,7 @@
 .PHONY: validate lint pack test-scripts test-templates publish-snapshot clean all
 
 ORB_FILE := orb.yml
-ORB_NAMESPACE := KofTwentyTwo
+ORB_NAMESPACE := kof22
 ORB_NAME := munitor
 
 all: lint validate test-scripts test-templates
