@@ -4,10 +4,10 @@ Latin: *munitor* (fortifier, protector) -- KofTwentyTwo's unified CircleCI orb f
 
 ## How It Works
 
-Munitor uses CircleCI's [dynamic configuration](https://circleci.com/docs/dynamic-config/) to generate your full CI/CD pipeline at runtime. Each repo has a minimal `.circleci/config.yml` that triggers Munitor, and a `.faber.yml` that declares what your project needs. Munitor reads your config, selects the right template, and generates a complete CircleCI workflow.
+Munitor uses CircleCI's [dynamic configuration](https://circleci.com/docs/dynamic-config/) to generate your full CI/CD pipeline at runtime. Each repo has a minimal `.circleci/config.yml` that triggers Munitor, and a `.munitor.yml` that declares what your project needs. Munitor reads your config, selects the right template, and generates a complete CircleCI workflow.
 
 ```
-repo/.faber.yml  -->  Munitor setup job  -->  Generated pipeline  -->  Build/Test/Deploy
+repo/.munitor.yml  -->  Munitor setup job  -->  Generated pipeline  -->  Build/Test/Deploy
 ```
 
 ## Quick Start
@@ -20,14 +20,14 @@ This file is identical across all repos:
 version: 2.1
 setup: true
 orbs:
-  faber: KofTwentyTwo/munitor@1
+  munitor: KofTwentyTwo/munitor@1
 workflows:
   setup:
     jobs:
       - munitor/generate_pipeline
 ```
 
-### 2. Add `.faber.yml`
+### 2. Add `.munitor.yml`
 
 Pick your pipeline type and create the config in your repo root. See [Pipeline Types](#pipeline-types) below.
 
@@ -341,7 +341,7 @@ Munitor manages versioning automatically via GitVersion. You do not need a `GitV
 
 Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are immutable and only created on main (full releases) or release branches (pre-releases).
 
-## `.faber.yml` Reference
+## `.munitor.yml` Reference
 
 | Field | Type | Default | Pipelines | Description |
 |-------|------|---------|-----------|-------------|
@@ -386,17 +386,17 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 
 Every container built by Munitor must expose a health endpoint. After the Docker image is built, Munitor starts the container and validates the endpoint returns HTTP 200. This is a mandatory gate; builds fail if the health check does not pass within 30 seconds.
 
-Default endpoint: `GET /api/health` on port 3000 (node-api) or 8080 (java-webapp). Override via `health.path` and `health.port` in `.faber.yml`.
+Default endpoint: `GET /api/health` on port 3000 (node-api) or 8080 (java-webapp). Override via `health.path` and `health.port` in `.munitor.yml`.
 
 ## Troubleshooting
 
-**"Missing required fields: orb_version"** -- Add `orb_version` to your `.faber.yml`. Use `dev:snapshot` for pre-release testing or `1` once a stable release is published.
+**"Missing required fields: orb_version"** -- Add `orb_version` to your `.munitor.yml`. Use `dev:snapshot` for pre-release testing or `1` once a stable release is published.
 
-**"faber_header: command not found"** -- You're using an older orb version. Update to `dev:snapshot` or wait for the next stable release.
+**"munitor_header: command not found"** -- You're using an older orb version. Update to `dev:snapshot` or wait for the next stable release.
 
 **Empty output + exit code 1 on `npm ci`** -- Usually a PATH issue. Munitor exports node/npm to `BASH_ENV`; if this breaks, all subsequent steps fail silently. Check that `install_node` succeeded in the build logs.
 
-**"Unknown key 'xxx' in .faber.yml"** -- Munitor warns on unrecognized top-level keys to catch typos. Check spelling against the reference table above.
+**"Unknown key 'xxx' in .munitor.yml"** -- Munitor warns on unrecognized top-level keys to catch typos. Check spelling against the reference table above.
 
 **Interactive prompt hangs (debconf/dpkg)** -- If test commands install system packages via apt, add `DEBIAN_FRONTEND=noninteractive` as a prefix. Munitor sets this automatically in the test runner, but explicit is safer for custom commands.
 
@@ -404,7 +404,7 @@ Default endpoint: `GET /api/health` on port 3000 (node-api) or 8080 (java-webapp
 
 **Branch name rejected** -- Munitor enforces GitFlow naming. Rename your branch to match an allowed pattern.
 
-**Tests pass locally but fail in CI** -- Check Node/Java version alignment. Add an `.nvmrc` file to keep local and CI versions in sync. Munitor will warn if `.nvmrc` and `.faber.yml` versions differ.
+**Tests pass locally but fail in CI** -- Check Node/Java version alignment. Add an `.nvmrc` file to keep local and CI versions in sync. Munitor will warn if `.nvmrc` and `.munitor.yml` versions differ.
 
 ## Development (Munitor Contributors)
 
@@ -428,14 +428,14 @@ src/
   executors/*.yml        # Machine executor definitions
   scripts/
     *.sh                 # 55+ bash scripts (the actual logic)
-    faber_helpers.sh     # Shared library (header, tool checks, download retry)
+    munitor_helpers.sh     # Shared library (header, tool checks, download retry)
     templates/*.yml.tpl  # Pipeline templates with conditional blocks
     templates/partials/  # Reusable deploy workflow fragments
 ```
 
 Pipeline generation flow:
 1. `generate_pipeline` job runs `generate_config.sh`
-2. Reads `.faber.yml`, extracts variables via `extract_faber_vars.sh`
+2. Reads `.munitor.yml`, extracts variables via `extract_munitor_vars.sh`
 3. Selects template based on `pipeline` type
 4. Expands `##INCLUDE_DEPLOY##` markers with partial templates
 5. Runs `envsubst` for variable substitution

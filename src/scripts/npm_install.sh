@@ -2,18 +2,18 @@
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-faber_header "npm_install"
-faber_check_tool node --version
-faber_check_tool npm --version
+munitor_header "npm_install"
+munitor_check_tool node --version
+munitor_check_tool npm --version
 
 # Verify package-lock.json exists
 if [[ ! -f "package-lock.json" ]]; then

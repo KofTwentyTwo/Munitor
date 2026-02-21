@@ -2,13 +2,13 @@
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
 HEALTH_PATH="${HEALTH_PATH:-/api/health}"
@@ -19,11 +19,11 @@ HEALTH_DB="${HEALTH_DB:-false}"
 IMAGE="${DOCKER_IMAGE:?DOCKER_IMAGE not set -- run docker_build first}"
 TAG="${DOCKER_TAG:?DOCKER_TAG not set -- run docker_build first}"
 
-CONTAINER_NAME="faber-health-check-$$"
-DB_CONTAINER_NAME="faber-health-db-$$"
-NETWORK_NAME="faber-health-net-$$"
+CONTAINER_NAME="munitor-health-check-$$"
+DB_CONTAINER_NAME="munitor-health-db-$$"
+NETWORK_NAME="munitor-health-net-$$"
 
-faber_header "health_check (${IMAGE}:${TAG})"
+munitor_header "health_check (${IMAGE}:${TAG})"
 echo "Endpoint: GET http://localhost:${HEALTH_PORT}${HEALTH_PATH}"
 
 # Always clean up containers and network on exit

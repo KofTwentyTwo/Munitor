@@ -1,31 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONFIG_FILE="${FABER_CONFIG:-.faber.yml}"
+CONFIG_FILE="${MUNITOR_CONFIG:-.munitor.yml}"
 OUTPUT_FILE="/tmp/generated-config.yml"
 
 # When run via CircleCI << include() >>, BASH_SOURCE is empty.
-# Fall back to FABER_SCRIPT_DIR set by the command YAML.
+# Fall back to MUNITOR_SCRIPT_DIR set by the command YAML.
 if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 else
-  SCRIPT_DIR="${FABER_SCRIPT_DIR:-/tmp/faber}"
+  SCRIPT_DIR="${MUNITOR_SCRIPT_DIR:-/tmp/munitor}"
 fi
 TEMPLATE_DIR="${SCRIPT_DIR}/templates"
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-${SCRIPT_DIR}/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-${SCRIPT_DIR}/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-faber_header "generate_config"
-faber_check_tool yq --version
-faber_check_tool envsubst --version
+munitor_header "generate_config"
+munitor_check_tool yq --version
+munitor_check_tool envsubst --version
 
 # Temp file cleanup trap
 TEMP_FILES=()
@@ -38,14 +38,14 @@ trap cleanup EXIT
 
 # Source shared variable extraction
 # shellcheck disable=SC1091
-source "${SCRIPT_DIR}/extract_faber_vars.sh"
+source "${SCRIPT_DIR}/extract_munitor_vars.sh"
 
 # --------------------------------------------------------------------------
-# Read .faber.yml
+# Read .munitor.yml
 # --------------------------------------------------------------------------
 if [[ ! -f "${CONFIG_FILE}" ]]; then
   echo "ERROR: Config file '${CONFIG_FILE}' not found."
-  echo "Each repo must have a .faber.yml in the root."
+  echo "Each repo must have a .munitor.yml in the root."
   exit 1
 fi
 
@@ -117,9 +117,9 @@ fi
 echo "Using template: ${TEMPLATE_FILE}"
 
 # --------------------------------------------------------------------------
-# Extract values from .faber.yml and export for envsubst
+# Extract values from .munitor.yml and export for envsubst
 # --------------------------------------------------------------------------
-extract_faber_vars "${CONFIG_FILE}"
+extract_munitor_vars "${CONFIG_FILE}"
 
 # --------------------------------------------------------------------------
 # Render template
@@ -199,7 +199,7 @@ process_conditionals() {
 
   # Process each conditional flag
   for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD; do
-    local var_name="FABER_${flag}"
+    local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file
     flag_file=$(mktemp)

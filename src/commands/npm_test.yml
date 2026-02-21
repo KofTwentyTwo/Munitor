@@ -10,7 +10,7 @@ steps:
   - run:
       name: npm test
       environment:
-        FABER_TEST_COMMANDS_JSON: << parameters.test_commands >>
+        MUNITOR_TEST_COMMANDS_JSON: << parameters.test_commands >>
       command: << include(scripts/npm_test.sh) >>
   - store_test_results:
       path: reports/junit

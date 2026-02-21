@@ -1,8 +1,8 @@
 description: >
-  Generate a Dockerfile based on the pipeline type in .faber.yml.
+  Generate a Dockerfile based on the pipeline type in .munitor.yml.
 steps:
   - run:
       name: Generate Dockerfile
       environment:
-        FABER_SCRIPT_DIR: /tmp/faber
+        MUNITOR_SCRIPT_DIR: /tmp/munitor
       command: << include(scripts/packed_generate_dockerfile.sh) >>

@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  faber: ${FABER_ORB_SLUG}@${FABER_ORB_VERSION}
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-validate:
@@ -9,15 +9,15 @@ workflows:
       not:
         equal: [main, << pipeline.git.branch >>]
     jobs:
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
 
   release:
     jobs:
-      - faber/sdk_release:
+      - munitor/sdk_release:
           name: sdk-release
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               ignore: /.*/

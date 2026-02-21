@@ -1,6 +1,6 @@
 description: >
   Start Docker service containers for testing. Reads service definitions
-  from FABER_SERVICES_JSON, starts each container with port mapping and
+  from MUNITOR_SERVICES_JSON, starts each container with port mapping and
   environment variables, and polls health checks until ready.
 parameters:
   services:
@@ -11,5 +11,5 @@ steps:
   - run:
       name: Start service containers
       environment:
-        FABER_SERVICES_JSON: << parameters.services >>
+        MUNITOR_SERVICES_JSON: << parameters.services >>
       command: << include(scripts/start_services.sh) >>

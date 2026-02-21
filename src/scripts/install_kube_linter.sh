@@ -2,26 +2,26 @@
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
 VERSION="${KUBE_LINTER_VERSION:-0.6.8}"
 
-faber_header "install_kube_linter (v${VERSION})"
+munitor_header "install_kube_linter (v${VERSION})"
 
 if command -v kube-linter &>/dev/null; then
   echo "kube-linter already installed: $(kube-linter version 2>&1 || true)"
   exit 0
 fi
 
-faber_check_tool curl --version
-faber_check_tool tar --version
+munitor_check_tool curl --version
+munitor_check_tool tar --version
 
 # Detect OS and architecture
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -39,7 +39,7 @@ cleanup() { rm -rf "${TMPDIR}"; }
 trap cleanup EXIT
 
 echo "Downloading kube-linter v${VERSION} from ${URL}..."
-faber_download_with_retry "${URL}" "${TMPDIR}/kube-linter.tar.gz"
+munitor_download_with_retry "${URL}" "${TMPDIR}/kube-linter.tar.gz"
 
 tar -xzf "${TMPDIR}/kube-linter.tar.gz" -C "${TMPDIR}"
 sudo mv "${TMPDIR}/kube-linter" /usr/local/bin/kube-linter

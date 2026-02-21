@@ -2,16 +2,16 @@
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-faber_header "npm_sonar"
+munitor_header "npm_sonar"
 
 PROJECT_KEY="${SONAR_PROJECT_KEY:?SONAR_PROJECT_KEY not set}"
 ORG="${SONAR_ORG:-KofTwentyTwo}"
@@ -30,13 +30,13 @@ if ! command -v sonar-scanner &>/dev/null; then
   SCANNER_DIR="${HOME}/.sonar/scanner"
   mkdir -p "${SCANNER_DIR}"
   DOWNLOAD_URL="https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip"
-  faber_download_with_retry "${DOWNLOAD_URL}" /tmp/sonar-scanner.zip
+  munitor_download_with_retry "${DOWNLOAD_URL}" /tmp/sonar-scanner.zip
   unzip -qo /tmp/sonar-scanner.zip -d "${SCANNER_DIR}"
   rm -f /tmp/sonar-scanner.zip
   export PATH="${SCANNER_DIR}/sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64/bin:${PATH}"
 fi
 
-faber_check_tool sonar-scanner --version
+munitor_check_tool sonar-scanner --version
 
 # SonarCloud's SCM Publisher uses JGit which cannot lazy-fetch objects.
 # Ensure ALL git objects are present regardless of clone type.

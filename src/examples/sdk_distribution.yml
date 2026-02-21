@@ -1,6 +1,6 @@
 description: >
   Example showing how to use Munitor with an SDK distribution repo.
-  Each repo needs .circleci/config.yml, .faber.yml, and .sdk-release.yml.
+  Each repo needs .circleci/config.yml, .munitor.yml, and .sdk-release.yml.
 
 usage:
   version: 2.1

@@ -29,12 +29,12 @@ teardown() {
 }
 
 run_generate() {
-  (cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" 2>&1)
+  (cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" 2>&1)
 }
 
 run_generate_rc() {
-  (cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" 2>&1) || true
-  (cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" >/dev/null 2>&1)
+  (cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" 2>&1) || true
+  (cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" >/dev/null 2>&1)
   echo $?
 }
 
@@ -45,7 +45,7 @@ echo "=== node-api Dockerfile Generation ==="
 
 echo -n "  TEST: generates Dockerfile with node:20-alpine (default)... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-app
 EOF
@@ -59,7 +59,7 @@ teardown
 
 echo -n "  TEST: generates Dockerfile with node:22-alpine (custom)... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-app
 node_version: "22"
@@ -74,7 +74,7 @@ teardown
 
 echo -n "  TEST: includes STANDALONE=true env... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-app
 EOF
@@ -88,7 +88,7 @@ teardown
 
 echo -n "  TEST: includes npm ci in deps stage... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-app
 EOF
@@ -102,7 +102,7 @@ teardown
 
 echo -n "  TEST: runs as nextjs user... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-app
 EOF
@@ -122,7 +122,7 @@ echo "=== node-api Express Dockerfile Generation ==="
 
 echo -n "  TEST: express generates Dockerfile without STANDALONE env... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -138,7 +138,7 @@ teardown
 
 echo -n "  TEST: express does not copy .next/standalone... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -154,7 +154,7 @@ teardown
 
 echo -n "  TEST: express uses appuser not nextjs... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -170,7 +170,7 @@ teardown
 
 echo -n "  TEST: express CMD uses node . ... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -186,7 +186,7 @@ teardown
 
 echo -n "  TEST: express includes HEALTHCHECK... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -202,7 +202,7 @@ teardown
 
 echo -n "  TEST: express EXPOSE uses health port (default 3000)... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -218,7 +218,7 @@ teardown
 
 echo -n "  TEST: express EXPOSE uses custom health port... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -236,7 +236,7 @@ teardown
 
 echo -n "  TEST: express npm ci uses --omit=dev... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-express-app
 node:
@@ -252,14 +252,14 @@ teardown
 
 echo -n "  TEST: unsupported node framework fails... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-app
 node:
   framework: koa
 EOF
-OUTPUT=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" 2>&1 || true)
-RC=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
+OUTPUT=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" 2>&1 || true)
+RC=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
 if [[ "${RC}" -ne 0 ]] && echo "${OUTPUT}" | grep -q "Unsupported node framework"; then
   pass
 else
@@ -282,7 +282,7 @@ setup_java() {
 
 echo -n "  TEST: generates Dockerfile with Alpine JRE base... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
@@ -296,7 +296,7 @@ teardown
 
 echo -n "  TEST: generates Dockerfile with temurin-17-jre-alpine (custom)... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 java_version: "17"
@@ -311,7 +311,7 @@ teardown
 
 echo -n "  TEST: uses non-root user (appuser)... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
@@ -325,7 +325,7 @@ teardown
 
 echo -n "  TEST: EXPOSE uses health port (default 8080)... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
@@ -339,7 +339,7 @@ teardown
 
 echo -n "  TEST: EXPOSE uses custom health port... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 health:
@@ -355,7 +355,7 @@ teardown
 
 echo -n "  TEST: HEALTHCHECK uses health path and port... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 health:
@@ -372,7 +372,7 @@ teardown
 
 echo -n "  TEST: includes JVM container tuning flags... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
@@ -387,7 +387,7 @@ teardown
 
 echo -n "  TEST: copies detected JAR as app.jar... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
@@ -402,7 +402,7 @@ teardown
 echo -n "  TEST: excludes original-* JARs from detection... "
 setup_java
 touch "${WORK_DIR}/target/original-my-app-1.0.0.jar"
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
@@ -416,12 +416,12 @@ teardown
 
 echo -n "  TEST: fails when no JAR found in target/... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
-OUTPUT=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" 2>&1 || true)
-RC=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
+OUTPUT=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" 2>&1 || true)
+RC=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
 if [[ "${RC}" -ne 0 ]] && echo "${OUTPUT}" | grep -q "No application JAR found"; then
   pass
 else
@@ -431,7 +431,7 @@ teardown
 
 echo -n "  TEST: no builder stage (no maven FROM)... "
 setup_java
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: java-webapp
 image_name: my-app
 EOF
@@ -451,12 +451,12 @@ echo "=== Error Handling ==="
 
 echo -n "  TEST: fails for unsupported pipeline type... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: python-api
 image_name: my-app
 EOF
-OUTPUT=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" 2>&1 || true)
-RC=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
+OUTPUT=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" 2>&1 || true)
+RC=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
 if [[ "${RC}" -ne 0 ]] && echo "${OUTPUT}" | grep -q "Unsupported pipeline type"; then
   pass
 else
@@ -464,10 +464,10 @@ else
 fi
 teardown
 
-echo -n "  TEST: fails when .faber.yml is missing... "
+echo -n "  TEST: fails when .munitor.yml is missing... "
 setup
-OUTPUT=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" 2>&1 || true)
-RC=$(cd "${WORK_DIR}" && FABER_CONFIG=".faber.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
+OUTPUT=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" 2>&1 || true)
+RC=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
 if [[ "${RC}" -ne 0 ]] && echo "${OUTPUT}" | grep -q "not found"; then
   pass
 else
@@ -483,7 +483,7 @@ echo "=== File Validation ==="
 
 echo -n "  TEST: generated Dockerfile exists and is non-empty... "
 setup
-cat > "${WORK_DIR}/.faber.yml" <<'EOF'
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-api
 image_name: my-app
 node_version: "22"

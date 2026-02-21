@@ -10,5 +10,5 @@ steps:
   - run:
       name: Run test setup
       environment:
-        FABER_TEST_SETUP_SCRIPT: << parameters.test_setup >>
+        MUNITOR_TEST_SETUP_SCRIPT: << parameters.test_setup >>
       command: << include(scripts/run_test_setup.sh) >>

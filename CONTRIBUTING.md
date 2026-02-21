@@ -2,11 +2,11 @@
 
 ## Module Inventory
 
-Munitor organizes CI/CD pipelines into **modules** (called "pipeline types" in `.faber.yml`). Each module is a self-contained set of templates, jobs, commands, and scripts that handle a specific application stack.
+Munitor organizes CI/CD pipelines into **modules** (called "pipeline types" in `.munitor.yml`). Each module is a self-contained set of templates, jobs, commands, and scripts that handle a specific application stack.
 
 ### Current Modules
 
-| Module | `.faber.yml` name | Stack | Deploys Docker | Environments | Repos Using It |
+| Module | `.munitor.yml` name | Stack | Deploys Docker | Environments | Repos Using It |
 |--------|-------------------|-------|---------------|--------------|----------------|
 | **Node.js App** | `node-api` | Node.js, Next.js, TypeScript | Yes (auto-generated Dockerfile) | dev, staging, prod | me-health-website, me-health-dashboard-api, fulfillment APIs |
 | **Java Webapp** | `java-webapp` | Java, Maven | Yes (auto-generated Dockerfile) | dev, staging, prod | me-health-portal |
@@ -45,21 +45,21 @@ src/jobs/
   ...
 
 tests/fixtures/
-  {module-name}.faber.yml            # Full-featured test fixture
-  {module-name}-minimal.faber.yml    # Minimal test fixture
+  {module-name}.munitor.yml            # Full-featured test fixture
+  {module-name}-minimal.munitor.yml    # Minimal test fixture
 ```
 
 ### How a module executes
 
 ```
-1. Consumer repo has .faber.yml with: pipeline: {module-name}
+1. Consumer repo has .munitor.yml with: pipeline: {module-name}
 
 2. generate_config.sh:
-   a. Reads .faber.yml
-   b. extract_faber_vars.sh maps fields to FABER_* shell variables
+   a. Reads .munitor.yml
+   b. extract_munitor_vars.sh maps fields to MUNITOR_* shell variables
    c. Selects templates/{module-name}.yml.tpl
    d. Expands ##INCLUDE_DEPLOY## markers with deploy partials
-   e. Runs envsubst for ${FABER_*} variable substitution
+   e. Runs envsubst for ${MUNITOR_*} variable substitution
    f. Processes ##IF_FLAG## / ##ENDIF_FLAG## conditional blocks
    g. Validates output YAML
 
@@ -73,13 +73,13 @@ tests/fixtures/
 
 **File:** `src/scripts/templates/{module-name}.yml.tpl`
 
-This is the CircleCI config that gets generated. Use `${FABER_*}` variables and conditional blocks:
+This is the CircleCI config that gets generated. Use `${MUNITOR_*}` variables and conditional blocks:
 
 ```yaml
 version: 2.1
 
 orbs:
-  munitor: KofTwentyTwo/munitor@${FABER_ORB_VERSION}
+  munitor: KofTwentyTwo/munitor@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-checks:
@@ -87,7 +87,7 @@ workflows:
       - munitor/{module}_build_and_test:
           name: build-and-test
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
@@ -117,7 +117,7 @@ Templates use a split workflow pattern for release and production:
 - **`release-candidate:`** (release/* branches) -- Full quality pipeline with all gates
 - **`production:`** (main branch) -- Fast-path: build + deploy only (quality was enforced on the release branch)
 
-To add a new flag, set it in `extract_faber_vars.sh` and add it to the processing loop in `generate_config.sh` (line ~195).
+To add a new flag, set it in `extract_munitor_vars.sh` and add it to the processing loop in `generate_config.sh` (line ~195).
 
 ### Step 2: Create deploy partials (if multi-environment)
 
@@ -136,23 +136,23 @@ Reference from the main template:
 
 ### Step 3: Add variable extraction
 
-**File:** `src/scripts/extract_faber_vars.sh` (edit existing)
+**File:** `src/scripts/extract_munitor_vars.sh` (edit existing)
 
-Add module-specific fields to `extract_faber_vars()`:
+Add module-specific fields to `extract_munitor_vars()`:
 
 ```bash
 # Python-app settings
-FABER_PYTHON_VERSION=$(yq '.python_version // "3.12"' "${config_file}")
+MUNITOR_PYTHON_VERSION=$(yq '.python_version // "3.12"' "${config_file}")
 ```
 
 Then add to the exports:
 ```bash
-export FABER_PYTHON_VERSION
+export MUNITOR_PYTHON_VERSION
 ```
 
 And add to `get_envsubst_vars()`:
 ```bash
-echo '... ${FABER_PYTHON_VERSION}'
+echo '... ${MUNITOR_PYTHON_VERSION}'
 ```
 
 ### Step 4: Register the module in generate_config.sh
@@ -170,7 +170,7 @@ case "${pipeline}" in
 esac
 ```
 
-**Known keys** (~line 91) -- add any new top-level `.faber.yml` keys:
+**Known keys** (~line 91) -- add any new top-level `.munitor.yml` keys:
 ```bash
 KNOWN_KEYS="... python_version"
 ```
@@ -220,17 +220,17 @@ steps:
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-faber_header "pip_install"
-faber_check_tool pip3 --version
+munitor_header "pip_install"
+munitor_check_tool pip3 --version
 
 pip3 install -r requirements.txt
 ```
@@ -256,8 +256,8 @@ Regenerate: `bash scripts/pack_generate_config.sh`
 **Test fixtures** (`tests/fixtures/`):
 
 Create at least two:
-- `{module-name}.faber.yml` -- all features enabled
-- `{module-name}-minimal.faber.yml` -- bare minimum config
+- `{module-name}.munitor.yml` -- all features enabled
+- `{module-name}-minimal.munitor.yml` -- bare minimum config
 
 **Template rendering tests** (`tests/test_generate_config.sh`):
 ```bash
@@ -265,25 +265,25 @@ echo ""
 echo "=== python-app Template Tests ==="
 
 run_test "python-app: uses correct orb" \
-  "${FIXTURES_DIR}/python-app.faber.yml" \
+  "${FIXTURES_DIR}/python-app.munitor.yml" \
   "KofTwentyTwo/munitor@"
 
 run_test "python-app: renders python_version" \
-  "${FIXTURES_DIR}/python-app.faber.yml" \
+  "${FIXTURES_DIR}/python-app.munitor.yml" \
   'python_version: "3.12"'
 
 run_negative_test "python-app-minimal: no sast block" \
-  "${FIXTURES_DIR}/python-app-minimal.faber.yml" \
+  "${FIXTURES_DIR}/python-app-minimal.munitor.yml" \
   "sast-scan"
 ```
 
-**Variable extraction tests** (`tests/test_extract_faber_vars.sh`):
+**Variable extraction tests** (`tests/test_extract_munitor_vars.sh`):
 ```bash
 echo ""
 echo "=== python-app Variable Tests ==="
-extract_faber_vars "${FIXTURES_DIR}/python-app.faber.yml"
-assert_eq "FABER_PIPELINE" "python-app" "${FABER_PIPELINE}"
-assert_eq "FABER_PYTHON_VERSION" "3.12" "${FABER_PYTHON_VERSION}"
+extract_munitor_vars "${FIXTURES_DIR}/python-app.munitor.yml"
+assert_eq "MUNITOR_PIPELINE" "python-app" "${MUNITOR_PIPELINE}"
+assert_eq "MUNITOR_PYTHON_VERSION" "3.12" "${MUNITOR_PYTHON_VERSION}"
 ```
 
 ### Step 8: Validate and publish
@@ -306,9 +306,9 @@ git push origin develop             # triggers dev:snapshot publish
 | Orb command | `snake_case` | `pip_install` |
 | Orb job | `snake_case` | `python_build_and_test` |
 | Shell script | `snake_case.sh` | `pip_install.sh` |
-| FABER variable | `FABER_UPPER_SNAKE` | `FABER_PYTHON_VERSION` |
+| MUNITOR variable | `MUNITOR_UPPER_SNAKE` | `MUNITOR_PYTHON_VERSION` |
 | Conditional flag | `UPPER_SNAKE` | `##IF_SAST##` |
-| Test fixture | `{module}[-variant].faber.yml` | `python-app-minimal.faber.yml` |
+| Test fixture | `{module}[-variant].munitor.yml` | `python-app-minimal.munitor.yml` |
 
 ## Shared Infrastructure
 
@@ -316,7 +316,7 @@ These components are shared across all modules -- you don't need to recreate the
 
 | Component | What It Does |
 |-----------|-------------|
-| `faber_helpers.sh` | Standard header, tool checks, download retry |
+| `munitor_helpers.sh` | Standard header, tool checks, download retry |
 | `validate_branch.sh` | GitFlow branch name enforcement |
 | `secrets_scan` job | Gitleaks (all modules) |
 | `sast_scan` job | Semgrep (all modules, opt-in) |

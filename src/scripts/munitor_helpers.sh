@@ -3,19 +3,19 @@
 # Source this at the top of each script for consistent diagnostics.
 #
 # Sourcing pattern (works even if helpers are missing):
-#   FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-#   [[ -f "${FABER_HELPERS}" ]] && source "${FABER_HELPERS}"
+#   MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+#   [[ -f "${MUNITOR_HELPERS}" ]] && source "${MUNITOR_HELPERS}"
 
 # Guard against double-sourcing
-[[ -n "${_FABER_HELPERS_LOADED:-}" ]] && return 0
-_FABER_HELPERS_LOADED=1
+[[ -n "${_MUNITOR_HELPERS_LOADED:-}" ]] && return 0
+_MUNITOR_HELPERS_LOADED=1
 
 # --------------------------------------------------------------------------
-# faber_header <step_name>
+# munitor_header <step_name>
 #
 # Print a standard banner with date, hostname, and working directory.
 # --------------------------------------------------------------------------
-faber_header() {
+munitor_header() {
   local name="${1:-unknown}"
   echo "========================================"
   echo "  Munitor: ${name}"
@@ -26,12 +26,12 @@ faber_header() {
 }
 
 # --------------------------------------------------------------------------
-# faber_check_tool <command> [version_flag]
+# munitor_check_tool <command> [version_flag]
 #
 # Verify a tool is in PATH and print its version.  Exits 1 with a clear
 # message if the tool is missing.
 # --------------------------------------------------------------------------
-faber_check_tool() {
+munitor_check_tool() {
   local cmd="$1"
   local version_flag="${2:---version}"
 
@@ -47,11 +47,11 @@ faber_check_tool() {
 }
 
 # --------------------------------------------------------------------------
-# faber_download_with_retry <url> <output> [retries] [delay]
+# munitor_download_with_retry <url> <output> [retries] [delay]
 #
 # Download a URL with retry logic. Tries curl first, falls back to wget.
 # --------------------------------------------------------------------------
-faber_download_with_retry() {
+munitor_download_with_retry() {
   local url="$1"
   local output="$2"
   local retries="${3:-3}"

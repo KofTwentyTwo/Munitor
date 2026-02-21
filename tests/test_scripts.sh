@@ -143,7 +143,7 @@ else
 fi
 
 # =============================================================================
-# Test: calculate_version.sh - Faber-managed GitVersion config
+# Test: calculate_version.sh - Munitor-managed GitVersion config
 # =============================================================================
 echo ""
 echo "=== calculate_version.sh Tests ==="
@@ -383,11 +383,11 @@ fi
 echo ""
 echo "=== generate_dockerfile.sh Tests ==="
 
-echo -n "  TEST: reads .faber.yml config... "
-if grep -q '\.faber\.yml' "${SRC_SCRIPTS}/generate_dockerfile.sh"; then
+echo -n "  TEST: reads .munitor.yml config... "
+if grep -q '\.munitor\.yml' "${SRC_SCRIPTS}/generate_dockerfile.sh"; then
   pass
 else
-  fail "should read .faber.yml"
+  fail "should read .munitor.yml"
 fi
 
 echo -n "  TEST: handles node-api pipeline... "
@@ -431,11 +431,11 @@ fi
 echo ""
 echo "=== install_kustomize.sh Tests ==="
 
-echo -n "  TEST: uses faber_download_with_retry... "
-if grep -q 'faber_download_with_retry' "${SRC_SCRIPTS}/install_kustomize.sh"; then
+echo -n "  TEST: uses munitor_download_with_retry... "
+if grep -q 'munitor_download_with_retry' "${SRC_SCRIPTS}/install_kustomize.sh"; then
   pass
 else
-  fail "should use faber_download_with_retry"
+  fail "should use munitor_download_with_retry"
 fi
 
 echo -n "  TEST: pins version via KUSTOMIZE_VERSION... "
@@ -492,11 +492,11 @@ fi
 echo ""
 echo "=== install_kubesec.sh Tests ==="
 
-echo -n "  TEST: uses faber_download_with_retry... "
-if grep -q 'faber_download_with_retry' "${SRC_SCRIPTS}/install_kubesec.sh"; then
+echo -n "  TEST: uses munitor_download_with_retry... "
+if grep -q 'munitor_download_with_retry' "${SRC_SCRIPTS}/install_kubesec.sh"; then
   pass
 else
-  fail "should use faber_download_with_retry"
+  fail "should use munitor_download_with_retry"
 fi
 
 echo -n "  TEST: has cleanup trap... "
@@ -532,11 +532,11 @@ fi
 echo ""
 echo "=== install_kube_linter.sh Tests ==="
 
-echo -n "  TEST: uses faber_download_with_retry... "
-if grep -q 'faber_download_with_retry' "${SRC_SCRIPTS}/install_kube_linter.sh"; then
+echo -n "  TEST: uses munitor_download_with_retry... "
+if grep -q 'munitor_download_with_retry' "${SRC_SCRIPTS}/install_kube_linter.sh"; then
   pass
 else
-  fail "should use faber_download_with_retry"
+  fail "should use munitor_download_with_retry"
 fi
 
 echo -n "  TEST: has cleanup trap... "
@@ -607,8 +607,8 @@ echo ""
 echo "=== Error Handling Tests ==="
 
 echo -n "  TEST: all scripts use set -euo pipefail... "
-# faber_helpers.sh is a sourced library, not a standalone script -- exclude it
-SCRIPTS_WITHOUT_STRICT=$(find "${SRC_SCRIPTS}" -name "*.sh" ! -name "faber_helpers.sh" -exec grep -L 'set -euo pipefail' {} \;)
+# munitor_helpers.sh is a sourced library, not a standalone script -- exclude it
+SCRIPTS_WITHOUT_STRICT=$(find "${SRC_SCRIPTS}" -name "*.sh" ! -name "munitor_helpers.sh" -exec grep -L 'set -euo pipefail' {} \;)
 if [[ -z "${SCRIPTS_WITHOUT_STRICT}" ]]; then
   pass
 else
@@ -657,23 +657,23 @@ else
 fi
 
 # =============================================================================
-# Test: All scripts source faber_helpers and call faber_header
+# Test: All scripts source munitor_helpers and call munitor_header
 # =============================================================================
 echo ""
-echo "=== Faber Helpers Integration Tests ==="
+echo "=== Munitor Helpers Integration Tests ==="
 
-# Scripts that are excluded from the faber_header requirement:
-# - faber_helpers.sh: the library itself
-# - extract_faber_vars.sh: low-level helper, sourced by other scripts
+# Scripts that are excluded from the munitor_header requirement:
+# - munitor_helpers.sh: the library itself
+# - extract_munitor_vars.sh: low-level helper, sourced by other scripts
 # - packed_*: auto-generated, embed helpers differently
-EXCLUDED_PATTERN="faber_helpers.sh|extract_faber_vars.sh|packed_"
+EXCLUDED_PATTERN="munitor_helpers.sh|extract_munitor_vars.sh|packed_"
 
-echo -n "  TEST: all scripts source faber_helpers... "
+echo -n "  TEST: all scripts source munitor_helpers... "
 MISSING_SOURCE=""
 while IFS= read -r script; do
   name=$(basename "${script}")
   if echo "${name}" | grep -qE "${EXCLUDED_PATTERN}"; then continue; fi
-  if ! grep -q 'FABER_HELPERS' "${script}"; then
+  if ! grep -q 'MUNITOR_HELPERS' "${script}"; then
     MISSING_SOURCE="${MISSING_SOURCE} ${name}"
   fi
 done < <(find "${SRC_SCRIPTS}" -maxdepth 1 -name "*.sh" -type f)
@@ -683,19 +683,19 @@ else
   fail "missing sourcing:${MISSING_SOURCE}"
 fi
 
-echo -n "  TEST: all scripts call faber_header... "
+echo -n "  TEST: all scripts call munitor_header... "
 MISSING_HEADER=""
 while IFS= read -r script; do
   name=$(basename "${script}")
   if echo "${name}" | grep -qE "${EXCLUDED_PATTERN}"; then continue; fi
-  if ! grep -q 'faber_header' "${script}"; then
+  if ! grep -q 'munitor_header' "${script}"; then
     MISSING_HEADER="${MISSING_HEADER} ${name}"
   fi
 done < <(find "${SRC_SCRIPTS}" -maxdepth 1 -name "*.sh" -type f)
 if [[ -z "${MISSING_HEADER}" ]]; then
   pass
 else
-  fail "missing faber_header:${MISSING_HEADER}"
+  fail "missing munitor_header:${MISSING_HEADER}"
 fi
 
 # =============================================================================

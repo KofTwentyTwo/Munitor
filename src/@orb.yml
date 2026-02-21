@@ -4,7 +4,7 @@ description: >
   Munitor (Latin: fortifier, protector) -- KofTwentyTwo's unified CircleCI orb
   for building, testing, and deploying all repositories. Provides standardized
   CI/CD pipelines via dynamic configuration so each repo needs only a tiny
-  .faber.yml to define its pipeline.
+  .munitor.yml to define its pipeline.
 
 display:
   home_url: https://github.com/KofTwentyTwo/Munitor

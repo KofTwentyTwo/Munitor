@@ -2,16 +2,16 @@
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-faber_header "github_release"
+munitor_header "github_release"
 
 # Validate required environment
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
@@ -20,14 +20,14 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   exit 1
 fi
 
-# PROJECT_VERSION is set by GitVersion in the build job and restored via .faber-version
+# PROJECT_VERSION is set by GitVersion in the build job and restored via .munitor-version
 VERSION="${PROJECT_VERSION:?PROJECT_VERSION is not set. Ensure the build job ran and version metadata was persisted.}"
 TAG="v${VERSION}"
 
 echo "Version: ${VERSION}"
 echo "Tag: ${TAG}"
 
-faber_check_tool gh --version
+munitor_check_tool gh --version
 
 # Detect pre-release versions (RC, alpha, beta, SNAPSHOT)
 if [[ "${VERSION}" =~ -(RC|alpha|beta|SNAPSHOT) ]]; then

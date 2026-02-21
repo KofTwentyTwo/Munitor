@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build a self-contained generate_dockerfile.sh that embeds extract_faber_vars.
+# Build a self-contained generate_dockerfile.sh that embeds extract_munitor_vars.
 # The orb includes this packed version via << include() >>.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,20 +20,20 @@ echo "Packing generate_dockerfile.sh..."
   echo '# Do not edit directly. Edit src/scripts/*.sh and re-pack.'
   echo '# ======================================================================'
   echo ''
-  echo '# Stage extract_faber_vars.sh to /tmp/faber/'
-  echo 'mkdir -p /tmp/faber'
+  echo '# Stage extract_munitor_vars.sh to /tmp/munitor/'
+  echo 'mkdir -p /tmp/munitor'
   echo ''
 
-  # Embed faber_helpers.sh
-  echo 'cat > /tmp/faber/faber_helpers.sh << '"'"'FABER_HELPERS_EOF'"'"
-  cat "${SRC}/faber_helpers.sh"
-  echo 'FABER_HELPERS_EOF'
+  # Embed munitor_helpers.sh
+  echo 'cat > /tmp/munitor/munitor_helpers.sh << '"'"'MUNITOR_HELPERS_EOF'"'"
+  cat "${SRC}/munitor_helpers.sh"
+  echo 'MUNITOR_HELPERS_EOF'
   echo ''
 
-  # Embed extract_faber_vars.sh
-  echo 'cat > /tmp/faber/extract_faber_vars.sh << '"'"'FABER_EXTRACT_EOF'"'"
-  cat "${SRC}/extract_faber_vars.sh"
-  echo 'FABER_EXTRACT_EOF'
+  # Embed extract_munitor_vars.sh
+  echo 'cat > /tmp/munitor/extract_munitor_vars.sh << '"'"'MUNITOR_EXTRACT_EOF'"'"
+  cat "${SRC}/extract_munitor_vars.sh"
+  echo 'MUNITOR_EXTRACT_EOF'
   echo ''
 
   echo '# ======================================================================'

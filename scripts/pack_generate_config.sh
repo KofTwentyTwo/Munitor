@@ -22,39 +22,39 @@ echo "Packing generate_config.sh..."
   echo '# Do not edit directly. Edit src/scripts/*.sh and re-pack.'
   echo '# ======================================================================'
   echo ''
-  echo '# Stage helper files to /tmp/faber/ so generate_config.sh can find them'
-  echo 'mkdir -p /tmp/faber/templates/partials'
+  echo '# Stage helper files to /tmp/munitor/ so generate_config.sh can find them'
+  echo 'mkdir -p /tmp/munitor/templates/partials'
   echo ''
 
-  # Embed faber_helpers.sh
-  echo 'cat > /tmp/faber/faber_helpers.sh << '"'"'FABER_HELPERS_EOF'"'"
-  cat "${SRC}/faber_helpers.sh"
-  echo 'FABER_HELPERS_EOF'
+  # Embed munitor_helpers.sh
+  echo 'cat > /tmp/munitor/munitor_helpers.sh << '"'"'MUNITOR_HELPERS_EOF'"'"
+  cat "${SRC}/munitor_helpers.sh"
+  echo 'MUNITOR_HELPERS_EOF'
   echo ''
 
-  # Embed extract_faber_vars.sh
-  echo 'cat > /tmp/faber/extract_faber_vars.sh << '"'"'FABER_EXTRACT_EOF'"'"
-  cat "${SRC}/extract_faber_vars.sh"
-  echo 'FABER_EXTRACT_EOF'
+  # Embed extract_munitor_vars.sh
+  echo 'cat > /tmp/munitor/extract_munitor_vars.sh << '"'"'MUNITOR_EXTRACT_EOF'"'"
+  cat "${SRC}/extract_munitor_vars.sh"
+  echo 'MUNITOR_EXTRACT_EOF'
   echo ''
 
   # Embed each template
   for tpl in java-webapp node-api terraform sdk-distribution validate-cd-repo; do
-    echo "cat > /tmp/faber/templates/${tpl}.yml.tpl << 'FABER_TPL_EOF'"
+    echo "cat > /tmp/munitor/templates/${tpl}.yml.tpl << 'MUNITOR_TPL_EOF'"
     cat "${SRC}/templates/${tpl}.yml.tpl"
-    echo 'FABER_TPL_EOF'
+    echo 'MUNITOR_TPL_EOF'
     echo ''
   done
 
   # Embed partials
   for partial in java-webapp-deploy node-api-deploy; do
-    echo "cat > /tmp/faber/templates/partials/${partial}.yml.tpl << 'FABER_PARTIAL_EOF'"
+    echo "cat > /tmp/munitor/templates/partials/${partial}.yml.tpl << 'MUNITOR_PARTIAL_EOF'"
     cat "${SRC}/templates/partials/${partial}.yml.tpl"
-    echo 'FABER_PARTIAL_EOF'
+    echo 'MUNITOR_PARTIAL_EOF'
     echo ''
   done
 
-  echo 'echo "Faber helpers staged to /tmp/faber/"'
+  echo 'echo "Munitor helpers staged to /tmp/munitor/"'
   echo ''
   echo '# ======================================================================'
   echo '# Main generate_config.sh logic'

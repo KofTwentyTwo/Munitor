@@ -2,21 +2,21 @@
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-faber_header "start_services"
-faber_check_tool docker --version
-faber_check_tool jq --version
+munitor_header "start_services"
+munitor_check_tool docker --version
+munitor_check_tool jq --version
 
-SERVICES_JSON="${FABER_SERVICES_JSON:-}"
-HEALTH_TIMEOUT="${FABER_HEALTH_TIMEOUT:-60}"
+SERVICES_JSON="${MUNITOR_SERVICES_JSON:-}"
+HEALTH_TIMEOUT="${MUNITOR_HEALTH_TIMEOUT:-60}"
 HEALTH_INTERVAL=2
 
 if [[ -z "${SERVICES_JSON}" || "${SERVICES_JSON}" == "[]" ]]; then
@@ -46,7 +46,7 @@ for i in $(seq 0 $((SERVICE_COUNT - 1))); do
   fi
 
   # Build docker run arguments
-  DOCKER_ARGS="-d --name faber-svc-${i} -p ${PORT}:${PORT}"
+  DOCKER_ARGS="-d --name munitor-svc-${i} -p ${PORT}:${PORT}"
 
   # Add environment variables if present
   ENV_KEYS=$(echo "${SERVICE}" | jq -r '.env // {} | keys[]' 2>/dev/null || true)
@@ -73,7 +73,7 @@ for i in $(seq 0 $((SERVICE_COUNT - 1))); do
     LAST_OUTPUT=""
     while true; do
       # Try docker exec first -- capture output instead of swallowing it
-      LAST_OUTPUT=$(docker exec "faber-svc-${i}" sh -c "${HEALTHCHECK}" 2>&1) && {
+      LAST_OUTPUT=$(docker exec "munitor-svc-${i}" sh -c "${HEALTHCHECK}" 2>&1) && {
         echo "  Service ${IMAGE} is healthy."
         break
       }
@@ -95,7 +95,7 @@ for i in $(seq 0 $((SERVICE_COUNT - 1))); do
         echo "  Last health check output:"
         echo "    ${LAST_OUTPUT}"
         echo "  Container logs (last 20 lines):"
-        docker logs "faber-svc-${i}" 2>&1 | tail -20
+        docker logs "munitor-svc-${i}" 2>&1 | tail -20
         exit 1
       fi
 

@@ -7,7 +7,7 @@ TOTAL_FAIL=0
 FAILED_TESTS=()
 
 echo "========================================"
-echo "  Faber Orb Test Suite"
+echo "  Munitor Orb Test Suite"
 echo "========================================"
 echo ""
 

@@ -1,6 +1,6 @@
 description: >
   Example showing how to use Munitor with a Java webapp repo.
-  Each repo needs two files: .circleci/config.yml and .faber.yml.
+  Each repo needs two files: .circleci/config.yml and .munitor.yml.
 
 usage:
   version: 2.1

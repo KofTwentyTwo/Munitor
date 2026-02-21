@@ -6,28 +6,28 @@ set -euo pipefail
 # Do not edit directly. Edit src/scripts/*.sh and re-pack.
 # ======================================================================
 
-# Stage helper files to /tmp/faber/ so generate_config.sh can find them
-mkdir -p /tmp/faber/templates/partials
+# Stage helper files to /tmp/munitor/ so generate_config.sh can find them
+mkdir -p /tmp/munitor/templates/partials
 
-cat > /tmp/faber/faber_helpers.sh << 'FABER_HELPERS_EOF'
+cat > /tmp/munitor/munitor_helpers.sh << 'MUNITOR_HELPERS_EOF'
 #!/usr/bin/env bash
 # Shared helper library for Munitor orb scripts.
 # Source this at the top of each script for consistent diagnostics.
 #
 # Sourcing pattern (works even if helpers are missing):
-#   FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-#   [[ -f "${FABER_HELPERS}" ]] && source "${FABER_HELPERS}"
+#   MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+#   [[ -f "${MUNITOR_HELPERS}" ]] && source "${MUNITOR_HELPERS}"
 
 # Guard against double-sourcing
-[[ -n "${_FABER_HELPERS_LOADED:-}" ]] && return 0
-_FABER_HELPERS_LOADED=1
+[[ -n "${_MUNITOR_HELPERS_LOADED:-}" ]] && return 0
+_MUNITOR_HELPERS_LOADED=1
 
 # --------------------------------------------------------------------------
-# faber_header <step_name>
+# munitor_header <step_name>
 #
 # Print a standard banner with date, hostname, and working directory.
 # --------------------------------------------------------------------------
-faber_header() {
+munitor_header() {
   local name="${1:-unknown}"
   echo "========================================"
   echo "  Munitor: ${name}"
@@ -38,12 +38,12 @@ faber_header() {
 }
 
 # --------------------------------------------------------------------------
-# faber_check_tool <command> [version_flag]
+# munitor_check_tool <command> [version_flag]
 #
 # Verify a tool is in PATH and print its version.  Exits 1 with a clear
 # message if the tool is missing.
 # --------------------------------------------------------------------------
-faber_check_tool() {
+munitor_check_tool() {
   local cmd="$1"
   local version_flag="${2:---version}"
 
@@ -59,11 +59,11 @@ faber_check_tool() {
 }
 
 # --------------------------------------------------------------------------
-# faber_download_with_retry <url> <output> [retries] [delay]
+# munitor_download_with_retry <url> <output> [retries] [delay]
 #
 # Download a URL with retry logic. Tries curl first, falls back to wget.
 # --------------------------------------------------------------------------
-faber_download_with_retry() {
+munitor_download_with_retry() {
   local url="$1"
   local output="$2"
   local retries="${3:-3}"
@@ -92,17 +92,17 @@ faber_download_with_retry() {
   echo "ERROR: Failed to download ${url} after ${retries} attempts."
   return 1
 }
-FABER_HELPERS_EOF
+MUNITOR_HELPERS_EOF
 
-cat > /tmp/faber/extract_faber_vars.sh << 'FABER_EXTRACT_EOF'
+cat > /tmp/munitor/extract_munitor_vars.sh << 'MUNITOR_EXTRACT_EOF'
 #!/usr/bin/env bash
-# Shared helper for extracting variables from .faber.yml
-# Source this file to get FABER_* variables exported
+# Shared helper for extracting variables from .munitor.yml
+# Source this file to get MUNITOR_* variables exported
 
 set -euo pipefail
 
-extract_faber_vars() {
-  local config_file="${1:-.faber.yml}"
+extract_munitor_vars() {
+  local config_file="${1:-.munitor.yml}"
 
   if [[ ! -f "${config_file}" ]]; then
     echo "ERROR: Config file '${config_file}' not found." >&2
@@ -117,210 +117,210 @@ extract_faber_vars() {
   local ORG_ORB_SLUG="KofTwentyTwo/munitor"
 
   # Core pipeline settings
-  FABER_PIPELINE=$(yq '.pipeline' "${config_file}")
-  FABER_ORB_VERSION=$(yq '.orb_version // ""' "${config_file}")
-  FABER_IMAGE_NAME=$(yq '.image_name // ""' "${config_file}")
-  FABER_JAVA_VERSION=$(yq '.java_version // "21"' "${config_file}")
-  FABER_NODE_VERSION=$(yq '.node_version // "20"' "${config_file}")
-  FABER_SONAR_PROJECT_KEY=$(yq '.sonar.project_key // ""' "${config_file}")
-  FABER_DOCKER_REGISTRY=$(yq '.docker.registry // ""' "${config_file}")
-  if [[ -z "${FABER_DOCKER_REGISTRY}" || "${FABER_DOCKER_REGISTRY}" == "null" ]]; then
-    FABER_DOCKER_REGISTRY="${ORG_DOCKER_REGISTRY}"
+  MUNITOR_PIPELINE=$(yq '.pipeline' "${config_file}")
+  MUNITOR_ORB_VERSION=$(yq '.orb_version // ""' "${config_file}")
+  MUNITOR_IMAGE_NAME=$(yq '.image_name // ""' "${config_file}")
+  MUNITOR_JAVA_VERSION=$(yq '.java_version // "21"' "${config_file}")
+  MUNITOR_NODE_VERSION=$(yq '.node_version // "20"' "${config_file}")
+  MUNITOR_SONAR_PROJECT_KEY=$(yq '.sonar.project_key // ""' "${config_file}")
+  MUNITOR_DOCKER_REGISTRY=$(yq '.docker.registry // ""' "${config_file}")
+  if [[ -z "${MUNITOR_DOCKER_REGISTRY}" || "${MUNITOR_DOCKER_REGISTRY}" == "null" ]]; then
+    MUNITOR_DOCKER_REGISTRY="${ORG_DOCKER_REGISTRY}"
   fi
-  FABER_CD_REPO=$(yq '.cd.repo // ""' "${config_file}")
-  FABER_CD_FORMAT=$(yq '.cd.format // "helm"' "${config_file}")
-  FABER_CD_ENV_DEVELOP=$(yq '.cd.env.develop // "develop"' "${config_file}")
-  FABER_CD_ENV_STAGING=$(yq '.cd.env.staging // "staging"' "${config_file}")
-  FABER_CD_ENV_PROD=$(yq '.cd.env.prod // "prod"' "${config_file}")
-  FABER_CD_ENV_RELEASE=$(yq '.cd.env.release // "staging"' "${config_file}")
-  FABER_COVERAGE_MIN=$(yq '.coverage.min_instruction // "70"' "${config_file}")
-  FABER_E2E=$(yq '.e2e // false' "${config_file}")
-  FABER_SBOM=$(yq '.sbom // false' "${config_file}")
+  MUNITOR_CD_REPO=$(yq '.cd.repo // ""' "${config_file}")
+  MUNITOR_CD_FORMAT=$(yq '.cd.format // "helm"' "${config_file}")
+  MUNITOR_CD_ENV_DEVELOP=$(yq '.cd.env.develop // "develop"' "${config_file}")
+  MUNITOR_CD_ENV_STAGING=$(yq '.cd.env.staging // "staging"' "${config_file}")
+  MUNITOR_CD_ENV_PROD=$(yq '.cd.env.prod // "prod"' "${config_file}")
+  MUNITOR_CD_ENV_RELEASE=$(yq '.cd.env.release // "staging"' "${config_file}")
+  MUNITOR_COVERAGE_MIN=$(yq '.coverage.min_instruction // "70"' "${config_file}")
+  MUNITOR_E2E=$(yq '.e2e // false' "${config_file}")
+  MUNITOR_SBOM=$(yq '.sbom // false' "${config_file}")
 
   # Contexts
-  FABER_CONTEXT_REGISTRY=$(yq '.contexts.registry // ""' "${config_file}")
-  FABER_CONTEXT_GITHUB=$(yq '.contexts.github // ""' "${config_file}")
-  FABER_CONTEXT_SONAR=$(yq '.contexts.sonar // ""' "${config_file}")
-  FABER_CONTEXT_NVD=$(yq '.contexts.nvd // ""' "${config_file}")
+  MUNITOR_CONTEXT_REGISTRY=$(yq '.contexts.registry // ""' "${config_file}")
+  MUNITOR_CONTEXT_GITHUB=$(yq '.contexts.github // ""' "${config_file}")
+  MUNITOR_CONTEXT_SONAR=$(yq '.contexts.sonar // ""' "${config_file}")
+  MUNITOR_CONTEXT_NVD=$(yq '.contexts.nvd // ""' "${config_file}")
 
   # GitHub Release: auto-enabled when contexts.github is present
-  if [[ -n "${FABER_CONTEXT_GITHUB}" ]]; then
-    FABER_GITHUB_RELEASE="true"
+  if [[ -n "${MUNITOR_CONTEXT_GITHUB}" ]]; then
+    MUNITOR_GITHUB_RELEASE="true"
   else
-    FABER_GITHUB_RELEASE="false"
+    MUNITOR_GITHUB_RELEASE="false"
   fi
 
   # Node-api extended features
-  FABER_NPM_AUTH=$(yq '.npm.private_registry // false' "${config_file}")
-  FABER_NPM_SCOPES=$(yq -o=json -I=0 '.npm.scopes // []' "${config_file}")
-  FABER_SERVICES_JSON=$(yq '.services // [] | tojson' "${config_file}")
-  if [[ "${FABER_SERVICES_JSON}" == "[]" ]]; then
-    FABER_SERVICES="false"
+  MUNITOR_NPM_AUTH=$(yq '.npm.private_registry // false' "${config_file}")
+  MUNITOR_NPM_SCOPES=$(yq -o=json -I=0 '.npm.scopes // []' "${config_file}")
+  MUNITOR_SERVICES_JSON=$(yq '.services // [] | tojson' "${config_file}")
+  if [[ "${MUNITOR_SERVICES_JSON}" == "[]" ]]; then
+    MUNITOR_SERVICES="false"
   else
-    FABER_SERVICES="true"
+    MUNITOR_SERVICES="true"
   fi
-  FABER_TEST_SETUP_SCRIPT=$(yq '.test.setup // ""' "${config_file}")
-  if [[ -n "${FABER_TEST_SETUP_SCRIPT}" ]]; then
-    FABER_TEST_SETUP="true"
+  MUNITOR_TEST_SETUP_SCRIPT=$(yq '.test.setup // ""' "${config_file}")
+  if [[ -n "${MUNITOR_TEST_SETUP_SCRIPT}" ]]; then
+    MUNITOR_TEST_SETUP="true"
   else
-    FABER_TEST_SETUP="false"
+    MUNITOR_TEST_SETUP="false"
   fi
-  FABER_TEST_COMMANDS_JSON=$(yq '.test.commands // [] | tojson' "${config_file}")
-  if [[ "${FABER_TEST_COMMANDS_JSON}" == "[]" ]]; then
-    FABER_CUSTOM_TEST="false"
+  MUNITOR_TEST_COMMANDS_JSON=$(yq '.test.commands // [] | tojson' "${config_file}")
+  if [[ "${MUNITOR_TEST_COMMANDS_JSON}" == "[]" ]]; then
+    MUNITOR_CUSTOM_TEST="false"
   else
-    FABER_CUSTOM_TEST="true"
+    MUNITOR_CUSTOM_TEST="true"
   fi
-  FABER_COVERAGE_TOOL=$(yq '.test.coverage.tool // "jest"' "${config_file}")
-  FABER_COVERAGE_COMMAND=$(yq '.test.coverage.command // ""' "${config_file}")
-  if [[ -n "${FABER_COVERAGE_COMMAND}" ]]; then
-    FABER_COVERAGE_CMD="true"
+  MUNITOR_COVERAGE_TOOL=$(yq '.test.coverage.tool // "jest"' "${config_file}")
+  MUNITOR_COVERAGE_COMMAND=$(yq '.test.coverage.command // ""' "${config_file}")
+  if [[ -n "${MUNITOR_COVERAGE_COMMAND}" ]]; then
+    MUNITOR_COVERAGE_CMD="true"
   else
-    FABER_COVERAGE_CMD="false"
+    MUNITOR_COVERAGE_CMD="false"
   fi
   # Allow test.coverage.min_instruction to override coverage.min_instruction
-  FABER_TEST_COVERAGE_MIN=$(yq '.test.coverage.min_instruction // ""' "${config_file}")
-  if [[ -n "${FABER_TEST_COVERAGE_MIN}" ]]; then
-    FABER_COVERAGE_MIN="${FABER_TEST_COVERAGE_MIN}"
+  MUNITOR_TEST_COVERAGE_MIN=$(yq '.test.coverage.min_instruction // ""' "${config_file}")
+  if [[ -n "${MUNITOR_TEST_COVERAGE_MIN}" ]]; then
+    MUNITOR_COVERAGE_MIN="${MUNITOR_TEST_COVERAGE_MIN}"
   fi
 
   # Terraform pipeline settings
-  FABER_TF_PATH=$(yq '.terraform.path // "terraform/"' "${config_file}")
-  FABER_TF_LIVE_PATH=$(yq '.terraform.live_path // "terraform/live"' "${config_file}")
-  FABER_TF_ENVIRONMENTS=$(yq '.terraform.environments // ["production"] | join(" ")' "${config_file}")
-  FABER_CHECKOV_SKIP=$(yq '.terraform.checkov_skip // ""' "${config_file}")
+  MUNITOR_TF_PATH=$(yq '.terraform.path // "terraform/"' "${config_file}")
+  MUNITOR_TF_LIVE_PATH=$(yq '.terraform.live_path // "terraform/live"' "${config_file}")
+  MUNITOR_TF_ENVIRONMENTS=$(yq '.terraform.environments // ["production"] | join(" ")' "${config_file}")
+  MUNITOR_CHECKOV_SKIP=$(yq '.terraform.checkov_skip // ""' "${config_file}")
   # Kustomize / CD repo validation settings
-  FABER_KUSTOMIZE_VERSION=$(yq '.kustomize.version // "5.5.0"' "${config_file}")
-  FABER_KUSTOMIZE_BASE_PATH=$(yq '.kustomize.base_path // "base/"' "${config_file}")
-  FABER_KUSTOMIZE_LOAD_RESTRICTOR=$(yq '.kustomize.load_restrictor // "true"' "${config_file}")
-  FABER_KUSTOMIZE_SCAN_OVERLAY=$(yq '.kustomize.scan_overlay // "production"' "${config_file}")
-  FABER_KUSTOMIZE_OVERLAYS=$(yq '.kustomize.overlays // [] | join(" ")' "${config_file}")
-  FABER_KUBE_LINTER_CONFIG=$(yq '.kube_linter_config // ""' "${config_file}")
-  FABER_YAMLLINT_PATHS="base/ overlays/ argocd-apps/"
+  MUNITOR_KUSTOMIZE_VERSION=$(yq '.kustomize.version // "5.5.0"' "${config_file}")
+  MUNITOR_KUSTOMIZE_BASE_PATH=$(yq '.kustomize.base_path // "base/"' "${config_file}")
+  MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR=$(yq '.kustomize.load_restrictor // "true"' "${config_file}")
+  MUNITOR_KUSTOMIZE_SCAN_OVERLAY=$(yq '.kustomize.scan_overlay // "production"' "${config_file}")
+  MUNITOR_KUSTOMIZE_OVERLAYS=$(yq '.kustomize.overlays // [] | join(" ")' "${config_file}")
+  MUNITOR_KUBE_LINTER_CONFIG=$(yq '.kube_linter_config // ""' "${config_file}")
+  MUNITOR_YAMLLINT_PATHS="base/ overlays/ argocd-apps/"
 
   # SAST: supports boolean (true/false) or object form (sast: { fail_on_findings: false })
   local sast_raw
   sast_raw=$(yq '.sast' "${config_file}")
   case "${sast_raw}" in
     true)
-      FABER_SAST="true"
-      FABER_SAST_FAIL_ON_FINDINGS="true"
+      MUNITOR_SAST="true"
+      MUNITOR_SAST_FAIL_ON_FINDINGS="true"
       ;;
     false|null)
-      FABER_SAST="false"
-      FABER_SAST_FAIL_ON_FINDINGS="true"
+      MUNITOR_SAST="false"
+      MUNITOR_SAST_FAIL_ON_FINDINGS="true"
       ;;
     *)
       # Object form: sast is present as a map, so SAST is enabled
-      FABER_SAST="true"
+      MUNITOR_SAST="true"
       local fof
       fof=$(yq '.sast.fail_on_findings' "${config_file}")
       if [[ "${fof}" == "false" ]]; then
-        FABER_SAST_FAIL_ON_FINDINGS="false"
+        MUNITOR_SAST_FAIL_ON_FINDINGS="false"
       else
-        FABER_SAST_FAIL_ON_FINDINGS="true"
+        MUNITOR_SAST_FAIL_ON_FINDINGS="true"
       fi
       ;;
   esac
 
   # Node framework (nextjs or express)
-  FABER_NODE_FRAMEWORK=$(yq '.node.framework // "nextjs"' "${config_file}")
+  MUNITOR_NODE_FRAMEWORK=$(yq '.node.framework // "nextjs"' "${config_file}")
 
   # Org-level variables (derived from defaults block)
-  FABER_CI_EMAIL="${ORG_CI_EMAIL}"
-  FABER_CI_NAME="${ORG_CI_NAME}"
-  FABER_NPM_DEFAULT_SCOPE="${ORG_NPM_SCOPE}"
-  FABER_ORB_SLUG="${ORG_ORB_SLUG}"
+  MUNITOR_CI_EMAIL="${ORG_CI_EMAIL}"
+  MUNITOR_CI_NAME="${ORG_CI_NAME}"
+  MUNITOR_NPM_DEFAULT_SCOPE="${ORG_NPM_SCOPE}"
+  MUNITOR_ORB_SLUG="${ORG_ORB_SLUG}"
 
   # Health check settings
-  FABER_HEALTH_PATH=$(yq '.health.path // "/api/health"' "${config_file}")
-  FABER_HEALTH_PORT=$(yq '.health.port // ""' "${config_file}")
-  if [[ -z "${FABER_HEALTH_PORT}" || "${FABER_HEALTH_PORT}" == "null" ]]; then
-    case "${FABER_PIPELINE}" in
-      node-api) FABER_HEALTH_PORT="3000" ;;
-      *) FABER_HEALTH_PORT="8080" ;;
+  MUNITOR_HEALTH_PATH=$(yq '.health.path // "/api/health"' "${config_file}")
+  MUNITOR_HEALTH_PORT=$(yq '.health.port // ""' "${config_file}")
+  if [[ -z "${MUNITOR_HEALTH_PORT}" || "${MUNITOR_HEALTH_PORT}" == "null" ]]; then
+    case "${MUNITOR_PIPELINE}" in
+      node-api) MUNITOR_HEALTH_PORT="3000" ;;
+      *) MUNITOR_HEALTH_PORT="8080" ;;
     esac
   fi
-  FABER_HEALTH_DB=$(yq '.health.db // false' "${config_file}")
+  MUNITOR_HEALTH_DB=$(yq '.health.db // false' "${config_file}")
 
   # Derived flags
-  if [[ -n "${FABER_SONAR_PROJECT_KEY}" ]]; then
-    FABER_SONAR="true"
+  if [[ -n "${MUNITOR_SONAR_PROJECT_KEY}" ]]; then
+    MUNITOR_SONAR="true"
   else
-    FABER_SONAR="false"
+    MUNITOR_SONAR="false"
   fi
 
-  if [[ -n "${FABER_CD_REPO}" ]]; then
-    FABER_CD="true"
+  if [[ -n "${MUNITOR_CD_REPO}" ]]; then
+    MUNITOR_CD="true"
   else
-    FABER_CD="false"
+    MUNITOR_CD="false"
   fi
 
   # Export all variables
-  export FABER_PIPELINE FABER_ORB_VERSION FABER_IMAGE_NAME FABER_JAVA_VERSION FABER_NODE_VERSION
-  export FABER_SONAR_PROJECT_KEY FABER_DOCKER_REGISTRY FABER_CD_REPO FABER_CD_FORMAT
-  export FABER_CD_ENV_DEVELOP FABER_CD_ENV_STAGING FABER_CD_ENV_PROD FABER_CD_ENV_RELEASE
-  export FABER_COVERAGE_MIN FABER_E2E FABER_SBOM
-  export FABER_CONTEXT_REGISTRY FABER_CONTEXT_GITHUB FABER_CONTEXT_SONAR FABER_CONTEXT_NVD
-  export FABER_GITHUB_RELEASE
-  export FABER_NPM_AUTH FABER_NPM_SCOPES
-  export FABER_SERVICES FABER_SERVICES_JSON
-  export FABER_TEST_SETUP FABER_TEST_SETUP_SCRIPT
-  export FABER_CUSTOM_TEST FABER_TEST_COMMANDS_JSON
-  export FABER_COVERAGE_TOOL FABER_COVERAGE_CMD FABER_COVERAGE_COMMAND
-  export FABER_TF_PATH FABER_TF_LIVE_PATH FABER_TF_ENVIRONMENTS FABER_CHECKOV_SKIP FABER_SAST FABER_SAST_FAIL_ON_FINDINGS
-  export FABER_KUSTOMIZE_VERSION FABER_KUSTOMIZE_BASE_PATH FABER_KUSTOMIZE_LOAD_RESTRICTOR
-  export FABER_KUSTOMIZE_SCAN_OVERLAY FABER_KUSTOMIZE_OVERLAYS FABER_KUBE_LINTER_CONFIG FABER_YAMLLINT_PATHS
-  export FABER_NODE_FRAMEWORK
-  export FABER_CI_EMAIL FABER_CI_NAME FABER_NPM_DEFAULT_SCOPE FABER_ORB_SLUG
-  export FABER_HEALTH_PATH FABER_HEALTH_PORT FABER_HEALTH_DB
-  export FABER_SONAR FABER_CD
+  export MUNITOR_PIPELINE MUNITOR_ORB_VERSION MUNITOR_IMAGE_NAME MUNITOR_JAVA_VERSION MUNITOR_NODE_VERSION
+  export MUNITOR_SONAR_PROJECT_KEY MUNITOR_DOCKER_REGISTRY MUNITOR_CD_REPO MUNITOR_CD_FORMAT
+  export MUNITOR_CD_ENV_DEVELOP MUNITOR_CD_ENV_STAGING MUNITOR_CD_ENV_PROD MUNITOR_CD_ENV_RELEASE
+  export MUNITOR_COVERAGE_MIN MUNITOR_E2E MUNITOR_SBOM
+  export MUNITOR_CONTEXT_REGISTRY MUNITOR_CONTEXT_GITHUB MUNITOR_CONTEXT_SONAR MUNITOR_CONTEXT_NVD
+  export MUNITOR_GITHUB_RELEASE
+  export MUNITOR_NPM_AUTH MUNITOR_NPM_SCOPES
+  export MUNITOR_SERVICES MUNITOR_SERVICES_JSON
+  export MUNITOR_TEST_SETUP MUNITOR_TEST_SETUP_SCRIPT
+  export MUNITOR_CUSTOM_TEST MUNITOR_TEST_COMMANDS_JSON
+  export MUNITOR_COVERAGE_TOOL MUNITOR_COVERAGE_CMD MUNITOR_COVERAGE_COMMAND
+  export MUNITOR_TF_PATH MUNITOR_TF_LIVE_PATH MUNITOR_TF_ENVIRONMENTS MUNITOR_CHECKOV_SKIP MUNITOR_SAST MUNITOR_SAST_FAIL_ON_FINDINGS
+  export MUNITOR_KUSTOMIZE_VERSION MUNITOR_KUSTOMIZE_BASE_PATH MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR
+  export MUNITOR_KUSTOMIZE_SCAN_OVERLAY MUNITOR_KUSTOMIZE_OVERLAYS MUNITOR_KUBE_LINTER_CONFIG MUNITOR_YAMLLINT_PATHS
+  export MUNITOR_NODE_FRAMEWORK
+  export MUNITOR_CI_EMAIL MUNITOR_CI_NAME MUNITOR_NPM_DEFAULT_SCOPE MUNITOR_ORB_SLUG
+  export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB
+  export MUNITOR_SONAR MUNITOR_CD
 }
 
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${FABER_PIPELINE} ${FABER_ORB_VERSION} ${FABER_IMAGE_NAME} ${FABER_JAVA_VERSION} ${FABER_NODE_VERSION} ${FABER_SONAR_PROJECT_KEY} ${FABER_DOCKER_REGISTRY} ${FABER_CD_REPO} ${FABER_CD_FORMAT} ${FABER_CD_ENV_DEVELOP} ${FABER_CD_ENV_STAGING} ${FABER_CD_ENV_PROD} ${FABER_CD_ENV_RELEASE} ${FABER_COVERAGE_MIN} ${FABER_E2E} ${FABER_SBOM} ${FABER_CONTEXT_REGISTRY} ${FABER_CONTEXT_GITHUB} ${FABER_CONTEXT_SONAR} ${FABER_CONTEXT_NVD} ${FABER_NPM_AUTH} ${FABER_NPM_SCOPES} ${FABER_SERVICES_JSON} ${FABER_TEST_SETUP_SCRIPT} ${FABER_TEST_COMMANDS_JSON} ${FABER_COVERAGE_TOOL} ${FABER_COVERAGE_COMMAND} ${FABER_GITHUB_RELEASE} ${FABER_SAST} ${FABER_SAST_FAIL_ON_FINDINGS} ${FABER_HEALTH_PATH} ${FABER_HEALTH_PORT} ${FABER_HEALTH_DB} ${FABER_TF_PATH} ${FABER_TF_LIVE_PATH} ${FABER_TF_ENVIRONMENTS} ${FABER_CHECKOV_SKIP} ${FABER_KUSTOMIZE_VERSION} ${FABER_KUSTOMIZE_BASE_PATH} ${FABER_KUSTOMIZE_LOAD_RESTRICTOR} ${FABER_KUSTOMIZE_SCAN_OVERLAY} ${FABER_KUSTOMIZE_OVERLAYS} ${FABER_KUBE_LINTER_CONFIG} ${FABER_YAMLLINT_PATHS} ${FABER_CI_EMAIL} ${FABER_CI_NAME} ${FABER_NPM_DEFAULT_SCOPE} ${FABER_ORB_SLUG}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG}'
 }
-FABER_EXTRACT_EOF
+MUNITOR_EXTRACT_EOF
 
-cat > /tmp/faber/templates/java-webapp.yml.tpl << 'FABER_TPL_EOF'
+cat > /tmp/munitor/templates/java-webapp.yml.tpl << 'MUNITOR_TPL_EOF'
 version: 2.1
 
 orbs:
-  faber: ${FABER_ORB_SLUG}@${FABER_ORB_VERSION}
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-checks:
     jobs:
-      - faber/mvn_build_and_test:
+      - munitor/mvn_build_and_test:
           name: build-and-test
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/mvn_code_quality:
+      - munitor/mvn_code_quality:
           name: code-quality
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           requires:
             - build-and-test
           filters:
@@ -328,10 +328,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/mvn_coverage:
+      - munitor/mvn_coverage:
           name: coverage
-          java_version: "${FABER_JAVA_VERSION}"
-          min_instruction: "${FABER_COVERAGE_MIN}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
+          min_instruction: "${MUNITOR_COVERAGE_MIN}"
           requires:
             - build-and-test
           filters:
@@ -339,11 +339,11 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/security_scan:
+      - munitor/security_scan:
           name: security-scan
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_NVD}
+            - ${MUNITOR_CONTEXT_NVD}
           requires:
             - build-and-test
           filters:
@@ -352,9 +352,9 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_E2E##
-      - faber/mvn_e2e_test:
+      - munitor/mvn_e2e_test:
           name: e2e-tests
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           requires:
             - build-and-test
           filters:
@@ -364,57 +364,57 @@ workflows:
                 - /hotfix\/.*/
       ##ENDIF_E2E##
 
-  ##INCLUDE_DEPLOY java-webapp-deploy develop develop ${FABER_CD_ENV_DEVELOP}##
-  ##INCLUDE_DEPLOY java-webapp-deploy staging staging ${FABER_CD_ENV_STAGING}##
+  ##INCLUDE_DEPLOY java-webapp-deploy develop develop ${MUNITOR_CD_ENV_DEVELOP}##
+  ##INCLUDE_DEPLOY java-webapp-deploy staging staging ${MUNITOR_CD_ENV_STAGING}##
 
   release-candidate:
     jobs:
-      - faber/mvn_build_and_test:
+      - munitor/mvn_build_and_test:
           name: build-and-test
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/mvn_code_quality:
+      - munitor/mvn_code_quality:
           name: code-quality
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           requires:
             - build-and-test
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/mvn_coverage:
+      - munitor/mvn_coverage:
           name: coverage
-          java_version: "${FABER_JAVA_VERSION}"
-          min_instruction: "${FABER_COVERAGE_MIN}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
+          min_instruction: "${MUNITOR_COVERAGE_MIN}"
           requires:
             - build-and-test
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/security_scan:
+      - munitor/security_scan:
           name: security-scan
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_NVD}
+            - ${MUNITOR_CONTEXT_NVD}
           requires:
             - build-and-test
           filters:
@@ -422,9 +422,9 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_E2E##
-      - faber/mvn_e2e_test:
+      - munitor/mvn_e2e_test:
           name: e2e-tests
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           requires:
             - build-and-test
           filters:
@@ -433,27 +433,27 @@ workflows:
                 - /release\/.*/
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - faber/sonar_scan:
+      - munitor/sonar_scan:
           name: sonar-scan
-          java_version: "${FABER_JAVA_VERSION}"
-          sonar_project_key: ${FABER_SONAR_PROJECT_KEY}
+          java_version: "${MUNITOR_JAVA_VERSION}"
+          sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
             - coverage
           context:
-            - ${FABER_CONTEXT_SONAR}
+            - ${MUNITOR_CONTEXT_SONAR}
           filters:
             branches:
               only:
                 - /release\/.*/
       ##ENDIF_SONAR##
-      - faber/docker_build_push:
+      - munitor/docker_build_push:
           name: docker-build-push
-          image_name: ${FABER_IMAGE_NAME}
-          registry: ${FABER_DOCKER_REGISTRY}
-          health_path: ${FABER_HEALTH_PATH}
-          health_port: "${FABER_HEALTH_PORT}"
-          health_db: "${FABER_HEALTH_DB}"
+          image_name: ${MUNITOR_IMAGE_NAME}
+          registry: ${MUNITOR_DOCKER_REGISTRY}
+          health_path: ${MUNITOR_HEALTH_PATH}
+          health_port: "${MUNITOR_HEALTH_PORT}"
+          health_db: "${MUNITOR_HEALTH_DB}"
           requires:
             - code-quality
             - coverage
@@ -467,17 +467,17 @@ workflows:
             - e2e-tests
             ##ENDIF_E2E##
           context:
-            - ${FABER_CONTEXT_REGISTRY}
+            - ${MUNITOR_CONTEXT_REGISTRY}
           filters:
             branches:
               only:
                 - /release\/.*/
       ##IF_SBOM##
-      - faber/sbom:
+      - munitor/sbom:
           name: sbom
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           requires:
             - code-quality
             - coverage
@@ -496,30 +496,30 @@ workflows:
                 - /release\/.*/
       ##ENDIF_SBOM##
       ##IF_CD##
-      - faber/update_cd_repo:
+      - munitor/update_cd_repo:
           name: update-cd-repo
-          cd_repo: ${FABER_CD_REPO}
-          environment: ${FABER_CD_ENV_RELEASE}
-          cd_format: ${FABER_CD_FORMAT}
-          cd_image_name: ${FABER_DOCKER_REGISTRY}/${FABER_IMAGE_NAME}
-          ci_git_email: '${FABER_CI_EMAIL}'
-          ci_git_name: '${FABER_CI_NAME}'
+          cd_repo: ${MUNITOR_CD_REPO}
+          environment: ${MUNITOR_CD_ENV_RELEASE}
+          cd_format: ${MUNITOR_CD_FORMAT}
+          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ci_git_email: '${MUNITOR_CI_EMAIL}'
+          ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
                 - /release\/.*/
       ##ENDIF_CD##
       ##IF_GITHUB_RELEASE##
-      - faber/github_release:
+      - munitor/github_release:
           name: github-release
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
@@ -528,107 +528,107 @@ workflows:
 
   production:
     jobs:
-      - faber/mvn_build_and_test:
+      - munitor/mvn_build_and_test:
           name: build-and-test
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: main
-      - faber/docker_build_push:
+      - munitor/docker_build_push:
           name: docker-build-push
-          image_name: ${FABER_IMAGE_NAME}
-          registry: ${FABER_DOCKER_REGISTRY}
-          health_path: ${FABER_HEALTH_PATH}
-          health_port: "${FABER_HEALTH_PORT}"
-          health_db: "${FABER_HEALTH_DB}"
+          image_name: ${MUNITOR_IMAGE_NAME}
+          registry: ${MUNITOR_DOCKER_REGISTRY}
+          health_path: ${MUNITOR_HEALTH_PATH}
+          health_port: "${MUNITOR_HEALTH_PORT}"
+          health_db: "${MUNITOR_HEALTH_DB}"
           requires:
             - build-and-test
           context:
-            - ${FABER_CONTEXT_REGISTRY}
+            - ${MUNITOR_CONTEXT_REGISTRY}
           filters:
             branches:
               only: main
       ##IF_CD##
-      - faber/update_cd_repo:
+      - munitor/update_cd_repo:
           name: update-cd-repo
-          cd_repo: ${FABER_CD_REPO}
-          environment: ${FABER_CD_ENV_PROD}
-          cd_format: ${FABER_CD_FORMAT}
-          cd_image_name: ${FABER_DOCKER_REGISTRY}/${FABER_IMAGE_NAME}
-          ci_git_email: '${FABER_CI_EMAIL}'
-          ci_git_name: '${FABER_CI_NAME}'
+          cd_repo: ${MUNITOR_CD_REPO}
+          environment: ${MUNITOR_CD_ENV_PROD}
+          cd_format: ${MUNITOR_CD_FORMAT}
+          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ci_git_email: '${MUNITOR_CI_EMAIL}'
+          ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: main
       ##ENDIF_CD##
       ##IF_GITHUB_RELEASE##
-      - faber/github_release:
+      - munitor/github_release:
           name: github-release
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: main
       ##ENDIF_GITHUB_RELEASE##
-FABER_TPL_EOF
+MUNITOR_TPL_EOF
 
-cat > /tmp/faber/templates/node-api.yml.tpl << 'FABER_TPL_EOF'
+cat > /tmp/munitor/templates/node-api.yml.tpl << 'MUNITOR_TPL_EOF'
 version: 2.1
 
 orbs:
-  faber: ${FABER_ORB_SLUG}@${FABER_ORB_VERSION}
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-checks:
     jobs:
-      - faber/npm_build_and_test:
+      - munitor/npm_build_and_test:
           name: build-and-test
-          node_version: "${FABER_NODE_VERSION}"
+          node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
           npm_auth: true
-          npm_scopes: '${FABER_NPM_SCOPES}'
-          npm_default_scope: '${FABER_NPM_DEFAULT_SCOPE}'
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
           ##ENDIF_NPM_AUTH##
           ##IF_SERVICES##
-          services: '${FABER_SERVICES_JSON}'
+          services: '${MUNITOR_SERVICES_JSON}'
           ##ENDIF_SERVICES##
           ##IF_TEST_SETUP##
-          test_setup: ${FABER_TEST_SETUP_SCRIPT}
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
           ##ENDIF_TEST_SETUP##
           ##IF_CUSTOM_TEST##
-          test_commands: '${FABER_TEST_COMMANDS_JSON}'
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
           ##ENDIF_CUSTOM_TEST##
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/npm_code_quality:
+      - munitor/npm_code_quality:
           name: code-quality
           requires:
             - build-and-test
@@ -637,12 +637,12 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/npm_coverage:
+      - munitor/npm_coverage:
           name: coverage
-          min_coverage: "${FABER_COVERAGE_MIN}"
-          coverage_tool: ${FABER_COVERAGE_TOOL}
+          min_coverage: "${MUNITOR_COVERAGE_MIN}"
+          coverage_tool: ${MUNITOR_COVERAGE_TOOL}
           ##IF_COVERAGE_CMD##
-          coverage_command: ${FABER_COVERAGE_COMMAND}
+          coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
           requires:
             - build-and-test
@@ -651,7 +651,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/npm_security_scan:
+      - munitor/npm_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -661,7 +661,7 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_E2E##
-      - faber/npm_e2e_test:
+      - munitor/npm_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -672,48 +672,48 @@ workflows:
                 - /hotfix\/.*/
       ##ENDIF_E2E##
 
-  ##INCLUDE_DEPLOY node-api-deploy develop develop ${FABER_CD_ENV_DEVELOP}##
-  ##INCLUDE_DEPLOY node-api-deploy staging staging ${FABER_CD_ENV_STAGING}##
+  ##INCLUDE_DEPLOY node-api-deploy develop develop ${MUNITOR_CD_ENV_DEVELOP}##
+  ##INCLUDE_DEPLOY node-api-deploy staging staging ${MUNITOR_CD_ENV_STAGING}##
 
   release-candidate:
     jobs:
-      - faber/npm_build_and_test:
+      - munitor/npm_build_and_test:
           name: build-and-test
-          node_version: "${FABER_NODE_VERSION}"
+          node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
           npm_auth: true
-          npm_scopes: '${FABER_NPM_SCOPES}'
-          npm_default_scope: '${FABER_NPM_DEFAULT_SCOPE}'
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
           ##ENDIF_NPM_AUTH##
           ##IF_SERVICES##
-          services: '${FABER_SERVICES_JSON}'
+          services: '${MUNITOR_SERVICES_JSON}'
           ##ENDIF_SERVICES##
           ##IF_TEST_SETUP##
-          test_setup: ${FABER_TEST_SETUP_SCRIPT}
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
           ##ENDIF_TEST_SETUP##
           ##IF_CUSTOM_TEST##
-          test_commands: '${FABER_TEST_COMMANDS_JSON}'
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
           ##ENDIF_CUSTOM_TEST##
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/npm_code_quality:
+      - munitor/npm_code_quality:
           name: code-quality
           requires:
             - build-and-test
@@ -721,12 +721,12 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - faber/npm_coverage:
+      - munitor/npm_coverage:
           name: coverage
-          min_coverage: "${FABER_COVERAGE_MIN}"
-          coverage_tool: ${FABER_COVERAGE_TOOL}
+          min_coverage: "${MUNITOR_COVERAGE_MIN}"
+          coverage_tool: ${MUNITOR_COVERAGE_TOOL}
           ##IF_COVERAGE_CMD##
-          coverage_command: ${FABER_COVERAGE_COMMAND}
+          coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
           requires:
             - build-and-test
@@ -734,7 +734,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - faber/npm_security_scan:
+      - munitor/npm_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -743,7 +743,7 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_E2E##
-      - faber/npm_e2e_test:
+      - munitor/npm_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -753,27 +753,27 @@ workflows:
                 - /release\/.*/
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - faber/npm_sonar_scan:
+      - munitor/npm_sonar_scan:
           name: sonar-scan
-          node_version: "${FABER_NODE_VERSION}"
-          sonar_project_key: ${FABER_SONAR_PROJECT_KEY}
+          node_version: "${MUNITOR_NODE_VERSION}"
+          sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
             - coverage
           context:
-            - ${FABER_CONTEXT_SONAR}
+            - ${MUNITOR_CONTEXT_SONAR}
           filters:
             branches:
               only:
                 - /release\/.*/
       ##ENDIF_SONAR##
-      - faber/docker_build_push:
+      - munitor/docker_build_push:
           name: docker-build-push
-          image_name: ${FABER_IMAGE_NAME}
-          registry: ${FABER_DOCKER_REGISTRY}
-          health_path: ${FABER_HEALTH_PATH}
-          health_port: "${FABER_HEALTH_PORT}"
-          health_db: "${FABER_HEALTH_DB}"
+          image_name: ${MUNITOR_IMAGE_NAME}
+          registry: ${MUNITOR_DOCKER_REGISTRY}
+          health_path: ${MUNITOR_HEALTH_PATH}
+          health_port: "${MUNITOR_HEALTH_PORT}"
+          health_db: "${MUNITOR_HEALTH_DB}"
           requires:
             - code-quality
             - coverage
@@ -784,17 +784,17 @@ workflows:
             - e2e-tests
             ##ENDIF_E2E##
           context:
-            - ${FABER_CONTEXT_REGISTRY}
+            - ${MUNITOR_CONTEXT_REGISTRY}
           filters:
             branches:
               only:
                 - /release\/.*/
       ##IF_SBOM##
-      - faber/npm_sbom:
+      - munitor/npm_sbom:
           name: sbom
-          node_version: "${FABER_NODE_VERSION}"
+          node_version: "${MUNITOR_NODE_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           requires:
             - code-quality
             - coverage
@@ -810,30 +810,30 @@ workflows:
                 - /release\/.*/
       ##ENDIF_SBOM##
       ##IF_CD##
-      - faber/update_cd_repo:
+      - munitor/update_cd_repo:
           name: update-cd-repo
-          cd_repo: ${FABER_CD_REPO}
-          environment: ${FABER_CD_ENV_RELEASE}
-          cd_format: ${FABER_CD_FORMAT}
-          cd_image_name: ${FABER_DOCKER_REGISTRY}/${FABER_IMAGE_NAME}
-          ci_git_email: '${FABER_CI_EMAIL}'
-          ci_git_name: '${FABER_CI_NAME}'
+          cd_repo: ${MUNITOR_CD_REPO}
+          environment: ${MUNITOR_CD_ENV_RELEASE}
+          cd_format: ${MUNITOR_CD_FORMAT}
+          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ci_git_email: '${MUNITOR_CI_EMAIL}'
+          ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
                 - /release\/.*/
       ##ENDIF_CD##
       ##IF_GITHUB_RELEASE##
-      - faber/github_release:
+      - munitor/github_release:
           name: github-release
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
@@ -842,108 +842,108 @@ workflows:
 
   production:
     jobs:
-      - faber/npm_build_and_test:
+      - munitor/npm_build_and_test:
           name: build-and-test
-          node_version: "${FABER_NODE_VERSION}"
+          node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
           npm_auth: true
-          npm_scopes: '${FABER_NPM_SCOPES}'
-          npm_default_scope: '${FABER_NPM_DEFAULT_SCOPE}'
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
           ##ENDIF_NPM_AUTH##
           ##IF_SERVICES##
-          services: '${FABER_SERVICES_JSON}'
+          services: '${MUNITOR_SERVICES_JSON}'
           ##ENDIF_SERVICES##
           ##IF_TEST_SETUP##
-          test_setup: ${FABER_TEST_SETUP_SCRIPT}
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
           ##ENDIF_TEST_SETUP##
           ##IF_CUSTOM_TEST##
-          test_commands: '${FABER_TEST_COMMANDS_JSON}'
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
           ##ENDIF_CUSTOM_TEST##
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: main
-      - faber/docker_build_push:
+      - munitor/docker_build_push:
           name: docker-build-push
-          image_name: ${FABER_IMAGE_NAME}
-          registry: ${FABER_DOCKER_REGISTRY}
-          health_path: ${FABER_HEALTH_PATH}
-          health_port: "${FABER_HEALTH_PORT}"
-          health_db: "${FABER_HEALTH_DB}"
+          image_name: ${MUNITOR_IMAGE_NAME}
+          registry: ${MUNITOR_DOCKER_REGISTRY}
+          health_path: ${MUNITOR_HEALTH_PATH}
+          health_port: "${MUNITOR_HEALTH_PORT}"
+          health_db: "${MUNITOR_HEALTH_DB}"
           requires:
             - build-and-test
           context:
-            - ${FABER_CONTEXT_REGISTRY}
+            - ${MUNITOR_CONTEXT_REGISTRY}
           filters:
             branches:
               only: main
       ##IF_CD##
-      - faber/update_cd_repo:
+      - munitor/update_cd_repo:
           name: update-cd-repo
-          cd_repo: ${FABER_CD_REPO}
-          environment: ${FABER_CD_ENV_PROD}
-          cd_format: ${FABER_CD_FORMAT}
-          cd_image_name: ${FABER_DOCKER_REGISTRY}/${FABER_IMAGE_NAME}
-          ci_git_email: '${FABER_CI_EMAIL}'
-          ci_git_name: '${FABER_CI_NAME}'
+          cd_repo: ${MUNITOR_CD_REPO}
+          environment: ${MUNITOR_CD_ENV_PROD}
+          cd_format: ${MUNITOR_CD_FORMAT}
+          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ci_git_email: '${MUNITOR_CI_EMAIL}'
+          ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: main
       ##ENDIF_CD##
       ##IF_GITHUB_RELEASE##
-      - faber/github_release:
+      - munitor/github_release:
           name: github-release
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: main
       ##ENDIF_GITHUB_RELEASE##
-FABER_TPL_EOF
+MUNITOR_TPL_EOF
 
-cat > /tmp/faber/templates/terraform.yml.tpl << 'FABER_TPL_EOF'
+cat > /tmp/munitor/templates/terraform.yml.tpl << 'MUNITOR_TPL_EOF'
 version: 2.1
 
 orbs:
-  faber: ${FABER_ORB_SLUG}@${FABER_ORB_VERSION}
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-checks:
     jobs:
-      - faber/validate_repo:
+      - munitor/validate_repo:
           name: validate-repo
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/tf_validate:
+      - munitor/tf_validate:
           name: tf-validate
-          environments: "${FABER_TF_ENVIRONMENTS}"
-          tf_path: ${FABER_TF_PATH}
-          base_path: ${FABER_TF_LIVE_PATH}
+          environments: "${MUNITOR_TF_ENVIRONMENTS}"
+          tf_path: ${MUNITOR_TF_PATH}
+          base_path: ${MUNITOR_TF_LIVE_PATH}
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/tf_security_scan:
+      - munitor/tf_security_scan:
           name: tf-security-scan
-          tf_path: ${FABER_TF_PATH}
-          checkov_skip: ${FABER_CHECKOV_SKIP}
+          tf_path: ${MUNITOR_TF_PATH}
+          checkov_skip: ${MUNITOR_CHECKOV_SKIP}
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
@@ -951,9 +951,9 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_SAST##
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only:
@@ -963,35 +963,35 @@ workflows:
 
   develop:
     jobs:
-      - faber/validate_repo:
+      - munitor/validate_repo:
           name: validate-repo
           filters:
             branches:
               only: develop
-      - faber/tf_validate:
+      - munitor/tf_validate:
           name: tf-validate
-          environments: "${FABER_TF_ENVIRONMENTS}"
-          tf_path: ${FABER_TF_PATH}
-          base_path: ${FABER_TF_LIVE_PATH}
+          environments: "${MUNITOR_TF_ENVIRONMENTS}"
+          tf_path: ${MUNITOR_TF_PATH}
+          base_path: ${MUNITOR_TF_LIVE_PATH}
           filters:
             branches:
               only: develop
-      - faber/tf_security_scan:
+      - munitor/tf_security_scan:
           name: tf-security-scan
-          tf_path: ${FABER_TF_PATH}
-          checkov_skip: ${FABER_CHECKOV_SKIP}
+          tf_path: ${MUNITOR_TF_PATH}
+          checkov_skip: ${MUNITOR_CHECKOV_SKIP}
           filters:
             branches:
               only: develop
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only: develop
       ##IF_SAST##
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only: develop
@@ -999,39 +999,39 @@ workflows:
 
   release-candidate:
     jobs:
-      - faber/validate_repo:
+      - munitor/validate_repo:
           name: validate-repo
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/tf_validate:
+      - munitor/tf_validate:
           name: tf-validate
-          environments: "${FABER_TF_ENVIRONMENTS}"
-          tf_path: ${FABER_TF_PATH}
-          base_path: ${FABER_TF_LIVE_PATH}
+          environments: "${MUNITOR_TF_ENVIRONMENTS}"
+          tf_path: ${MUNITOR_TF_PATH}
+          base_path: ${MUNITOR_TF_LIVE_PATH}
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/tf_security_scan:
+      - munitor/tf_security_scan:
           name: tf-security-scan
-          tf_path: ${FABER_TF_PATH}
-          checkov_skip: ${FABER_CHECKOV_SKIP}
+          tf_path: ${MUNITOR_TF_PATH}
+          checkov_skip: ${MUNITOR_CHECKOV_SKIP}
           filters:
             branches:
               only:
                 - /release\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only:
                 - /release\/.*/
       ##IF_SAST##
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only:
@@ -1040,26 +1040,26 @@ workflows:
 
   production:
     jobs:
-      - faber/validate_repo:
+      - munitor/validate_repo:
           name: validate-repo
           filters:
             branches:
               only: main
-      - faber/tf_validate:
+      - munitor/tf_validate:
           name: tf-validate
-          environments: "${FABER_TF_ENVIRONMENTS}"
-          tf_path: ${FABER_TF_PATH}
-          base_path: ${FABER_TF_LIVE_PATH}
+          environments: "${MUNITOR_TF_ENVIRONMENTS}"
+          tf_path: ${MUNITOR_TF_PATH}
+          base_path: ${MUNITOR_TF_LIVE_PATH}
           filters:
             branches:
               only: main
-FABER_TPL_EOF
+MUNITOR_TPL_EOF
 
-cat > /tmp/faber/templates/sdk-distribution.yml.tpl << 'FABER_TPL_EOF'
+cat > /tmp/munitor/templates/sdk-distribution.yml.tpl << 'MUNITOR_TPL_EOF'
 version: 2.1
 
 orbs:
-  faber: ${FABER_ORB_SLUG}@${FABER_ORB_VERSION}
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-validate:
@@ -1067,53 +1067,53 @@ workflows:
       not:
         equal: [main, << pipeline.git.branch >>]
     jobs:
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
 
   release:
     jobs:
-      - faber/sdk_release:
+      - munitor/sdk_release:
           name: sdk-release
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
-FABER_TPL_EOF
+MUNITOR_TPL_EOF
 
-cat > /tmp/faber/templates/validate-cd-repo.yml.tpl << 'FABER_TPL_EOF'
+cat > /tmp/munitor/templates/validate-cd-repo.yml.tpl << 'MUNITOR_TPL_EOF'
 version: 2.1
 
 orbs:
-  faber: ${FABER_ORB_SLUG}@${FABER_ORB_VERSION}
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-checks:
     jobs:
-      - faber/yaml_lint_cd:
+      - munitor/yaml_lint_cd:
           name: yaml-lint
-          paths: "${FABER_YAMLLINT_PATHS}"
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/kustomize_validate:
+      - munitor/kustomize_validate:
           name: kustomize-validate
-          kustomize_version: "${FABER_KUSTOMIZE_VERSION}"
-          base_path: "${FABER_KUSTOMIZE_BASE_PATH}"
-          overlays: "${FABER_KUSTOMIZE_OVERLAYS}"
-          load_restrictor: "${FABER_KUSTOMIZE_LOAD_RESTRICTOR}"
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/kubesec_scan:
+      - munitor/kubesec_scan:
           name: kubesec-scan
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
           requires:
             - kustomize-validate
           filters:
@@ -1121,10 +1121,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/kube_linter:
+      - munitor/kube_linter:
           name: kube-linter
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
-          config: "${FABER_KUBE_LINTER_CONFIG}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
           requires:
             - kustomize-validate
           filters:
@@ -1132,7 +1132,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
@@ -1142,39 +1142,39 @@ workflows:
 
   develop:
     jobs:
-      - faber/yaml_lint_cd:
+      - munitor/yaml_lint_cd:
           name: yaml-lint
-          paths: "${FABER_YAMLLINT_PATHS}"
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
           filters:
             branches:
               only: develop
-      - faber/kustomize_validate:
+      - munitor/kustomize_validate:
           name: kustomize-validate
-          kustomize_version: "${FABER_KUSTOMIZE_VERSION}"
-          base_path: "${FABER_KUSTOMIZE_BASE_PATH}"
-          overlays: "${FABER_KUSTOMIZE_OVERLAYS}"
-          load_restrictor: "${FABER_KUSTOMIZE_LOAD_RESTRICTOR}"
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
           filters:
             branches:
               only: develop
-      - faber/kubesec_scan:
+      - munitor/kubesec_scan:
           name: kubesec-scan
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: develop
-      - faber/kube_linter:
+      - munitor/kube_linter:
           name: kube-linter
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
-          config: "${FABER_KUBE_LINTER_CONFIG}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: develop
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
@@ -1182,98 +1182,98 @@ workflows:
 
   release:
     jobs:
-      - faber/yaml_lint_cd:
+      - munitor/yaml_lint_cd:
           name: yaml-lint
-          paths: "${FABER_YAMLLINT_PATHS}"
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
           filters:
             branches:
               only: main
-      - faber/kustomize_validate:
+      - munitor/kustomize_validate:
           name: kustomize-validate
-          kustomize_version: "${FABER_KUSTOMIZE_VERSION}"
-          base_path: "${FABER_KUSTOMIZE_BASE_PATH}"
-          overlays: "${FABER_KUSTOMIZE_OVERLAYS}"
-          load_restrictor: "${FABER_KUSTOMIZE_LOAD_RESTRICTOR}"
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
           filters:
             branches:
               only: main
-      - faber/kubesec_scan:
+      - munitor/kubesec_scan:
           name: kubesec-scan
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: main
-      - faber/kube_linter:
+      - munitor/kube_linter:
           name: kube-linter
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
-          config: "${FABER_KUBE_LINTER_CONFIG}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: main
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only: main
-FABER_TPL_EOF
+MUNITOR_TPL_EOF
 
-cat > /tmp/faber/templates/partials/java-webapp-deploy.yml.tpl << 'FABER_PARTIAL_EOF'
+cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
-      - faber/mvn_build_and_test:
+      - munitor/mvn_build_and_test:
           name: build-and-test
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/mvn_code_quality:
+      - munitor/mvn_code_quality:
           name: code-quality
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/mvn_coverage:
+      - munitor/mvn_coverage:
           name: coverage
-          java_version: "${FABER_JAVA_VERSION}"
-          min_instruction: "${FABER_COVERAGE_MIN}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
+          min_instruction: "${MUNITOR_COVERAGE_MIN}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/security_scan:
+      - munitor/security_scan:
           name: security-scan
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_NVD}
+            - ${MUNITOR_CONTEXT_NVD}
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##IF_E2E##
-      - faber/mvn_e2e_test:
+      - munitor/mvn_e2e_test:
           name: e2e-tests
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           requires:
             - build-and-test
           filters:
@@ -1281,26 +1281,26 @@ cat > /tmp/faber/templates/partials/java-webapp-deploy.yml.tpl << 'FABER_PARTIAL
               only: __BRANCH_FILTER__
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - faber/sonar_scan:
+      - munitor/sonar_scan:
           name: sonar-scan
-          java_version: "${FABER_JAVA_VERSION}"
-          sonar_project_key: ${FABER_SONAR_PROJECT_KEY}
+          java_version: "${MUNITOR_JAVA_VERSION}"
+          sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
             - coverage
           context:
-            - ${FABER_CONTEXT_SONAR}
+            - ${MUNITOR_CONTEXT_SONAR}
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SONAR##
-      - faber/docker_build_push:
+      - munitor/docker_build_push:
           name: docker-build-push
-          image_name: ${FABER_IMAGE_NAME}
-          registry: ${FABER_DOCKER_REGISTRY}
-          health_path: ${FABER_HEALTH_PATH}
-          health_port: "${FABER_HEALTH_PORT}"
-          health_db: "${FABER_HEALTH_DB}"
+          image_name: ${MUNITOR_IMAGE_NAME}
+          registry: ${MUNITOR_DOCKER_REGISTRY}
+          health_path: ${MUNITOR_HEALTH_PATH}
+          health_port: "${MUNITOR_HEALTH_PORT}"
+          health_db: "${MUNITOR_HEALTH_DB}"
           requires:
             - code-quality
             - coverage
@@ -1314,16 +1314,16 @@ cat > /tmp/faber/templates/partials/java-webapp-deploy.yml.tpl << 'FABER_PARTIAL
             - e2e-tests
             ##ENDIF_E2E##
           context:
-            - ${FABER_CONTEXT_REGISTRY}
+            - ${MUNITOR_CONTEXT_REGISTRY}
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##IF_SBOM##
-      - faber/sbom:
+      - munitor/sbom:
           name: sbom
-          java_version: "${FABER_JAVA_VERSION}"
+          java_version: "${MUNITOR_JAVA_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           requires:
             - code-quality
             - coverage
@@ -1341,80 +1341,80 @@ cat > /tmp/faber/templates/partials/java-webapp-deploy.yml.tpl << 'FABER_PARTIAL
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
       ##IF_CD##
-      - faber/update_cd_repo:
+      - munitor/update_cd_repo:
           name: update-cd-repo
-          cd_repo: ${FABER_CD_REPO}
+          cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
-          cd_format: ${FABER_CD_FORMAT}
-          cd_image_name: ${FABER_DOCKER_REGISTRY}/${FABER_IMAGE_NAME}
-          ci_git_email: '${FABER_CI_EMAIL}'
-          ci_git_name: '${FABER_CI_NAME}'
+          cd_format: ${MUNITOR_CD_FORMAT}
+          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ci_git_email: '${MUNITOR_CI_EMAIL}'
+          ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_CD##
-FABER_PARTIAL_EOF
+MUNITOR_PARTIAL_EOF
 
-cat > /tmp/faber/templates/partials/node-api-deploy.yml.tpl << 'FABER_PARTIAL_EOF'
+cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
-      - faber/npm_build_and_test:
+      - munitor/npm_build_and_test:
           name: build-and-test
-          node_version: "${FABER_NODE_VERSION}"
+          node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
           npm_auth: true
-          npm_scopes: '${FABER_NPM_SCOPES}'
-          npm_default_scope: '${FABER_NPM_DEFAULT_SCOPE}'
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
           ##ENDIF_NPM_AUTH##
           ##IF_SERVICES##
-          services: '${FABER_SERVICES_JSON}'
+          services: '${MUNITOR_SERVICES_JSON}'
           ##ENDIF_SERVICES##
           ##IF_TEST_SETUP##
-          test_setup: ${FABER_TEST_SETUP_SCRIPT}
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
           ##ENDIF_TEST_SETUP##
           ##IF_CUSTOM_TEST##
-          test_commands: '${FABER_TEST_COMMANDS_JSON}'
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
           ##ENDIF_CUSTOM_TEST##
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
-          fail_on_findings: "${FABER_SAST_FAIL_ON_FINDINGS}"
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/npm_code_quality:
+      - munitor/npm_code_quality:
           name: code-quality
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/npm_coverage:
+      - munitor/npm_coverage:
           name: coverage
-          min_coverage: "${FABER_COVERAGE_MIN}"
-          coverage_tool: ${FABER_COVERAGE_TOOL}
+          min_coverage: "${MUNITOR_COVERAGE_MIN}"
+          coverage_tool: ${MUNITOR_COVERAGE_TOOL}
           ##IF_COVERAGE_CMD##
-          coverage_command: ${FABER_COVERAGE_COMMAND}
+          coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - faber/npm_security_scan:
+      - munitor/npm_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -1422,7 +1422,7 @@ cat > /tmp/faber/templates/partials/node-api-deploy.yml.tpl << 'FABER_PARTIAL_EO
             branches:
               only: __BRANCH_FILTER__
       ##IF_E2E##
-      - faber/npm_e2e_test:
+      - munitor/npm_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -1431,26 +1431,26 @@ cat > /tmp/faber/templates/partials/node-api-deploy.yml.tpl << 'FABER_PARTIAL_EO
               only: __BRANCH_FILTER__
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - faber/npm_sonar_scan:
+      - munitor/npm_sonar_scan:
           name: sonar-scan
-          node_version: "${FABER_NODE_VERSION}"
-          sonar_project_key: ${FABER_SONAR_PROJECT_KEY}
+          node_version: "${MUNITOR_NODE_VERSION}"
+          sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
             - coverage
           context:
-            - ${FABER_CONTEXT_SONAR}
+            - ${MUNITOR_CONTEXT_SONAR}
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SONAR##
-      - faber/docker_build_push:
+      - munitor/docker_build_push:
           name: docker-build-push
-          image_name: ${FABER_IMAGE_NAME}
-          registry: ${FABER_DOCKER_REGISTRY}
-          health_path: ${FABER_HEALTH_PATH}
-          health_port: "${FABER_HEALTH_PORT}"
-          health_db: "${FABER_HEALTH_DB}"
+          image_name: ${MUNITOR_IMAGE_NAME}
+          registry: ${MUNITOR_DOCKER_REGISTRY}
+          health_path: ${MUNITOR_HEALTH_PATH}
+          health_port: "${MUNITOR_HEALTH_PORT}"
+          health_db: "${MUNITOR_HEALTH_DB}"
           requires:
             - code-quality
             - coverage
@@ -1461,16 +1461,16 @@ cat > /tmp/faber/templates/partials/node-api-deploy.yml.tpl << 'FABER_PARTIAL_EO
             - e2e-tests
             ##ENDIF_E2E##
           context:
-            - ${FABER_CONTEXT_REGISTRY}
+            - ${MUNITOR_CONTEXT_REGISTRY}
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##IF_SBOM##
-      - faber/npm_sbom:
+      - munitor/npm_sbom:
           name: sbom
-          node_version: "${FABER_NODE_VERSION}"
+          node_version: "${MUNITOR_NODE_VERSION}"
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           requires:
             - code-quality
             - coverage
@@ -1485,25 +1485,25 @@ cat > /tmp/faber/templates/partials/node-api-deploy.yml.tpl << 'FABER_PARTIAL_EO
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
       ##IF_CD##
-      - faber/update_cd_repo:
+      - munitor/update_cd_repo:
           name: update-cd-repo
-          cd_repo: ${FABER_CD_REPO}
+          cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
-          cd_format: ${FABER_CD_FORMAT}
-          cd_image_name: ${FABER_DOCKER_REGISTRY}/${FABER_IMAGE_NAME}
-          ci_git_email: '${FABER_CI_EMAIL}'
-          ci_git_name: '${FABER_CI_NAME}'
+          cd_format: ${MUNITOR_CD_FORMAT}
+          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ci_git_email: '${MUNITOR_CI_EMAIL}'
+          ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
             - docker-build-push
           context:
-            - ${FABER_CONTEXT_GITHUB}
+            - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_CD##
-FABER_PARTIAL_EOF
+MUNITOR_PARTIAL_EOF
 
-echo "Faber helpers staged to /tmp/faber/"
+echo "Munitor helpers staged to /tmp/munitor/"
 
 # ======================================================================
 # Main generate_config.sh logic
@@ -1511,31 +1511,31 @@ echo "Faber helpers staged to /tmp/faber/"
 
 set -euo pipefail
 
-CONFIG_FILE="${FABER_CONFIG:-.faber.yml}"
+CONFIG_FILE="${MUNITOR_CONFIG:-.munitor.yml}"
 OUTPUT_FILE="/tmp/generated-config.yml"
 
 # When run via CircleCI << include() >>, BASH_SOURCE is empty.
-# Fall back to FABER_SCRIPT_DIR set by the command YAML.
+# Fall back to MUNITOR_SCRIPT_DIR set by the command YAML.
 if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 else
-  SCRIPT_DIR="${FABER_SCRIPT_DIR:-/tmp/faber}"
+  SCRIPT_DIR="${MUNITOR_SCRIPT_DIR:-/tmp/munitor}"
 fi
 TEMPLATE_DIR="${SCRIPT_DIR}/templates"
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-${SCRIPT_DIR}/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-${SCRIPT_DIR}/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-faber_header "generate_config"
-faber_check_tool yq --version
-faber_check_tool envsubst --version
+munitor_header "generate_config"
+munitor_check_tool yq --version
+munitor_check_tool envsubst --version
 
 # Temp file cleanup trap
 TEMP_FILES=()
@@ -1548,14 +1548,14 @@ trap cleanup EXIT
 
 # Source shared variable extraction
 # shellcheck disable=SC1091
-source "${SCRIPT_DIR}/extract_faber_vars.sh"
+source "${SCRIPT_DIR}/extract_munitor_vars.sh"
 
 # --------------------------------------------------------------------------
-# Read .faber.yml
+# Read .munitor.yml
 # --------------------------------------------------------------------------
 if [[ ! -f "${CONFIG_FILE}" ]]; then
   echo "ERROR: Config file '${CONFIG_FILE}' not found."
-  echo "Each repo must have a .faber.yml in the root."
+  echo "Each repo must have a .munitor.yml in the root."
   exit 1
 fi
 
@@ -1627,9 +1627,9 @@ fi
 echo "Using template: ${TEMPLATE_FILE}"
 
 # --------------------------------------------------------------------------
-# Extract values from .faber.yml and export for envsubst
+# Extract values from .munitor.yml and export for envsubst
 # --------------------------------------------------------------------------
-extract_faber_vars "${CONFIG_FILE}"
+extract_munitor_vars "${CONFIG_FILE}"
 
 # --------------------------------------------------------------------------
 # Render template
@@ -1709,7 +1709,7 @@ process_conditionals() {
 
   # Process each conditional flag
   for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD; do
-    local var_name="FABER_${flag}"
+    local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file
     flag_file=$(mktemp)

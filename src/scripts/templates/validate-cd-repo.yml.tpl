@@ -1,33 +1,33 @@
 version: 2.1
 
 orbs:
-  faber: ${FABER_ORB_SLUG}@${FABER_ORB_VERSION}
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
 
 workflows:
   pr-checks:
     jobs:
-      - faber/yaml_lint_cd:
+      - munitor/yaml_lint_cd:
           name: yaml-lint
-          paths: "${FABER_YAMLLINT_PATHS}"
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/kustomize_validate:
+      - munitor/kustomize_validate:
           name: kustomize-validate
-          kustomize_version: "${FABER_KUSTOMIZE_VERSION}"
-          base_path: "${FABER_KUSTOMIZE_BASE_PATH}"
-          overlays: "${FABER_KUSTOMIZE_OVERLAYS}"
-          load_restrictor: "${FABER_KUSTOMIZE_LOAD_RESTRICTOR}"
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
           filters:
             branches:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/kubesec_scan:
+      - munitor/kubesec_scan:
           name: kubesec-scan
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
           requires:
             - kustomize-validate
           filters:
@@ -35,10 +35,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/kube_linter:
+      - munitor/kube_linter:
           name: kube-linter
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
-          config: "${FABER_KUBE_LINTER_CONFIG}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
           requires:
             - kustomize-validate
           filters:
@@ -46,7 +46,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
@@ -56,39 +56,39 @@ workflows:
 
   develop:
     jobs:
-      - faber/yaml_lint_cd:
+      - munitor/yaml_lint_cd:
           name: yaml-lint
-          paths: "${FABER_YAMLLINT_PATHS}"
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
           filters:
             branches:
               only: develop
-      - faber/kustomize_validate:
+      - munitor/kustomize_validate:
           name: kustomize-validate
-          kustomize_version: "${FABER_KUSTOMIZE_VERSION}"
-          base_path: "${FABER_KUSTOMIZE_BASE_PATH}"
-          overlays: "${FABER_KUSTOMIZE_OVERLAYS}"
-          load_restrictor: "${FABER_KUSTOMIZE_LOAD_RESTRICTOR}"
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
           filters:
             branches:
               only: develop
-      - faber/kubesec_scan:
+      - munitor/kubesec_scan:
           name: kubesec-scan
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: develop
-      - faber/kube_linter:
+      - munitor/kube_linter:
           name: kube-linter
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
-          config: "${FABER_KUBE_LINTER_CONFIG}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: develop
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
@@ -96,39 +96,39 @@ workflows:
 
   release:
     jobs:
-      - faber/yaml_lint_cd:
+      - munitor/yaml_lint_cd:
           name: yaml-lint
-          paths: "${FABER_YAMLLINT_PATHS}"
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
           filters:
             branches:
               only: main
-      - faber/kustomize_validate:
+      - munitor/kustomize_validate:
           name: kustomize-validate
-          kustomize_version: "${FABER_KUSTOMIZE_VERSION}"
-          base_path: "${FABER_KUSTOMIZE_BASE_PATH}"
-          overlays: "${FABER_KUSTOMIZE_OVERLAYS}"
-          load_restrictor: "${FABER_KUSTOMIZE_LOAD_RESTRICTOR}"
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
           filters:
             branches:
               only: main
-      - faber/kubesec_scan:
+      - munitor/kubesec_scan:
           name: kubesec-scan
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: main
-      - faber/kube_linter:
+      - munitor/kube_linter:
           name: kube-linter
-          scan_overlay: "${FABER_KUSTOMIZE_SCAN_OVERLAY}"
-          config: "${FABER_KUBE_LINTER_CONFIG}"
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
           requires:
             - kustomize-validate
           filters:
             branches:
               only: main
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:

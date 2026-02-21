@@ -2,18 +2,18 @@
 set -euo pipefail
 
 # Source shared helpers
-FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/faber_helpers.sh}"
-# shellcheck source=faber_helpers.sh
-if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
-elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
-  faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
-  faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
 VERSION="${NODE_VERSION:-20}"
 
-faber_header "install_node (v${VERSION})"
+munitor_header "install_node (v${VERSION})"
 
 # nvm is pre-installed on CircleCI ubuntu-2204 machine images
 export NVM_DIR="${HOME}/.nvm"
@@ -46,7 +46,7 @@ if [[ -f ".nvmrc" ]]; then
   NVMRC_VERSION=$(cat .nvmrc | tr -d '[:space:]')
   if [[ "${NVMRC_VERSION}" != "${VERSION}" && "${NVMRC_VERSION}" != "v${VERSION}" ]]; then
     echo ""
-    echo "WARNING: .nvmrc specifies '${NVMRC_VERSION}' but .faber.yml has node_version: '${VERSION}'"
+    echo "WARNING: .nvmrc specifies '${NVMRC_VERSION}' but .munitor.yml has node_version: '${VERSION}'"
     echo "  Update one or the other to keep local dev and CI in sync."
   fi
 fi
