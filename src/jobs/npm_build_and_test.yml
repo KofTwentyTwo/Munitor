@@ -1,0 +1,80 @@
+description: >
+  Full Node.js build and test job. Installs Node.js, restores cache, runs
+  npm ci, calculates version, tests with coverage, saves cache, and persists
+  the workspace for downstream jobs.
+parameters:
+  node_version:
+    type: string
+    default: "20"
+    description: Node.js major version to install.
+  npm_auth:
+    type: boolean
+    default: false
+    description: Configure private npm registry authentication before install.
+  npm_scopes:
+    type: string
+    default: "[]"
+    description: JSON array of additional npm scopes (e.g. '["@greatergoods"]').
+  npm_default_scope:
+    type: string
+    default: "@dmdbrands"
+    description: Default npm scope for the organization.
+  services:
+    type: string
+    default: ""
+    description: JSON array of service container definitions to start before tests.
+  test_setup:
+    type: string
+    default: ""
+    description: Path to a setup script to run before tests.
+  test_commands:
+    type: string
+    default: ""
+    description: JSON array of custom test commands to run instead of Jest.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+      - xlarge
+    default: large
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - checkout
+  - install_node:
+      version: << parameters.node_version >>
+  - when:
+      condition: << parameters.npm_auth >>
+      steps:
+        - npm_auth:
+            npm_scopes: << parameters.npm_scopes >>
+            npm_default_scope: << parameters.npm_default_scope >>
+  - restore_npm_cache
+  - npm_install
+  - when:
+      condition: << parameters.services >>
+      steps:
+        - start_services:
+            services: << parameters.services >>
+  - when:
+      condition: << parameters.test_setup >>
+      steps:
+        - run_test_setup:
+            test_setup: << parameters.test_setup >>
+  - calculate_version
+  - export_version_vars
+  - run:
+      name: Persist version metadata
+      command: <<include(scripts/persist_version_metadata.sh)>>
+  - npm_test:
+      test_commands: << parameters.test_commands >>
+  - store_test_results:
+      path: reports/junit
+  - save_npm_cache
+  - persist_to_workspace:
+      root: .
+      paths:
+        - "."

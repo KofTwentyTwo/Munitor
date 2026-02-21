@@ -1,0 +1,7 @@
+description: >
+  Map GitVersion output to Maven-convention version strings based on
+  branch type. Exports PROJECT_VERSION to BASH_ENV for all subsequent steps.
+steps:
+  - run:
+      name: Export version variables
+      command: << include(scripts/export_version_vars.sh) >>

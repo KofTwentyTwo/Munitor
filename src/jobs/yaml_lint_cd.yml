@@ -1,0 +1,12 @@
+description: >
+  Lint YAML files in a CD/GitOps repository.
+parameters:
+  paths:
+    type: string
+    default: "base/ overlays/ argocd-apps/"
+    description: Space-separated list of directories to lint.
+executor: base
+steps:
+  - checkout
+  - yaml_lint_cd:
+      paths: << parameters.paths >>

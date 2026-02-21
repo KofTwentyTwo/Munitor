@@ -1,0 +1,6 @@
+description: >
+  Run Trivy filesystem scan for vulnerabilities.
+steps:
+  - run:
+      name: Install and run Trivy
+      command: << include(scripts/run_trivy.sh) >>

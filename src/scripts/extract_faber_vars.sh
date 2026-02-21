@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+# Shared helper for extracting variables from .faber.yml
+# Source this file to get FABER_* variables exported
+
+set -euo pipefail
+
+extract_faber_vars() {
+  local config_file="${1:-.faber.yml}"
+
+  if [[ ! -f "${config_file}" ]]; then
+    echo "ERROR: Config file '${config_file}' not found." >&2
+    return 1
+  fi
+
+  # --- Org defaults (change this block when forking for another org) ---
+  local ORG_DOCKER_REGISTRY="ghcr.io/dmdbrands"
+  local ORG_NPM_SCOPE="@dmdbrands"
+  local ORG_CI_EMAIL="faber-ci@dmdbrands.com"
+  local ORG_CI_NAME="Faber CI"
+  local ORG_ORB_SLUG="dmdbrands/faber"
+
+  # Core pipeline settings
+  FABER_PIPELINE=$(yq '.pipeline' "${config_file}")
+  FABER_ORB_VERSION=$(yq '.orb_version // ""' "${config_file}")
+  FABER_IMAGE_NAME=$(yq '.image_name // ""' "${config_file}")
+  FABER_JAVA_VERSION=$(yq '.java_version // "21"' "${config_file}")
+  FABER_NODE_VERSION=$(yq '.node_version // "20"' "${config_file}")
+  FABER_SONAR_PROJECT_KEY=$(yq '.sonar.project_key // ""' "${config_file}")
+  FABER_DOCKER_REGISTRY=$(yq '.docker.registry // ""' "${config_file}")
+  if [[ -z "${FABER_DOCKER_REGISTRY}" || "${FABER_DOCKER_REGISTRY}" == "null" ]]; then
+    FABER_DOCKER_REGISTRY="${ORG_DOCKER_REGISTRY}"
+  fi
+  FABER_CD_REPO=$(yq '.cd.repo // ""' "${config_file}")
+  FABER_CD_FORMAT=$(yq '.cd.format // "helm"' "${config_file}")
+  FABER_CD_ENV_DEVELOP=$(yq '.cd.env.develop // "develop"' "${config_file}")
+  FABER_CD_ENV_STAGING=$(yq '.cd.env.staging // "staging"' "${config_file}")
+  FABER_CD_ENV_PROD=$(yq '.cd.env.prod // "prod"' "${config_file}")
+  FABER_CD_ENV_RELEASE=$(yq '.cd.env.release // "staging"' "${config_file}")
+  FABER_COVERAGE_MIN=$(yq '.coverage.min_instruction // "70"' "${config_file}")
+  FABER_E2E=$(yq '.e2e // false' "${config_file}")
+  FABER_SBOM=$(yq '.sbom // false' "${config_file}")
+
+  # Contexts
+  FABER_CONTEXT_REGISTRY=$(yq '.contexts.registry // ""' "${config_file}")
+  FABER_CONTEXT_GITHUB=$(yq '.contexts.github // ""' "${config_file}")
+  FABER_CONTEXT_SONAR=$(yq '.contexts.sonar // ""' "${config_file}")
+  FABER_CONTEXT_NVD=$(yq '.contexts.nvd // ""' "${config_file}")
+
+  # GitHub Release: auto-enabled when contexts.github is present
+  if [[ -n "${FABER_CONTEXT_GITHUB}" ]]; then
+    FABER_GITHUB_RELEASE="true"
+  else
+    FABER_GITHUB_RELEASE="false"
+  fi
+
+  # Node-api extended features
+  FABER_NPM_AUTH=$(yq '.npm.private_registry // false' "${config_file}")
+  FABER_NPM_SCOPES=$(yq -o=json -I=0 '.npm.scopes // []' "${config_file}")
+  FABER_SERVICES_JSON=$(yq '.services // [] | tojson' "${config_file}")
+  if [[ "${FABER_SERVICES_JSON}" == "[]" ]]; then
+    FABER_SERVICES="false"
+  else
+    FABER_SERVICES="true"
+  fi
+  FABER_TEST_SETUP_SCRIPT=$(yq '.test.setup // ""' "${config_file}")
+  if [[ -n "${FABER_TEST_SETUP_SCRIPT}" ]]; then
+    FABER_TEST_SETUP="true"
+  else
+    FABER_TEST_SETUP="false"
+  fi
+  FABER_TEST_COMMANDS_JSON=$(yq '.test.commands // [] | tojson' "${config_file}")
+  if [[ "${FABER_TEST_COMMANDS_JSON}" == "[]" ]]; then
+    FABER_CUSTOM_TEST="false"
+  else
+    FABER_CUSTOM_TEST="true"
+  fi
+  FABER_COVERAGE_TOOL=$(yq '.test.coverage.tool // "jest"' "${config_file}")
+  FABER_COVERAGE_COMMAND=$(yq '.test.coverage.command // ""' "${config_file}")
+  if [[ -n "${FABER_COVERAGE_COMMAND}" ]]; then
+    FABER_COVERAGE_CMD="true"
+  else
+    FABER_COVERAGE_CMD="false"
+  fi
+  # Allow test.coverage.min_instruction to override coverage.min_instruction
+  FABER_TEST_COVERAGE_MIN=$(yq '.test.coverage.min_instruction // ""' "${config_file}")
+  if [[ -n "${FABER_TEST_COVERAGE_MIN}" ]]; then
+    FABER_COVERAGE_MIN="${FABER_TEST_COVERAGE_MIN}"
+  fi
+
+  # Terraform pipeline settings
+  FABER_TF_PATH=$(yq '.terraform.path // "terraform/"' "${config_file}")
+  FABER_TF_LIVE_PATH=$(yq '.terraform.live_path // "terraform/live"' "${config_file}")
+  FABER_TF_ENVIRONMENTS=$(yq '.terraform.environments // ["production"] | join(" ")' "${config_file}")
+  FABER_CHECKOV_SKIP=$(yq '.terraform.checkov_skip // ""' "${config_file}")
+  # Kustomize / CD repo validation settings
+  FABER_KUSTOMIZE_VERSION=$(yq '.kustomize.version // "5.5.0"' "${config_file}")
+  FABER_KUSTOMIZE_BASE_PATH=$(yq '.kustomize.base_path // "base/"' "${config_file}")
+  FABER_KUSTOMIZE_LOAD_RESTRICTOR=$(yq '.kustomize.load_restrictor // "true"' "${config_file}")
+  FABER_KUSTOMIZE_SCAN_OVERLAY=$(yq '.kustomize.scan_overlay // "production"' "${config_file}")
+  FABER_KUSTOMIZE_OVERLAYS=$(yq '.kustomize.overlays // [] | join(" ")' "${config_file}")
+  FABER_KUBE_LINTER_CONFIG=$(yq '.kube_linter_config // ""' "${config_file}")
+  FABER_YAMLLINT_PATHS="base/ overlays/ argocd-apps/"
+
+  # SAST: supports boolean (true/false) or object form (sast: { fail_on_findings: false })
+  local sast_raw
+  sast_raw=$(yq '.sast' "${config_file}")
+  case "${sast_raw}" in
+    true)
+      FABER_SAST="true"
+      FABER_SAST_FAIL_ON_FINDINGS="true"
+      ;;
+    false|null)
+      FABER_SAST="false"
+      FABER_SAST_FAIL_ON_FINDINGS="true"
+      ;;
+    *)
+      # Object form: sast is present as a map, so SAST is enabled
+      FABER_SAST="true"
+      local fof
+      fof=$(yq '.sast.fail_on_findings' "${config_file}")
+      if [[ "${fof}" == "false" ]]; then
+        FABER_SAST_FAIL_ON_FINDINGS="false"
+      else
+        FABER_SAST_FAIL_ON_FINDINGS="true"
+      fi
+      ;;
+  esac
+
+  # Node framework (nextjs or express)
+  FABER_NODE_FRAMEWORK=$(yq '.node.framework // "nextjs"' "${config_file}")
+
+  # Org-level variables (derived from defaults block)
+  FABER_CI_EMAIL="${ORG_CI_EMAIL}"
+  FABER_CI_NAME="${ORG_CI_NAME}"
+  FABER_NPM_DEFAULT_SCOPE="${ORG_NPM_SCOPE}"
+  FABER_ORB_SLUG="${ORG_ORB_SLUG}"
+
+  # Health check settings
+  FABER_HEALTH_PATH=$(yq '.health.path // "/api/health"' "${config_file}")
+  FABER_HEALTH_PORT=$(yq '.health.port // ""' "${config_file}")
+  if [[ -z "${FABER_HEALTH_PORT}" || "${FABER_HEALTH_PORT}" == "null" ]]; then
+    case "${FABER_PIPELINE}" in
+      node-api) FABER_HEALTH_PORT="3000" ;;
+      *) FABER_HEALTH_PORT="8080" ;;
+    esac
+  fi
+  FABER_HEALTH_DB=$(yq '.health.db // false' "${config_file}")
+
+  # Derived flags
+  if [[ -n "${FABER_SONAR_PROJECT_KEY}" ]]; then
+    FABER_SONAR="true"
+  else
+    FABER_SONAR="false"
+  fi
+
+  if [[ -n "${FABER_CD_REPO}" ]]; then
+    FABER_CD="true"
+  else
+    FABER_CD="false"
+  fi
+
+  # Export all variables
+  export FABER_PIPELINE FABER_ORB_VERSION FABER_IMAGE_NAME FABER_JAVA_VERSION FABER_NODE_VERSION
+  export FABER_SONAR_PROJECT_KEY FABER_DOCKER_REGISTRY FABER_CD_REPO FABER_CD_FORMAT
+  export FABER_CD_ENV_DEVELOP FABER_CD_ENV_STAGING FABER_CD_ENV_PROD FABER_CD_ENV_RELEASE
+  export FABER_COVERAGE_MIN FABER_E2E FABER_SBOM
+  export FABER_CONTEXT_REGISTRY FABER_CONTEXT_GITHUB FABER_CONTEXT_SONAR FABER_CONTEXT_NVD
+  export FABER_GITHUB_RELEASE
+  export FABER_NPM_AUTH FABER_NPM_SCOPES
+  export FABER_SERVICES FABER_SERVICES_JSON
+  export FABER_TEST_SETUP FABER_TEST_SETUP_SCRIPT
+  export FABER_CUSTOM_TEST FABER_TEST_COMMANDS_JSON
+  export FABER_COVERAGE_TOOL FABER_COVERAGE_CMD FABER_COVERAGE_COMMAND
+  export FABER_TF_PATH FABER_TF_LIVE_PATH FABER_TF_ENVIRONMENTS FABER_CHECKOV_SKIP FABER_SAST FABER_SAST_FAIL_ON_FINDINGS
+  export FABER_KUSTOMIZE_VERSION FABER_KUSTOMIZE_BASE_PATH FABER_KUSTOMIZE_LOAD_RESTRICTOR
+  export FABER_KUSTOMIZE_SCAN_OVERLAY FABER_KUSTOMIZE_OVERLAYS FABER_KUBE_LINTER_CONFIG FABER_YAMLLINT_PATHS
+  export FABER_NODE_FRAMEWORK
+  export FABER_CI_EMAIL FABER_CI_NAME FABER_NPM_DEFAULT_SCOPE FABER_ORB_SLUG
+  export FABER_HEALTH_PATH FABER_HEALTH_PORT FABER_HEALTH_DB
+  export FABER_SONAR FABER_CD
+}
+
+# Build the envsubst variable list
+get_envsubst_vars() {
+  # shellcheck disable=SC2016
+  echo '${FABER_PIPELINE} ${FABER_ORB_VERSION} ${FABER_IMAGE_NAME} ${FABER_JAVA_VERSION} ${FABER_NODE_VERSION} ${FABER_SONAR_PROJECT_KEY} ${FABER_DOCKER_REGISTRY} ${FABER_CD_REPO} ${FABER_CD_FORMAT} ${FABER_CD_ENV_DEVELOP} ${FABER_CD_ENV_STAGING} ${FABER_CD_ENV_PROD} ${FABER_CD_ENV_RELEASE} ${FABER_COVERAGE_MIN} ${FABER_E2E} ${FABER_SBOM} ${FABER_CONTEXT_REGISTRY} ${FABER_CONTEXT_GITHUB} ${FABER_CONTEXT_SONAR} ${FABER_CONTEXT_NVD} ${FABER_NPM_AUTH} ${FABER_NPM_SCOPES} ${FABER_SERVICES_JSON} ${FABER_TEST_SETUP_SCRIPT} ${FABER_TEST_COMMANDS_JSON} ${FABER_COVERAGE_TOOL} ${FABER_COVERAGE_COMMAND} ${FABER_GITHUB_RELEASE} ${FABER_SAST} ${FABER_SAST_FAIL_ON_FINDINGS} ${FABER_HEALTH_PATH} ${FABER_HEALTH_PORT} ${FABER_HEALTH_DB} ${FABER_TF_PATH} ${FABER_TF_LIVE_PATH} ${FABER_TF_ENVIRONMENTS} ${FABER_CHECKOV_SKIP} ${FABER_KUSTOMIZE_VERSION} ${FABER_KUSTOMIZE_BASE_PATH} ${FABER_KUSTOMIZE_LOAD_RESTRICTOR} ${FABER_KUSTOMIZE_SCAN_OVERLAY} ${FABER_KUSTOMIZE_OVERLAYS} ${FABER_KUBE_LINTER_CONFIG} ${FABER_YAMLLINT_PATHS} ${FABER_CI_EMAIL} ${FABER_CI_NAME} ${FABER_NPM_DEFAULT_SCOPE} ${FABER_ORB_SLUG}'
+}

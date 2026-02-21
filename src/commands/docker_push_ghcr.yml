@@ -1,0 +1,18 @@
+description: >
+  Authenticate to GHCR and push the Docker image with version + latest tags.
+parameters:
+  ghcr_token_env:
+    type: env_var_name
+    default: GHCR_TOKEN
+    description: Environment variable containing the GHCR token.
+  ghcr_user_env:
+    type: env_var_name
+    default: GHCR_USER
+    description: Environment variable containing the GHCR username.
+steps:
+  - run:
+      name: Push to GHCR
+      environment:
+        GHCR_TOKEN_VAR: << parameters.ghcr_token_env >>
+        GHCR_USER_VAR: << parameters.ghcr_user_env >>
+      command: << include(scripts/docker_push_ghcr.sh) >>

@@ -1,0 +1,13 @@
+description: >
+  Run OWASP dependency-check Maven plugin to scan for vulnerable dependencies.
+parameters:
+  nvd_api_key_env:
+    type: env_var_name
+    default: NVD_API_KEY
+    description: Environment variable containing the NVD API key.
+steps:
+  - run:
+      name: OWASP dependency check
+      environment:
+        NVD_API_KEY_VAR: << parameters.nvd_api_key_env >>
+      command: << include(scripts/mvn_owasp.sh) >>

@@ -1,0 +1,23 @@
+description: >
+  Run checkov security scan on infrastructure-as-code files.
+parameters:
+  path:
+    type: string
+    default: terraform/
+    description: Path to scan.
+  skip_checks:
+    type: string
+    default: ""
+    description: Comma-separated list of checks to skip.
+  soft_fail:
+    type: boolean
+    default: true
+    description: Soft fail on findings (don't fail the build).
+steps:
+  - run:
+      name: Checkov Security Scan
+      environment:
+        CHECKOV_PATH: << parameters.path >>
+        CHECKOV_SKIP: << parameters.skip_checks >>
+        SOFT_FAIL: << parameters.soft_fail >>
+      command: << include(scripts/run_checkov.sh) >>

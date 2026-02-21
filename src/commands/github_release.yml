@@ -1,0 +1,7 @@
+description: >
+  Create an annotated git tag and GitHub Release using the version
+  calculated by GitVersion. Skips if tag or release already exists.
+steps:
+  - run:
+      name: Create GitHub Release
+      command: << include(scripts/github_release.sh) >>

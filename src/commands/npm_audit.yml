@@ -1,0 +1,6 @@
+description: >
+  Run npm audit to check for known vulnerabilities in dependencies.
+steps:
+  - run:
+      name: npm audit
+      command: << include(scripts/npm_audit.sh) >>

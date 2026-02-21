@@ -1,0 +1,14 @@
+description: >
+  Assemble SDK distribution by copying included files to a staging
+  directory, following .sdk-release.yml configuration.
+parameters:
+  config_path:
+    type: string
+    default: .sdk-release.yml
+    description: Path to SDK release configuration file.
+steps:
+  - run:
+      name: Assemble SDK
+      environment:
+        SDK_CONFIG: << parameters.config_path >>
+      command: << include(scripts/sdk_assemble.sh) >>

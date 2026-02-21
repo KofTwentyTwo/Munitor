@@ -1,0 +1,28 @@
+description: >
+  Submit the generated SBOM to a dependency tracking service.
+parameters:
+  sbom_path:
+    type: string
+    default: target/bom.json
+    description: Path to the CycloneDX SBOM JSON file.
+  detector_name:
+    type: string
+    default: CycloneDX Maven Plugin
+    description: Name of the SBOM generator for GitHub dependency graph.
+  detector_version:
+    type: string
+    default: "2.7.11"
+    description: Version of the SBOM generator.
+  detector_url:
+    type: string
+    default: https://github.com/CycloneDX/cyclonedx-maven-plugin
+    description: URL of the SBOM generator project.
+steps:
+  - run:
+      name: Submit dependency graph
+      environment:
+        SBOM_PATH: << parameters.sbom_path >>
+        SBOM_DETECTOR_NAME: << parameters.detector_name >>
+        SBOM_DETECTOR_VERSION: << parameters.detector_version >>
+        SBOM_DETECTOR_URL: << parameters.detector_url >>
+      command: << include(scripts/submit_dependency_graph.sh) >>

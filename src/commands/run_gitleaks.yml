@@ -1,0 +1,6 @@
+description: >
+  Run gitleaks to detect secrets in the repository.
+steps:
+  - run:
+      name: Run gitleaks secret scan
+      command: << include(scripts/run_gitleaks.sh) >>

@@ -1,0 +1,19 @@
+# Orb pack output
+orb.yml
+/tmp/
+
+# OS
+.DS_Store
+
+# Node (orb-tools testing)
+node_modules/
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Claude Code
+.claude/

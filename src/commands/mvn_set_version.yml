@@ -1,0 +1,6 @@
+description: >
+  Set the Maven project version using the calculated PROJECT_VERSION.
+steps:
+  - run:
+      name: Set Maven project version
+      command: << include(scripts/mvn_set_version.sh) >>

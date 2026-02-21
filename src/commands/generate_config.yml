@@ -1,0 +1,25 @@
+description: >
+  Read .faber.yml from the repo root, select the appropriate pipeline
+  template, substitute repo-specific values, and write the generated
+  config to /tmp/generated-config.yml.
+parameters:
+  config_path:
+    type: string
+    default: .faber.yml
+    description: Path to the Faber config file relative to repo root.
+  yq_version:
+    type: string
+    default: "v4.44.1"
+    description: yq version to install.
+steps:
+  - run:
+      name: Install yq
+      environment:
+        YQ_VERSION: << parameters.yq_version >>
+      command: << include(scripts/install_yq.sh) >>
+  - run:
+      name: Generate pipeline config
+      environment:
+        FABER_CONFIG: << parameters.config_path >>
+        FABER_SCRIPT_DIR: /tmp/faber
+      command: << include(scripts/packed_generate_config.sh) >>

@@ -1,0 +1,29 @@
+pipeline: java-webapp
+orb_version: dev:snapshot
+image_name: me-health-portal
+java_version: "21"
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+health:
+  path: /qqq-api/health
+  port: 8000
+
+cd:
+  repo: dmdbrands/me-health-portal-cd-pipeline
+
+coverage:
+  min_instruction: 45
+
+sonar:
+  project_key: dmdbrands_me-health-portal
+
+e2e: true
+sbom: true
+
+contexts:
+  registry: ghcr
+  github: github
+  sonar: sonarcloud
+  nvd: nvd

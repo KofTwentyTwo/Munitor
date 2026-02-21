@@ -1,0 +1,40 @@
+description: >
+  Run OWASP dependency check and Trivy filesystem scan.
+  Requires workspace from mvn_build_and_test.
+parameters:
+  java_version:
+    type: string
+    default: "21"
+    description: Java major version to install.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: large
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - install_java:
+      version: << parameters.java_version >>
+  - restore_maven_cache
+  - restore_cache:
+      keys:
+        - nvd-cache-v1-{{ .Branch }}
+        - nvd-cache-v1-
+  - mvn_owasp
+  - save_cache:
+      key: nvd-cache-v1-{{ .Branch }}-{{ epoch }}
+      paths:
+        - ~/.dependency-check
+  - run_trivy
+  - store_artifacts:
+      path: target/dependency-check-report.html
+      destination: owasp-report.html
+  - store_artifacts:
+      path: /tmp/trivy-results.json
+      destination: trivy-results.json

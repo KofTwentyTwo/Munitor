@@ -1,0 +1,14 @@
+pipeline: validate-cd-repo
+orb_version: dev:snapshot
+
+kustomize:
+  version: "5.5.0"
+  base_path: base/
+  overlays:
+    - dev
+    - staging
+    - production
+  load_restrictor: true
+  scan_overlay: production
+
+kube_linter_config: .kube-linter.yaml

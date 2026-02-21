@@ -1,0 +1,13 @@
+description: >
+  Install the specified Node.js version using nvm (pre-installed on CircleCI ubuntu-2204).
+parameters:
+  version:
+    type: string
+    default: "20"
+    description: Node.js major version to install (e.g., 20, 22).
+steps:
+  - run:
+      name: Install Node.js << parameters.version >>
+      environment:
+        NODE_VERSION: << parameters.version >>
+      command: << include(scripts/install_node.sh) >>

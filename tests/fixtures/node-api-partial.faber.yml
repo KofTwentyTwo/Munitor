@@ -1,0 +1,27 @@
+pipeline: node-api
+orb_version: dev:snapshot
+
+image_name: partial-test-api
+node_version: "20"
+
+test:
+  commands:
+    - npm run test
+    - npm run test:v2
+  coverage:
+    command: npm run coverage
+    tool: nyc
+    min_instruction: 75
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+cd:
+  repo: dmdbrands/partial-test-api-cd
+
+e2e: false
+sbom: false
+
+contexts:
+  registry: ghcr
+  github: github

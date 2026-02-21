@@ -1,0 +1,6 @@
+description: >
+  Generate SHA256 checksums for the SDK zip and individual binaries.
+steps:
+  - run:
+      name: Generate checksums
+      command: << include(scripts/sdk_checksum.sh) >>

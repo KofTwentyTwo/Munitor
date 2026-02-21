@@ -1,0 +1,13 @@
+description: >
+  Check Terraform formatting with OpenTofu.
+parameters:
+  path:
+    type: string
+    default: terraform/
+    description: Path to Terraform files.
+steps:
+  - run:
+      name: Terraform Format Check
+      environment:
+        TF_PATH: << parameters.path >>
+      command: << include(scripts/tf_fmt.sh) >>

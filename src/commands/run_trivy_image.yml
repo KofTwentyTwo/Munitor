@@ -1,0 +1,20 @@
+description: >
+  Scan a Docker image for vulnerabilities using Trivy.
+parameters:
+  image_tag:
+    type: string
+    description: Full image tag to scan (registry/name:tag).
+  trivy_version:
+    type: string
+    default: "0.58.2"
+    description: Trivy version to install.
+steps:
+  - run:
+      name: Trivy image scan
+      environment:
+        IMAGE_TAG: << parameters.image_tag >>
+        TRIVY_VERSION: << parameters.trivy_version >>
+      command: << include(scripts/run_trivy_image.sh) >>
+  - store_artifacts:
+      path: /tmp/trivy-image-results.json
+      destination: trivy-image-scan

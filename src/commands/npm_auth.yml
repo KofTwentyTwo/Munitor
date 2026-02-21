@@ -1,0 +1,19 @@
+description: >
+  Configure .npmrc for private npm registry authentication.
+  Requires NPM_TOKEN environment variable from CircleCI context.
+parameters:
+  npm_scopes:
+    type: string
+    default: "[]"
+    description: JSON array of additional npm scopes to configure (e.g. '["@greatergoods"]').
+  npm_default_scope:
+    type: string
+    default: "@dmdbrands"
+    description: Default npm scope for the organization.
+steps:
+  - run:
+      name: Configure npm private registry
+      environment:
+        NPM_SCOPES: << parameters.npm_scopes >>
+        NPM_DEFAULT_SCOPE: << parameters.npm_default_scope >>
+      command: << include(scripts/npm_auth.sh) >>

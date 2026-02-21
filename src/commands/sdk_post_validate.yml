@@ -1,0 +1,7 @@
+description: >
+  Post-release validation: download the release, unzip, and verify
+  structure and checksums.
+steps:
+  - run:
+      name: Post-release validation
+      command: << include(scripts/sdk_post_validate.sh) >>

@@ -1,0 +1,13 @@
+pipeline: terraform
+orb_version: dev:snapshot
+
+terraform:
+  path: terraform/
+  live_path: terraform/live
+  environments:
+    - production
+    - staging
+    - dev
+  checkov_skip: "CKV_AWS_144,CKV_AWS_145,CKV2_AWS_6"
+
+sast: false

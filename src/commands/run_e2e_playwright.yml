@@ -1,0 +1,21 @@
+description: >
+  Run Playwright E2E tests and store results and traces.
+parameters:
+  test_dir:
+    type: string
+    default: e2e
+    description: Directory containing Playwright tests.
+steps:
+  - run:
+      name: Run Playwright E2E tests
+      environment:
+        E2E_TEST_DIR: << parameters.test_dir >>
+      command: << include(scripts/run_e2e_playwright.sh) >>
+  - store_test_results:
+      path: e2e-results
+  - store_artifacts:
+      path: e2e-results
+      destination: e2e-results
+  - store_artifacts:
+      path: test-results/traces
+      destination: playwright-traces

@@ -1,0 +1,50 @@
+description: >
+  Update the GitOps CD repository with the new image tag.
+parameters:
+  cd_repo:
+    type: string
+    description: GitHub repository for CD pipeline.
+  environment:
+    type: string
+    default: ""
+    description: Target environment (e.g., develop, staging, prod).
+  values_file:
+    type: string
+    default: values.yaml
+    description: Path to the values file to update (Helm only).
+  image_key:
+    type: string
+    default: image.tag
+    description: YAML key path for the image tag (Helm only).
+  cd_format:
+    type: string
+    default: helm
+    description: CD repo format (helm or kustomize).
+  cd_image_name:
+    type: string
+    default: ""
+    description: Full image name for Kustomize repos.
+  ci_git_email:
+    type: string
+    default: ""
+    description: Git author email for CD repo commits.
+  ci_git_name:
+    type: string
+    default: ""
+    description: Git author name for CD repo commits.
+executor: base
+steps:
+  - attach_workspace:
+      at: .
+  - run:
+      name: Restore version metadata
+      command: <<include(scripts/restore_version_metadata.sh)>>
+  - update_cd_repo:
+      cd_repo: << parameters.cd_repo >>
+      environment: << parameters.environment >>
+      values_file: << parameters.values_file >>
+      image_key: << parameters.image_key >>
+      cd_format: << parameters.cd_format >>
+      cd_image_name: << parameters.cd_image_name >>
+      ci_git_email: << parameters.ci_git_email >>
+      ci_git_name: << parameters.ci_git_name >>

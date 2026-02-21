@@ -1,0 +1,25 @@
+pipeline: node-api
+orb_version: dev:snapshot
+
+image_name: mes-assembly-server
+node_version: "20"
+
+sonar:
+  project_key: dmdbrands_mes-assembly-server
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+cd:
+  repo: dmdbrands/mes-assembly-server-cd-pipeline
+
+coverage:
+  min_instruction: 80
+
+e2e: true
+sbom: true
+
+contexts:
+  registry: ghcr
+  github: github
+  sonar: sonarcloud

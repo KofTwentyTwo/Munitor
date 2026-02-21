@@ -1,0 +1,33 @@
+description: >
+  Validate Terraform formatting and configuration.
+parameters:
+  environments:
+    type: string
+    default: "production"
+    description: Space-separated list of environments to validate.
+  tf_path:
+    type: string
+    default: terraform/
+    description: Path to Terraform files for format check.
+  base_path:
+    type: string
+    default: terraform/live
+    description: Base path to Terragrunt environments.
+  terragrunt_version:
+    type: string
+    default: "0.77.0"
+    description: Terragrunt version.
+executor: python
+steps:
+  - checkout
+  - install_opentofu
+  - install_terragrunt:
+      version: << parameters.terragrunt_version >>
+  - tf_fmt:
+      path: << parameters.tf_path >>
+  - run:
+      name: Validate Environments
+      environment:
+        TF_BASE_PATH: << parameters.base_path >>
+        TF_ENVIRONMENTS: << parameters.environments >>
+      command: << include(scripts/tf_validate_environments.sh) >>

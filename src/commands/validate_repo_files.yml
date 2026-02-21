@@ -1,0 +1,18 @@
+description: >
+  Validate that required repository files exist and are valid.
+parameters:
+  required_files:
+    type: string
+    default: "CODEOWNERS LICENSE README.md SECURITY.md"
+    description: Space-separated list of required files.
+  codeowners_path:
+    type: string
+    default: "CODEOWNERS"
+    description: Path to CODEOWNERS file.
+steps:
+  - run:
+      name: Validate Required Repository Files
+      environment:
+        REQUIRED_FILES: << parameters.required_files >>
+        CODEOWNERS_PATH: << parameters.codeowners_path >>
+      command: << include(scripts/validate_repo_files.sh) >>

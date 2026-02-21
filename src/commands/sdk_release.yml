@@ -1,0 +1,6 @@
+description: >
+  Create a GitHub Release with the SDK zip, checksums, and release notes.
+steps:
+  - run:
+      name: Create GitHub Release
+      command: << include(scripts/sdk_release.sh) >>

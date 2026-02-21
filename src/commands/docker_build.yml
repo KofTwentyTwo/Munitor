@@ -1,0 +1,22 @@
+description: >
+  Build a Docker image with the specified name and version tag.
+parameters:
+  image_name:
+    type: string
+    description: Docker image name (without registry prefix).
+  registry:
+    type: string
+    default: ghcr.io/dmdbrands
+    description: Container registry URL.
+  dockerfile:
+    type: string
+    default: Dockerfile
+    description: Path to Dockerfile.
+steps:
+  - run:
+      name: Docker build
+      environment:
+        IMAGE_NAME: << parameters.image_name >>
+        REGISTRY: << parameters.registry >>
+        DOCKERFILE: << parameters.dockerfile >>
+      command: << include(scripts/docker_build.sh) >>

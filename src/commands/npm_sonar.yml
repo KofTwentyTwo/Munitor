@@ -1,0 +1,22 @@
+description: >
+  Run SonarCloud analysis via sonar-scanner CLI for Node.js projects.
+parameters:
+  sonar_project_key:
+    type: string
+    description: SonarCloud project key.
+  sonar_org:
+    type: string
+    default: dmdbrands
+    description: SonarCloud organization.
+  sonar_token_env:
+    type: env_var_name
+    default: SONAR_TOKEN
+    description: Environment variable containing the SonarCloud token.
+steps:
+  - run:
+      name: SonarCloud analysis
+      environment:
+        SONAR_PROJECT_KEY: << parameters.sonar_project_key >>
+        SONAR_ORG: << parameters.sonar_org >>
+        SONAR_TOKEN_VAR: << parameters.sonar_token_env >>
+      command: << include(scripts/npm_sonar.sh) >>

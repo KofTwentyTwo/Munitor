@@ -1,0 +1,25 @@
+description: >
+  Full SDK release pipeline: validate tag, assemble, scrub, validate,
+  package, checksum, release to GitHub, and post-validate.
+parameters:
+  config_path:
+    type: string
+    default: .sdk-release.yml
+    description: Path to SDK release configuration file.
+executor: base
+steps:
+  - checkout
+  - run:
+      name: Validate release tag
+      command: << include(scripts/sdk_validate_tag.sh) >>
+  - sdk_assemble:
+      config_path: << parameters.config_path >>
+  - sdk_scrub
+  - sdk_validate
+  - sdk_package
+  - sdk_checksum
+  - sdk_release
+  - sdk_post_validate
+  - store_artifacts:
+      path: /tmp/CHECKSUMS.sha256
+      destination: CHECKSUMS.sha256

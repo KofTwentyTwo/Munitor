@@ -1,0 +1,53 @@
+description: >
+  Update the GitOps CD repository with the new image tag.
+parameters:
+  cd_repo:
+    type: string
+    description: >
+      GitHub repository for CD pipeline (e.g., dmdbrands/me-health-portal-cd-pipeline).
+  environment:
+    type: string
+    default: ""
+    description: >
+      Target environment (e.g., develop, staging, prod).
+      For Helm: looks for environments/<env>/values.yaml.
+      For Kustomize: looks for overlays/<env>/kustomization.yaml.
+  values_file:
+    type: string
+    default: values.yaml
+    description: Path to the values file to update within the CD repo (Helm only).
+  image_key:
+    type: string
+    default: image.tag
+    description: YAML key path for the image tag in the values file (Helm only).
+  cd_format:
+    type: string
+    default: helm
+    description: CD repo format (helm or kustomize).
+  cd_image_name:
+    type: string
+    default: ""
+    description: >
+      Full image name for Kustomize repos (e.g., ghcr.io/dmdbrands/me-health-portal).
+      Used to select the correct entry in the images[] array.
+  ci_git_email:
+    type: string
+    default: ""
+    description: Git author email for CD repo commits.
+  ci_git_name:
+    type: string
+    default: ""
+    description: Git author name for CD repo commits.
+steps:
+  - run:
+      name: Update CD repo
+      environment:
+        CD_REPO: << parameters.cd_repo >>
+        CD_ENVIRONMENT: << parameters.environment >>
+        VALUES_FILE: << parameters.values_file >>
+        IMAGE_KEY: << parameters.image_key >>
+        CD_FORMAT: << parameters.cd_format >>
+        CD_IMAGE_NAME: << parameters.cd_image_name >>
+        CI_GIT_EMAIL: << parameters.ci_git_email >>
+        CI_GIT_NAME: << parameters.ci_git_name >>
+      command: << include(scripts/update_cd_repo.sh) >>

@@ -1,0 +1,6 @@
+description: >
+  Run ESLint on the project source.
+steps:
+  - run:
+      name: ESLint
+      command: << include(scripts/npm_lint.sh) >>

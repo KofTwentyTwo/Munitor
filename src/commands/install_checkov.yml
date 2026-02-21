@@ -1,0 +1,6 @@
+description: >
+  Install checkov for infrastructure-as-code security scanning.
+steps:
+  - run:
+      name: Install checkov
+      command: << include(scripts/install_checkov.sh) >>

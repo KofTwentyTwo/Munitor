@@ -1,0 +1,32 @@
+description: >
+  Generate SBOM and submit dependency graph for Node.js projects.
+  Requires workspace from npm_build_and_test.
+parameters:
+  node_version:
+    type: string
+    default: "20"
+    description: Node.js major version to install.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: medium
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - install_node:
+      version: << parameters.node_version >>
+  - npm_sbom
+  - submit_dependency_graph:
+      sbom_path: bom.json
+      detector_name: CycloneDX npm
+      detector_version: "1.19.3"
+      detector_url: https://github.com/CycloneDX/cyclonedx-node-npm
+  - store_artifacts:
+      path: bom.json
+      destination: sbom.json

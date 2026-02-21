@@ -1,0 +1,12 @@
+pipeline: terraform
+orb_version: dev:snapshot
+
+terraform:
+  path: terraform/
+  live_path: terraform/live
+  environments:
+    - production
+    - staging
+  checkov_skip: ""
+
+sast: true

@@ -1,0 +1,7 @@
+description: >
+  Save the Maven local repository to cache for future builds.
+steps:
+  - save_cache:
+      key: maven-v1-{{ checksum "pom.xml" }}
+      paths:
+        - ~/.m2/repository

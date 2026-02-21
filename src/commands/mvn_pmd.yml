@@ -1,0 +1,6 @@
+description: >
+  Run Maven PMD static analysis.
+steps:
+  - run:
+      name: Maven PMD
+      command: << include(scripts/mvn_pmd.sh) >>

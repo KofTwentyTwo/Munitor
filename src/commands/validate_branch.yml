@@ -1,0 +1,8 @@
+description: >
+  Validate that the current branch or tag conforms to GitFlow naming
+  conventions. Hard-fails the build if the branch name does not match
+  an allowed pattern.
+steps:
+  - run:
+      name: Validate branch name (GitFlow)
+      command: << include(scripts/validate_branch.sh) >>

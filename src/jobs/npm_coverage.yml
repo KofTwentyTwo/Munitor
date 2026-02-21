@@ -1,0 +1,36 @@
+description: >
+  Enforce minimum coverage threshold from coverage output.
+  Requires workspace from npm_build_and_test.
+parameters:
+  min_coverage:
+    type: string
+    default: "70"
+    description: Minimum line coverage percentage.
+  coverage_tool:
+    type: string
+    default: "jest"
+    description: Coverage tool (jest or nyc).
+  coverage_command:
+    type: string
+    default: ""
+    description: Custom command to generate coverage report before threshold check.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: medium
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - npm_coverage_check:
+      min_coverage: << parameters.min_coverage >>
+      coverage_tool: << parameters.coverage_tool >>
+      coverage_command: << parameters.coverage_command >>
+  - store_artifacts:
+      path: coverage
+      destination: coverage-report

@@ -1,0 +1,6 @@
+description: >
+  Install trivy for Terraform security scanning (replaces deprecated tfsec).
+steps:
+  - run:
+      name: Install tfsec
+      command: << include(scripts/install_tfsec.sh) >>

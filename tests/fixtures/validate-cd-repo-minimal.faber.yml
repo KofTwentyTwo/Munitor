@@ -1,0 +1,2 @@
+pipeline: validate-cd-repo
+orb_version: dev:snapshot

@@ -1,0 +1,21 @@
+description: >
+  Run ESLint code quality checks.
+  Requires workspace from npm_build_and_test.
+parameters:
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: medium
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - npm_lint
+  - store_artifacts:
+      path: /tmp/eslint-report.json
+      destination: eslint-report.json

@@ -1,0 +1,6 @@
+description: >
+  Install OpenTofu (open-source Terraform fork).
+steps:
+  - run:
+      name: Install OpenTofu
+      command: << include(scripts/install_opentofu.sh) >>

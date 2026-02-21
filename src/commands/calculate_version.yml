@@ -1,0 +1,7 @@
+description: >
+  Calculate semantic version using GitVersion via Docker. Exports
+  GITVERSION_* environment variables for downstream commands.
+steps:
+  - run:
+      name: Calculate version (GitVersion)
+      command: << include(scripts/calculate_version.sh) >>

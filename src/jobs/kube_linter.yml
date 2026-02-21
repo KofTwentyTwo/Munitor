@@ -1,0 +1,28 @@
+description: >
+  Run kube-linter on rendered kustomize manifests.
+parameters:
+  scan_overlay:
+    type: string
+    default: "production"
+    description: Name of the overlay to scan.
+  config:
+    type: string
+    default: ""
+    description: Path to kube-linter config file. Leave empty to skip.
+  kube_linter_version:
+    type: string
+    default: "0.6.8"
+    description: kube-linter version to install.
+executor: base
+steps:
+  - checkout
+  - attach_workspace:
+      at: /tmp/kustomize-output
+  - install_kube_linter:
+      version: << parameters.kube_linter_version >>
+  - run_kube_linter:
+      scan_overlay: << parameters.scan_overlay >>
+      config: << parameters.config >>
+  - store_artifacts:
+      path: /tmp/kube-linter-report.json
+      destination: kube-linter-report.json

@@ -1,0 +1,10 @@
+description: >
+  Python executor for infrastructure tools (checkov, etc).
+parameters:
+  version:
+    type: string
+    default: "3.11"
+    description: Python version.
+docker:
+  - image: cimg/python:<< parameters.version >>
+resource_class: small

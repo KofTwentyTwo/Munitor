@@ -1,0 +1,5 @@
+pipeline: sdk-distribution
+orb_version: dev:snapshot
+
+contexts:
+  github: github

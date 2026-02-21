@@ -1,0 +1,22 @@
+description: >
+  Run Semgrep SAST analysis for security vulnerabilities.
+parameters:
+  config:
+    type: string
+    default: auto
+    description: Semgrep ruleset configuration.
+  fail_on_findings:
+    type: string
+    default: "true"
+    description: >
+      Whether to fail the build when Semgrep finds issues.
+      Set to 'false' for warn-only mode during migration.
+executor: semgrep
+steps:
+  - checkout
+  - run_semgrep:
+      config: << parameters.config >>
+      fail_on_findings: << parameters.fail_on_findings >>
+  - store_artifacts:
+      path: /tmp/semgrep-results.json
+      destination: semgrep-results.json

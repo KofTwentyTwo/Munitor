@@ -1,0 +1,13 @@
+description: >
+  Install a pinned version of kube-linter.
+parameters:
+  version:
+    type: string
+    default: "0.6.8"
+    description: kube-linter version to install.
+steps:
+  - run:
+      name: Install kube-linter << parameters.version >>
+      environment:
+        KUBE_LINTER_VERSION: << parameters.version >>
+      command: << include(scripts/install_kube_linter.sh) >>

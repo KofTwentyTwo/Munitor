@@ -1,0 +1,6 @@
+description: >
+  Package the SDK staging directory into a zip archive.
+steps:
+  - run:
+      name: Package SDK
+      command: << include(scripts/sdk_package.sh) >>

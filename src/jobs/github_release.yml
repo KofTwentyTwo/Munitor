@@ -1,0 +1,13 @@
+description: >
+  Create an annotated git tag and GitHub Release on main branch merges.
+  Uses PROJECT_VERSION from GitVersion (persisted by the build job).
+executor: base
+steps:
+  - checkout
+  - attach_workspace:
+      at: .
+  - run:
+      name: Restore version metadata
+      command: <<include(scripts/restore_version_metadata.sh)>>
+  - install_gh
+  - github_release

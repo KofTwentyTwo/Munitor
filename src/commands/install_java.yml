@@ -1,0 +1,13 @@
+description: >
+  Install the specified Java version using SDKMAN.
+parameters:
+  version:
+    type: string
+    default: "21"
+    description: Java major version to install (e.g., 21, 17).
+steps:
+  - run:
+      name: Install Java << parameters.version >>
+      environment:
+        JAVA_VERSION: << parameters.version >>
+      command: << include(scripts/install_java.sh) >>

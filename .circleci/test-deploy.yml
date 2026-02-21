@@ -1,0 +1,14 @@
+version: 2.1
+
+# Integration test workflow -- fleshed out in Phase 12.
+# This config is used to test the orb against real repos
+# after publishing a dev:snapshot.
+
+orbs:
+  faber: dmdbrands/faber@dev:snapshot
+
+workflows:
+  integration-tests:
+    jobs:
+      - faber/generate_pipeline:
+          name: test-generate-pipeline

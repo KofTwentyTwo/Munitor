@@ -1,0 +1,13 @@
+description: >
+  Run kubesec security scan on kustomize output.
+parameters:
+  scan_overlay:
+    type: string
+    default: "production"
+    description: Name of the overlay to scan.
+steps:
+  - run:
+      name: Run kubesec scan
+      environment:
+        KUBESEC_SCAN_OVERLAY: << parameters.scan_overlay >>
+      command: << include(scripts/run_kubesec.sh) >>

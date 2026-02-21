@@ -1,0 +1,25 @@
+description: >
+  Smoke test a Docker container's health endpoint. Starts the container,
+  retries the health endpoint for up to 30 seconds, and validates HTTP 200
+  with {"status":"ok"}.
+parameters:
+  health_path:
+    type: string
+    default: /api/health
+    description: Health check endpoint path.
+  health_port:
+    type: string
+    default: "3000"
+    description: Health check port.
+  health_db:
+    type: string
+    default: "false"
+    description: Start a PostgreSQL sidecar for apps that require a database to boot.
+steps:
+  - run:
+      name: Health check
+      environment:
+        HEALTH_PATH: << parameters.health_path >>
+        HEALTH_PORT: << parameters.health_port >>
+        HEALTH_DB: << parameters.health_db >>
+      command: << include(scripts/health_check.sh) >>

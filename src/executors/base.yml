@@ -1,0 +1,6 @@
+description: >
+  Lightweight Docker executor for pipeline generation, secret scanning,
+  SDK packaging, and CD repo updates.
+docker:
+  - image: cimg/base:current
+resource_class: small

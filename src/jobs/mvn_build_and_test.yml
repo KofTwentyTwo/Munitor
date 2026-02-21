@@ -1,0 +1,40 @@
+description: >
+  Full Maven build and test job. Installs Java, restores cache, calculates
+  version, builds, tests, saves cache, and persists the workspace for
+  downstream jobs.
+parameters:
+  java_version:
+    type: string
+    default: "21"
+    description: Java major version to install.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+      - xlarge
+    default: large
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - checkout
+  - install_java:
+      version: << parameters.java_version >>
+  - restore_maven_cache
+  - calculate_version
+  - export_version_vars
+  - mvn_set_version
+  - mvn_build
+  - mvn_test
+  - store_test_results:
+      path: target/surefire-reports
+  - run:
+      name: Persist version metadata
+      command: <<include(scripts/persist_version_metadata.sh)>>
+  - save_maven_cache
+  - persist_to_workspace:
+      root: .
+      paths:
+        - "."

@@ -1,0 +1,22 @@
+description: >
+  Run Semgrep SAST scan with configurable rulesets.
+parameters:
+  config:
+    type: string
+    default: auto
+    description: >
+      Semgrep configuration. Use 'auto' for recommended rules, or specify
+      a custom config string (e.g., 'p/java', 'p/owasp-top-ten').
+  fail_on_findings:
+    type: string
+    default: "true"
+    description: >
+      Whether to fail the build when Semgrep finds issues.
+      Set to 'false' for warn-only mode during migration.
+steps:
+  - run:
+      name: Run Semgrep SAST scan
+      environment:
+        SEMGREP_CONFIG: << parameters.config >>
+        SEMGREP_FAIL_ON_FINDINGS: << parameters.fail_on_findings >>
+      command: << include(scripts/run_semgrep.sh) >>

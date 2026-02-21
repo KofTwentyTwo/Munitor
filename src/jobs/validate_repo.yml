@@ -1,0 +1,13 @@
+description: >
+  Validate repository compliance: required files, branch naming, and structure.
+parameters:
+  required_files:
+    type: string
+    default: "CODEOWNERS LICENSE README.md SECURITY.md"
+    description: Space-separated list of required files.
+executor: base
+steps:
+  - checkout
+  - validate_branch
+  - validate_repo_files:
+      required_files: << parameters.required_files >>

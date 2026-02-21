@@ -1,0 +1,35 @@
+description: >
+  Validate kustomize base and overlays, persist rendered manifests.
+parameters:
+  kustomize_version:
+    type: string
+    default: "5.5.0"
+    description: Kustomize version to install.
+  base_path:
+    type: string
+    default: "base/"
+    description: Path to the kustomize base directory.
+  overlays:
+    type: string
+    default: ""
+    description: Space-separated list of overlay names. Auto-detects if empty.
+  load_restrictor:
+    type: string
+    default: "true"
+    description: Set to true to use --load-restrictor LoadRestrictionsNone.
+executor: base
+steps:
+  - checkout
+  - install_kustomize:
+      version: << parameters.kustomize_version >>
+  - kustomize_validate:
+      base_path: << parameters.base_path >>
+      overlays: << parameters.overlays >>
+      load_restrictor: << parameters.load_restrictor >>
+  - persist_to_workspace:
+      root: /tmp/kustomize-output
+      paths:
+        - "*.yaml"
+  - store_artifacts:
+      path: /tmp/kustomize-output
+      destination: kustomize-manifests

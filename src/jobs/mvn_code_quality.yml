@@ -1,0 +1,30 @@
+description: >
+  Run code quality checks: Checkstyle, SpotBugs, and PMD.
+  Requires workspace from mvn_build_and_test.
+parameters:
+  java_version:
+    type: string
+    default: "21"
+    description: Java major version to install.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: large
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - install_java:
+      version: << parameters.java_version >>
+  - restore_maven_cache
+  - mvn_checkstyle
+  - mvn_spotbugs
+  - mvn_pmd
+  - store_artifacts:
+      path: target/checkstyle-result.xml
+      destination: checkstyle-result.xml

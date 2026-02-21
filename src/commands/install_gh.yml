@@ -1,0 +1,13 @@
+description: >
+  Download and install the GitHub CLI (gh) binary for creating releases.
+parameters:
+  version:
+    type: string
+    default: "2.62.0"
+    description: GitHub CLI version to install.
+steps:
+  - run:
+      name: Install GitHub CLI
+      environment:
+        GH_VERSION: << parameters.version >>
+      command: << include(scripts/install_gh.sh) >>

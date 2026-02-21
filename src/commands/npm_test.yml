@@ -1,0 +1,22 @@
+description: >
+  Run tests with CI flags, coverage, and JUnit reporter. Supports custom
+  test commands via JSON array or falls back to Jest defaults.
+parameters:
+  test_commands:
+    type: string
+    default: ""
+    description: JSON array of custom test commands to run instead of Jest.
+steps:
+  - run:
+      name: npm test
+      environment:
+        FABER_TEST_COMMANDS_JSON: << parameters.test_commands >>
+      command: << include(scripts/npm_test.sh) >>
+  - store_test_results:
+      path: reports/junit
+  - store_artifacts:
+      path: reports/junit
+      destination: test-results
+  - store_artifacts:
+      path: coverage
+      destination: coverage

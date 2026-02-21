@@ -1,0 +1,15 @@
+pipeline: java-webapp
+orb_version: dev:snapshot
+
+image_name: me-health-portal
+java_version: "21"
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+sast:
+  fail_on_findings: false
+
+contexts:
+  registry: ghcr
+  github: github

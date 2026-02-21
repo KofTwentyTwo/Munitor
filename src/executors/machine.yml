@@ -1,0 +1,20 @@
+description: >
+  Ubuntu machine executor with full Docker-in-Docker support.
+  Used for builds, Docker operations, and integration testing.
+parameters:
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+      - xlarge
+    default: large
+    description: Machine resource class for the executor.
+  docker_layer_caching:
+    type: boolean
+    default: false
+    description: Enable Docker Layer Caching for faster Docker builds.
+machine:
+  image: ubuntu-2204:current
+  docker_layer_caching: << parameters.docker_layer_caching >>
+resource_class: << parameters.resource_class >>

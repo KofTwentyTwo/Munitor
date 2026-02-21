@@ -1,0 +1,10 @@
+description: >
+  Docker executor running the official Semgrep image for SAST scanning.
+parameters:
+  version:
+    type: string
+    default: "1.61.1"
+    description: Semgrep image version tag.
+docker:
+  - image: returntocorp/semgrep:<< parameters.version >>
+resource_class: medium

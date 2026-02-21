@@ -1,0 +1,18 @@
+description: >
+  Run kube-linter on kustomize output.
+parameters:
+  scan_overlay:
+    type: string
+    default: "production"
+    description: Name of the overlay to scan.
+  config:
+    type: string
+    default: ""
+    description: Path to kube-linter config file. Leave empty to skip.
+steps:
+  - run:
+      name: Run kube-linter
+      environment:
+        KUBE_LINTER_SCAN_OVERLAY: << parameters.scan_overlay >>
+        KUBE_LINTER_CONFIG: << parameters.config >>
+      command: << include(scripts/run_kube_linter.sh) >>

@@ -1,0 +1,13 @@
+description: >
+  Example showing how to use Faber with a Java webapp repo.
+  Each repo needs two files: .circleci/config.yml and .faber.yml.
+
+usage:
+  version: 2.1
+  setup: true
+  orbs:
+    faber: dmdbrands/faber@1
+  workflows:
+    setup:
+      jobs:
+        - faber/generate_pipeline

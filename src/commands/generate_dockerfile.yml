@@ -1,0 +1,8 @@
+description: >
+  Generate a Dockerfile based on the pipeline type in .faber.yml.
+steps:
+  - run:
+      name: Generate Dockerfile
+      environment:
+        FABER_SCRIPT_DIR: /tmp/faber
+      command: << include(scripts/packed_generate_dockerfile.sh) >>

@@ -1,0 +1,18 @@
+description: >
+  Run trivy config security scan on Terraform files (replaces deprecated tfsec).
+parameters:
+  path:
+    type: string
+    default: terraform/
+    description: Path to Terraform files.
+  soft_fail:
+    type: boolean
+    default: true
+    description: Soft fail on findings (don't fail the build).
+steps:
+  - run:
+      name: Terraform Security Scan (trivy config)
+      environment:
+        TF_PATH: << parameters.path >>
+        SOFT_FAIL: << parameters.soft_fail >>
+      command: << include(scripts/run_tfsec.sh) >>

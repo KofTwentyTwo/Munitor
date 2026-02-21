@@ -1,0 +1,6 @@
+description: >
+  Run Maven Checkstyle analysis.
+steps:
+  - run:
+      name: Maven Checkstyle
+      command: << include(scripts/mvn_checkstyle.sh) >>

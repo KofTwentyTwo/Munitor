@@ -1,0 +1,7 @@
+description: >
+  Remove IDE/build artifacts from the SDK staging directory based on
+  scrub patterns defined in .sdk-release.yml.
+steps:
+  - run:
+      name: Scrub SDK artifacts
+      command: << include(scripts/sdk_scrub.sh) >>

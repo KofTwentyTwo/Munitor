@@ -1,0 +1,54 @@
+description: >
+  Build and push Docker image to GHCR. Requires workspace from mvn_build_and_test.
+parameters:
+  image_name:
+    type: string
+    description: Docker image name (without registry prefix).
+  registry:
+    type: string
+    default: ghcr.io/dmdbrands
+    description: Container registry URL.
+  health_path:
+    type: string
+    default: /api/health
+    description: Health check endpoint path.
+  health_port:
+    type: string
+    default: "3000"
+    description: Health check port.
+  health_db:
+    type: string
+    default: "false"
+    description: Start a PostgreSQL sidecar for apps that require a database to boot.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: large
+    description: Machine resource class.
+  docker_layer_caching:
+    type: boolean
+    default: true
+    description: Enable Docker Layer Caching for faster builds.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+  docker_layer_caching: << parameters.docker_layer_caching >>
+steps:
+  - attach_workspace:
+      at: .
+  - run:
+      name: Restore version metadata
+      command: <<include(scripts/restore_version_metadata.sh)>>
+  - generate_dockerfile
+  - docker_build:
+      image_name: << parameters.image_name >>
+      registry: << parameters.registry >>
+  - health_check:
+      health_path: << parameters.health_path >>
+      health_port: << parameters.health_port >>
+      health_db: << parameters.health_db >>
+  - run_trivy_image:
+      image_tag: << parameters.registry >>/<< parameters.image_name >>:${DOCKER_TAG}
+  - docker_push_ghcr

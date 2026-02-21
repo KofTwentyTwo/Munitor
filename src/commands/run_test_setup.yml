@@ -1,0 +1,14 @@
+description: >
+  Execute a pre-test setup script. Validates the script exists, makes it
+  executable, and runs it before tests begin.
+parameters:
+  test_setup:
+    type: string
+    default: ""
+    description: Path to a setup script to run before tests.
+steps:
+  - run:
+      name: Run test setup
+      environment:
+        FABER_TEST_SETUP_SCRIPT: << parameters.test_setup >>
+      command: << include(scripts/run_test_setup.sh) >>

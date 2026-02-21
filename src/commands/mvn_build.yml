@@ -1,0 +1,6 @@
+description: >
+  Run Maven build (compile + package, skip tests).
+steps:
+  - run:
+      name: Maven build
+      command: << include(scripts/mvn_build.sh) >>

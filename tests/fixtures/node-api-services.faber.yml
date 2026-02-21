@@ -1,0 +1,46 @@
+pipeline: node-api
+orb_version: dev:snapshot
+
+image_name: wg-server3
+node_version: "20"
+
+npm:
+  private_registry: true
+  scopes:
+    - "@greatergoods"
+
+services:
+  - image: postgres:17
+    port: 5432
+    healthcheck: "pg_isready -U test -d wg"
+    env:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: wg
+
+test:
+  setup: scripts/ci-setup.sh
+  commands:
+    - npm run test
+    - npm run test:v2
+  coverage:
+    command: npm run coverage
+    tool: nyc
+    min_instruction: 70
+
+health:
+  path: /health
+  port: 4000
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+cd:
+  repo: dmdbrands/wg-server3-cd-pipeline
+
+e2e: false
+sbom: true
+
+contexts:
+  registry: ghcr
+  github: github

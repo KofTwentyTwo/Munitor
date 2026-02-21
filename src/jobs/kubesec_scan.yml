@@ -1,0 +1,22 @@
+description: >
+  Run kubesec security scan on rendered kustomize manifests.
+parameters:
+  scan_overlay:
+    type: string
+    default: "production"
+    description: Name of the overlay to scan.
+  kubesec_version:
+    type: string
+    default: "2.14.0"
+    description: kubesec version to install.
+executor: base
+steps:
+  - attach_workspace:
+      at: /tmp/kustomize-output
+  - install_kubesec:
+      version: << parameters.kubesec_version >>
+  - run_kubesec:
+      scan_overlay: << parameters.scan_overlay >>
+  - store_artifacts:
+      path: /tmp/kubesec-report.json
+      destination: kubesec-report.json

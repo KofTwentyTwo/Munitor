@@ -1,0 +1,15 @@
+pipeline: java-webapp
+orb_version: dev:snapshot
+
+image_name: standalone-api
+java_version: "21"
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+e2e: false
+sbom: false
+
+contexts:
+  registry: ghcr
+  github: github

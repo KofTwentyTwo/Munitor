@@ -1,0 +1,13 @@
+description: >
+  Generate JaCoCo coverage report and enforce minimum thresholds.
+parameters:
+  min_instruction:
+    type: string
+    default: "70"
+    description: Minimum instruction coverage percentage.
+steps:
+  - run:
+      name: Maven JaCoCo coverage
+      environment:
+        MIN_INSTRUCTION: << parameters.min_instruction >>
+      command: << include(scripts/mvn_jacoco.sh) >>

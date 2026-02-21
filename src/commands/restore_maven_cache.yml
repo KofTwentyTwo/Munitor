@@ -1,0 +1,7 @@
+description: >
+  Restore the Maven local repository cache based on pom.xml checksum.
+steps:
+  - restore_cache:
+      keys:
+        - maven-v1-{{ checksum "pom.xml" }}
+        - maven-v1-

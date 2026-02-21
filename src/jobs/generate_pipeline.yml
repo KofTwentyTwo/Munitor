@@ -1,0 +1,11 @@
+description: >
+  Setup job that reads .faber.yml, generates a full CircleCI pipeline
+  config from a template, and continues execution with the generated
+  config via the continuation orb.
+executor: base
+steps:
+  - checkout
+  - validate_branch
+  - generate_config
+  - continuation/continue:
+      configuration_path: /tmp/generated-config.yml

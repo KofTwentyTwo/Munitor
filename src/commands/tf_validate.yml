@@ -1,0 +1,18 @@
+description: >
+  Validate Terraform configuration with Terragrunt.
+parameters:
+  environment:
+    type: string
+    default: production
+    description: Environment to validate.
+  base_path:
+    type: string
+    default: terraform/live
+    description: Base path to Terragrunt environments.
+steps:
+  - run:
+      name: Terragrunt Validate (<< parameters.environment >>)
+      environment:
+        TF_ENV: << parameters.environment >>
+        TF_BASE_PATH: << parameters.base_path >>
+      command: << include(scripts/tf_validate.sh) >>

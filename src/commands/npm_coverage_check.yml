@@ -1,0 +1,24 @@
+description: >
+  Enforce minimum coverage threshold from coverage-summary.json.
+  Supports Jest (default) and NYC coverage tools.
+parameters:
+  min_coverage:
+    type: string
+    default: "70"
+    description: Minimum line coverage percentage.
+  coverage_tool:
+    type: string
+    default: "jest"
+    description: Coverage tool (jest or nyc).
+  coverage_command:
+    type: string
+    default: ""
+    description: Custom command to generate coverage report before threshold check.
+steps:
+  - run:
+      name: Coverage threshold check
+      environment:
+        MIN_COVERAGE: << parameters.min_coverage >>
+        FABER_COVERAGE_TOOL: << parameters.coverage_tool >>
+        FABER_COVERAGE_COMMAND: << parameters.coverage_command >>
+      command: << include(scripts/npm_coverage_check.sh) >>

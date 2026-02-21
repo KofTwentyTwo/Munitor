@@ -1,0 +1,6 @@
+description: >
+  Run Maven SpotBugs static analysis.
+steps:
+  - run:
+      name: Maven SpotBugs
+      command: << include(scripts/mvn_spotbugs.sh) >>

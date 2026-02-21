@@ -1,0 +1,25 @@
+description: >
+  Run Playwright E2E tests. Requires workspace from npm_build_and_test.
+parameters:
+  test_dir:
+    type: string
+    default: e2e
+    description: Directory containing Playwright tests.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: large
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - run_e2e_playwright:
+      test_dir: << parameters.test_dir >>
+  - store_artifacts:
+      path: << parameters.test_dir >>/playwright-report
+      destination: playwright-report

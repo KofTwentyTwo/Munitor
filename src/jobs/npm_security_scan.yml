@@ -1,0 +1,22 @@
+description: >
+  Run npm audit and Trivy filesystem scan.
+  Requires workspace from npm_build_and_test.
+parameters:
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: large
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - npm_audit
+  - run_trivy
+  - store_artifacts:
+      path: /tmp/trivy-results.json
+      destination: trivy-results.json

@@ -1,0 +1,7 @@
+description: >
+  Validate the assembled SDK: check required files are present, excluded
+  content is absent, and Devices/ directory has at least one .md file.
+steps:
+  - run:
+      name: Validate SDK
+      command: << include(scripts/sdk_validate.sh) >>

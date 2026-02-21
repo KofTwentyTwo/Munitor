@@ -1,0 +1,6 @@
+description: >
+  Generate a CycloneDX SBOM from the Maven project.
+steps:
+  - run:
+      name: Generate SBOM
+      command: << include(scripts/mvn_sbom.sh) >>

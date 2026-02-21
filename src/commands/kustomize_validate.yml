@@ -1,0 +1,23 @@
+description: >
+  Build and validate kustomize base and overlays.
+parameters:
+  base_path:
+    type: string
+    default: "base/"
+    description: Path to the kustomize base directory.
+  overlays:
+    type: string
+    default: ""
+    description: Space-separated list of overlay names. Auto-detects from overlays/*/ if empty.
+  load_restrictor:
+    type: string
+    default: "true"
+    description: Set to true to use --load-restrictor LoadRestrictionsNone.
+steps:
+  - run:
+      name: Validate Kustomize Manifests
+      environment:
+        KUSTOMIZE_BASE_PATH: << parameters.base_path >>
+        KUSTOMIZE_OVERLAYS: << parameters.overlays >>
+        KUSTOMIZE_LOAD_RESTRICTOR: << parameters.load_restrictor >>
+      command: << include(scripts/kustomize_validate.sh) >>

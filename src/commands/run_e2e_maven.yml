@@ -1,0 +1,13 @@
+description: >
+  Run Maven integration tests via the failsafe plugin (mvn verify).
+  Expects *IT.java test classes configured in maven-failsafe-plugin.
+steps:
+  - run:
+      name: Run Maven integration tests
+      command: << include(scripts/run_e2e_maven.sh) >>
+      no_output_timeout: 15m
+  - store_test_results:
+      path: target/failsafe-reports
+  - store_artifacts:
+      path: target/failsafe-reports
+      destination: failsafe-reports

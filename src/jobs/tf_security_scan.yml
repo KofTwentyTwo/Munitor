@@ -1,0 +1,31 @@
+description: >
+  Run trivy config and checkov security scans on Terraform files.
+parameters:
+  tf_path:
+    type: string
+    default: terraform/
+    description: Path to Terraform files.
+  checkov_skip:
+    type: string
+    default: ""
+    description: Comma-separated list of checkov checks to skip.
+  soft_fail:
+    type: boolean
+    default: true
+    description: Soft fail on findings.
+executor: python
+steps:
+  - checkout
+  - install_tfsec
+  - install_checkov
+  - run_tfsec:
+      path: << parameters.tf_path >>
+      soft_fail: << parameters.soft_fail >>
+  - run_checkov:
+      path: << parameters.tf_path >>
+      skip_checks: << parameters.checkov_skip >>
+      soft_fail: << parameters.soft_fail >>
+  - store_artifacts:
+      path: tfsec-results.json
+      destination: tfsec-report
+      when: always

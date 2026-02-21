@@ -1,0 +1,18 @@
+pipeline: node-api
+orb_version: dev:snapshot
+
+image_name: simple-node-api
+node_version: "22"
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+cd:
+  repo: dmdbrands/simple-node-api-cd
+
+e2e: false
+sbom: false
+
+contexts:
+  registry: ghcr
+  github: github
