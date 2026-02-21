@@ -4,7 +4,7 @@ parameters:
   cd_repo:
     type: string
     description: >
-      GitHub repository for CD pipeline (e.g., dmdbrands/me-health-portal-cd-pipeline).
+      GitHub repository for CD pipeline (e.g., KofTwentyTwo/my-app-cd-pipeline).
   environment:
     type: string
     default: ""
@@ -28,7 +28,7 @@ parameters:
     type: string
     default: ""
     description: >
-      Full image name for Kustomize repos (e.g., ghcr.io/dmdbrands/me-health-portal).
+      Full image name for Kustomize repos (e.g., ghcr.io/KofTwentyTwo/my-app).
       Used to select the correct entry in the images[] array.
   ci_git_email:
     type: string

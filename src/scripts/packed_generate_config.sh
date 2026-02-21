@@ -11,7 +11,7 @@ mkdir -p /tmp/faber/templates/partials
 
 cat > /tmp/faber/faber_helpers.sh << 'FABER_HELPERS_EOF'
 #!/usr/bin/env bash
-# Shared helper library for Faber orb scripts.
+# Shared helper library for Munitor orb scripts.
 # Source this at the top of each script for consistent diagnostics.
 #
 # Sourcing pattern (works even if helpers are missing):
@@ -30,7 +30,7 @@ _FABER_HELPERS_LOADED=1
 faber_header() {
   local name="${1:-unknown}"
   echo "========================================"
-  echo "  Faber: ${name}"
+  echo "  Munitor: ${name}"
   echo "  Date:  $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
   echo "  Host:  $(hostname 2>/dev/null || echo 'unknown')"
   echo "  Dir:   $(pwd)"
@@ -110,11 +110,11 @@ extract_faber_vars() {
   fi
 
   # --- Org defaults (change this block when forking for another org) ---
-  local ORG_DOCKER_REGISTRY="ghcr.io/dmdbrands"
-  local ORG_NPM_SCOPE="@dmdbrands"
-  local ORG_CI_EMAIL="faber-ci@dmdbrands.com"
-  local ORG_CI_NAME="Faber CI"
-  local ORG_ORB_SLUG="dmdbrands/faber"
+  local ORG_DOCKER_REGISTRY="ghcr.io/KofTwentyTwo"
+  local ORG_NPM_SCOPE="@koftwentytwo"
+  local ORG_CI_EMAIL="munitor-ci@koftwentytwo.com"
+  local ORG_CI_NAME="Munitor CI"
+  local ORG_ORB_SLUG="KofTwentyTwo/munitor"
 
   # Core pipeline settings
   FABER_PIPELINE=$(yq '.pipeline' "${config_file}")
@@ -1528,7 +1528,7 @@ FABER_HELPERS="${FABER_HELPERS:-${SCRIPT_DIR}/faber_helpers.sh}"
 # shellcheck source=faber_helpers.sh
 if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
 elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Faber: ${1:-unknown} ==="; }
+  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
   faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
   faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi

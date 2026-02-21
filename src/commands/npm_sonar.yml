@@ -6,7 +6,7 @@ parameters:
     description: SonarCloud project key.
   sonar_org:
     type: string
-    default: dmdbrands
+    default: KofTwentyTwo
     description: SonarCloud organization.
   sonar_token_env:
     type: env_var_name

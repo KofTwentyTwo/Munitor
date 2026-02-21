@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helper library for Faber orb scripts.
+# Shared helper library for Munitor orb scripts.
 # Source this at the top of each script for consistent diagnostics.
 #
 # Sourcing pattern (works even if helpers are missing):
@@ -18,7 +18,7 @@ _FABER_HELPERS_LOADED=1
 faber_header() {
   local name="${1:-unknown}"
   echo "========================================"
-  echo "  Faber: ${name}"
+  echo "  Munitor: ${name}"
   echo "  Date:  $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
   echo "  Host:  $(hostname 2>/dev/null || echo 'unknown')"
   echo "  Dir:   $(pwd)"

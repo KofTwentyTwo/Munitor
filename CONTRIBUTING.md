@@ -1,8 +1,8 @@
-# Contributing to Faber
+# Contributing to Munitor
 
 ## Module Inventory
 
-Faber organizes CI/CD pipelines into **modules** (called "pipeline types" in `.faber.yml`). Each module is a self-contained set of templates, jobs, commands, and scripts that handle a specific application stack.
+Munitor organizes CI/CD pipelines into **modules** (called "pipeline types" in `.faber.yml`). Each module is a self-contained set of templates, jobs, commands, and scripts that handle a specific application stack.
 
 ### Current Modules
 
@@ -64,7 +64,7 @@ tests/fixtures/
    g. Validates output YAML
 
 3. CircleCI continuation runs the generated pipeline, which references
-   faber orb jobs/commands by name (e.g., faber/npm_build_and_test)
+   munitor orb jobs/commands by name (e.g., munitor/npm_build_and_test)
 ```
 
 ## Adding a New Module
@@ -79,12 +79,12 @@ This is the CircleCI config that gets generated. Use `${FABER_*}` variables and 
 version: 2.1
 
 orbs:
-  faber: dmdbrands/faber@${FABER_ORB_VERSION}
+  munitor: KofTwentyTwo/munitor@${FABER_ORB_VERSION}
 
 workflows:
   pr-checks:
     jobs:
-      - faber/{module}_build_and_test:
+      - munitor/{module}_build_and_test:
           name: build-and-test
           context:
             - ${FABER_CONTEXT_GITHUB}
@@ -93,7 +93,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - faber/secrets_scan:
+      - munitor/secrets_scan:
           name: secrets-scan
           filters:
             branches:
@@ -101,7 +101,7 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_SAST##
-      - faber/sast_scan:
+      - munitor/sast_scan:
           name: sast-scan
           filters:
             branches:
@@ -224,7 +224,7 @@ FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd
 # shellcheck source=faber_helpers.sh
 if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
 elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Faber: ${1:-unknown} ==="; }
+  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
   faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
   faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
@@ -266,7 +266,7 @@ echo "=== python-app Template Tests ==="
 
 run_test "python-app: uses correct orb" \
   "${FIXTURES_DIR}/python-app.faber.yml" \
-  "dmdbrands/faber@"
+  "KofTwentyTwo/munitor@"
 
 run_test "python-app: renders python_version" \
   "${FIXTURES_DIR}/python-app.faber.yml" \

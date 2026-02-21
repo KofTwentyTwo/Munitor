@@ -5,10 +5,10 @@ version: 2.1
 # after publishing a dev:snapshot.
 
 orbs:
-  faber: dmdbrands/faber@dev:snapshot
+  munitor: KofTwentyTwo/munitor@dev:snapshot
 
 workflows:
   integration-tests:
     jobs:
-      - faber/generate_pipeline:
+      - munitor/generate_pipeline:
           name: test-generate-pipeline

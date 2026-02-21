@@ -6,7 +6,7 @@ parameters:
     description: Docker image name (without registry prefix).
   registry:
     type: string
-    default: ghcr.io/dmdbrands
+    default: ghcr.io/KofTwentyTwo
     description: Container registry URL.
   dockerfile:
     type: string

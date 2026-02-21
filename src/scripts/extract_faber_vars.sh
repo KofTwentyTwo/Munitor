@@ -13,11 +13,11 @@ extract_faber_vars() {
   fi
 
   # --- Org defaults (change this block when forking for another org) ---
-  local ORG_DOCKER_REGISTRY="ghcr.io/dmdbrands"
-  local ORG_NPM_SCOPE="@dmdbrands"
-  local ORG_CI_EMAIL="faber-ci@dmdbrands.com"
-  local ORG_CI_NAME="Faber CI"
-  local ORG_ORB_SLUG="dmdbrands/faber"
+  local ORG_DOCKER_REGISTRY="ghcr.io/KofTwentyTwo"
+  local ORG_NPM_SCOPE="@koftwentytwo"
+  local ORG_CI_EMAIL="munitor-ci@koftwentytwo.com"
+  local ORG_CI_NAME="Munitor CI"
+  local ORG_ORB_SLUG="KofTwentyTwo/munitor"
 
   # Core pipeline settings
   FABER_PIPELINE=$(yq '.pipeline' "${config_file}")

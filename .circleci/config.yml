@@ -29,7 +29,7 @@ workflows:
       - orb-tools/pack:
           filters: *tag-only
       - orb-tools/publish:
-          orb_name: dmdbrands/faber
+          orb_name: KofTwentyTwo/munitor
           vcs_type: << pipeline.project.type >>
           pub_type: production
           requires:
@@ -43,7 +43,7 @@ workflows:
       - orb-tools/pack:
           filters: *filters
       - orb-tools/publish:
-          orb_name: dmdbrands/faber
+          orb_name: KofTwentyTwo/munitor
           vcs_type: << pipeline.project.type >>
           pub_type: dev
           dev_tags: "dev:${CIRCLE_SHA1},dev:snapshot"

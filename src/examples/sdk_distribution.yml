@@ -1,13 +1,13 @@
 description: >
-  Example showing how to use Faber with an SDK distribution repo.
+  Example showing how to use Munitor with an SDK distribution repo.
   Each repo needs .circleci/config.yml, .faber.yml, and .sdk-release.yml.
 
 usage:
   version: 2.1
   setup: true
   orbs:
-    faber: dmdbrands/faber@1
+    munitor: KofTwentyTwo/munitor@1
   workflows:
     setup:
       jobs:
-        - faber/generate_pipeline
+        - munitor/generate_pipeline

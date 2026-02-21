@@ -1,13 +1,13 @@
 description: >
-  Example showing how to use Faber with a Node.js API repo.
+  Example showing how to use Munitor with a Node.js API repo.
   Each repo needs two files: .circleci/config.yml and .faber.yml.
 
 usage:
   version: 2.1
   setup: true
   orbs:
-    faber: dmdbrands/faber@1
+    munitor: KofTwentyTwo/munitor@1
   workflows:
     setup:
       jobs:
-        - faber/generate_pipeline
+        - munitor/generate_pipeline

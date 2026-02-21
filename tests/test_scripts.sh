@@ -196,11 +196,11 @@ else
   fail "should use NPM_TOKEN in .npmrc"
 fi
 
-echo -n "  TEST: always includes @dmdbrands scope... "
-if grep -q '@dmdbrands' "${SRC_SCRIPTS}/npm_auth.sh"; then
+echo -n "  TEST: always includes @koftwentytwo scope... "
+if grep -q '@koftwentytwo' "${SRC_SCRIPTS}/npm_auth.sh"; then
   pass
 else
-  fail "should always include @dmdbrands scope"
+  fail "should always include @koftwentytwo scope"
 fi
 
 echo -n "  TEST: supports additional scopes via NPM_SCOPES... "

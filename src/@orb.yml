@@ -1,14 +1,14 @@
 version: 2.1
 
 description: >
-  Faber (Latin: maker, craftsman) -- Me.Health's unified CircleCI orb for
-  building, testing, and deploying all repositories. Provides standardized
+  Munitor (Latin: fortifier, protector) -- KofTwentyTwo's unified CircleCI orb
+  for building, testing, and deploying all repositories. Provides standardized
   CI/CD pipelines via dynamic configuration so each repo needs only a tiny
   .faber.yml to define its pipeline.
 
 display:
-  home_url: https://github.com/dmdbrands/Faber
-  source_url: https://github.com/dmdbrands/Faber
+  home_url: https://github.com/KofTwentyTwo/Munitor
+  source_url: https://github.com/KofTwentyTwo/Munitor
 
 orbs:
   continuation: circleci/continuation@1.0

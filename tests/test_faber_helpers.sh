@@ -46,7 +46,7 @@ echo "=== faber_header Tests ==="
 HEADER_OUTPUT=$(bash -c "source '${SRC_SCRIPTS}/faber_helpers.sh'; faber_header 'test_step'" 2>&1)
 
 echo -n "  TEST: header contains step name... "
-if echo "${HEADER_OUTPUT}" | grep -q 'Faber: test_step'; then
+if echo "${HEADER_OUTPUT}" | grep -q 'Munitor: test_step'; then
   pass
 else
   fail "missing step name"

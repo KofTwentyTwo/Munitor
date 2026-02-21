@@ -49,10 +49,10 @@ assert_eq "context sonar" "sonarcloud" "${FABER_CONTEXT_SONAR}"
 assert_eq "context nvd" "nvd" "${FABER_CONTEXT_NVD}"
 assert_eq "github_release flag (has github context)" "true" "${FABER_GITHUB_RELEASE}"
 assert_eq "cd env release default" "staging" "${FABER_CD_ENV_RELEASE}"
-assert_eq "ci_email default" "faber-ci@dmdbrands.com" "${FABER_CI_EMAIL}"
-assert_eq "ci_name default" "Faber CI" "${FABER_CI_NAME}"
-assert_eq "npm_default_scope" "@dmdbrands" "${FABER_NPM_DEFAULT_SCOPE}"
-assert_eq "orb_slug" "dmdbrands/faber" "${FABER_ORB_SLUG}"
+assert_eq "ci_email default" "munitor-ci@koftwentytwo.com" "${FABER_CI_EMAIL}"
+assert_eq "ci_name default" "Munitor CI" "${FABER_CI_NAME}"
+assert_eq "npm_default_scope" "@koftwentytwo" "${FABER_NPM_DEFAULT_SCOPE}"
+assert_eq "orb_slug" "KofTwentyTwo/munitor" "${FABER_ORB_SLUG}"
 
 # --------------------------------------------------------------------------
 # node-api-minimal fixture (tests defaults)
@@ -109,7 +109,7 @@ assert_eq "tf_live_path" "terraform/live" "${FABER_TF_LIVE_PATH}"
 assert_eq "tf_environments" "production staging dev" "${FABER_TF_ENVIRONMENTS}"
 assert_eq "checkov_skip" "CKV_AWS_144,CKV_AWS_145,CKV2_AWS_6" "${FABER_CHECKOV_SKIP}"
 assert_eq "sast" "false" "${FABER_SAST}"
-assert_eq "docker_registry default" "ghcr.io/dmdbrands" "${FABER_DOCKER_REGISTRY}"
+assert_eq "docker_registry default" "ghcr.io/KofTwentyTwo" "${FABER_DOCKER_REGISTRY}"
 
 # --------------------------------------------------------------------------
 # SAST fail_on_findings (default, boolean true, boolean false, object form)

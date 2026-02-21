@@ -1,13 +1,13 @@
-# Faber
+# Munitor
 
-Latin: *faber* (maker, craftsman) -- DMD Brands' unified CircleCI orb for building, testing, and deploying all repositories. Pipeline changes happen in one place instead of 80+ repos.
+Latin: *munitor* (fortifier, protector) -- KofTwentyTwo's unified CircleCI orb for building, testing, and deploying all repositories. Pipeline changes happen in one place instead of 80+ repos.
 
 ## How It Works
 
-Faber uses CircleCI's [dynamic configuration](https://circleci.com/docs/dynamic-config/) to generate your full CI/CD pipeline at runtime. Each repo has a minimal `.circleci/config.yml` that triggers Faber, and a `.faber.yml` that declares what your project needs. Faber reads your config, selects the right template, and generates a complete CircleCI workflow.
+Munitor uses CircleCI's [dynamic configuration](https://circleci.com/docs/dynamic-config/) to generate your full CI/CD pipeline at runtime. Each repo has a minimal `.circleci/config.yml` that triggers Munitor, and a `.faber.yml` that declares what your project needs. Munitor reads your config, selects the right template, and generates a complete CircleCI workflow.
 
 ```
-repo/.faber.yml  -->  Faber setup job  -->  Generated pipeline  -->  Build/Test/Deploy
+repo/.faber.yml  -->  Munitor setup job  -->  Generated pipeline  -->  Build/Test/Deploy
 ```
 
 ## Quick Start
@@ -20,11 +20,11 @@ This file is identical across all repos:
 version: 2.1
 setup: true
 orbs:
-  faber: dmdbrands/faber@1
+  faber: KofTwentyTwo/munitor@1
 workflows:
   setup:
     jobs:
-      - faber/generate_pipeline
+      - munitor/generate_pipeline
 ```
 
 ### 2. Add `.faber.yml`
@@ -33,7 +33,7 @@ Pick your pipeline type and create the config in your repo root. See [Pipeline T
 
 ### 3. Ensure branch naming follows GitFlow
 
-Faber validates branch names and will fail on non-conforming names.
+Munitor validates branch names and will fail on non-conforming names.
 
 | Pattern | Purpose |
 |---------|---------|
@@ -71,7 +71,7 @@ pipeline: node-api
 orb_version: dev:snapshot
 image_name: my-app
 docker:
-  registry: ghcr.io/dmdbrands
+  registry: ghcr.io/KofTwentyTwo
 contexts:
   registry: ghcr
   github: github
@@ -86,13 +86,13 @@ image_name: my-app
 node_version: "22"                    # default: 20
 
 sonar:
-  project_key: dmdbrands_my-app       # omit to skip SonarCloud
+  project_key: KofTwentyTwo_my-app       # omit to skip SonarCloud
 
 docker:
-  registry: ghcr.io/dmdbrands
+  registry: ghcr.io/KofTwentyTwo
 
 cd:
-  repo: dmdbrands/my-app-cd           # omit to skip GitOps CD updates
+  repo: KofTwentyTwo/my-app-cd           # omit to skip GitOps CD updates
   env:
     release: staging                   # default: staging (CD target for release/* branches)
 
@@ -148,7 +148,7 @@ pipeline: java-webapp
 orb_version: dev:snapshot
 image_name: my-service
 docker:
-  registry: ghcr.io/dmdbrands
+  registry: ghcr.io/KofTwentyTwo
 contexts:
   github: github
 ```
@@ -162,13 +162,13 @@ image_name: my-service
 java_version: "21"                    # default: 21
 
 sonar:
-  project_key: dmdbrands_my-service   # omit to skip SonarCloud
+  project_key: KofTwentyTwo_my-service   # omit to skip SonarCloud
 
 docker:
-  registry: ghcr.io/dmdbrands
+  registry: ghcr.io/KofTwentyTwo
 
 cd:
-  repo: dmdbrands/my-service-cd       # omit to skip GitOps CD updates
+  repo: KofTwentyTwo/my-service-cd       # omit to skip GitOps CD updates
   env:
     release: staging                   # default: staging (CD target for release/* branches)
 
@@ -302,7 +302,7 @@ For `release-candidate` workflows, `docker-build-push` runs after all quality ch
 
 ## Release Workflow
 
-Faber follows a three-environment GitFlow model: **dev**, **staging**, **prod**. Release candidates on staging serve as the QA/UAT gate -- there is no separate UAT environment.
+Munitor follows a three-environment GitFlow model: **dev**, **staging**, **prod**. Release candidates on staging serve as the QA/UAT gate -- there is no separate UAT environment.
 
 ### Environments
 
@@ -333,7 +333,7 @@ For emergency production fixes: create `hotfix/<name>` from `main`, fix, then me
 
 ### Versioning
 
-Faber manages versioning automatically via GitVersion. You do not need a `GitVersion.yml` in your repo -- Faber writes a standard SDLC-compliant config at CI time. Version bumps follow commit conventions:
+Munitor manages versioning automatically via GitVersion. You do not need a `GitVersion.yml` in your repo -- Munitor writes a standard SDLC-compliant config at CI time. Version bumps follow commit conventions:
 
 - **Patch** (default): every merge to main
 - **Minor**: feature branch merge to develop
@@ -384,7 +384,7 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 
 ## Health Check Requirement
 
-Every container built by Faber must expose a health endpoint. After the Docker image is built, Faber starts the container and validates the endpoint returns HTTP 200. This is a mandatory gate; builds fail if the health check does not pass within 30 seconds.
+Every container built by Munitor must expose a health endpoint. After the Docker image is built, Munitor starts the container and validates the endpoint returns HTTP 200. This is a mandatory gate; builds fail if the health check does not pass within 30 seconds.
 
 Default endpoint: `GET /api/health` on port 3000 (node-api) or 8080 (java-webapp). Override via `health.path` and `health.port` in `.faber.yml`.
 
@@ -394,19 +394,19 @@ Default endpoint: `GET /api/health` on port 3000 (node-api) or 8080 (java-webapp
 
 **"faber_header: command not found"** -- You're using an older orb version. Update to `dev:snapshot` or wait for the next stable release.
 
-**Empty output + exit code 1 on `npm ci`** -- Usually a PATH issue. Faber exports node/npm to `BASH_ENV`; if this breaks, all subsequent steps fail silently. Check that `install_node` succeeded in the build logs.
+**Empty output + exit code 1 on `npm ci`** -- Usually a PATH issue. Munitor exports node/npm to `BASH_ENV`; if this breaks, all subsequent steps fail silently. Check that `install_node` succeeded in the build logs.
 
-**"Unknown key 'xxx' in .faber.yml"** -- Faber warns on unrecognized top-level keys to catch typos. Check spelling against the reference table above.
+**"Unknown key 'xxx' in .faber.yml"** -- Munitor warns on unrecognized top-level keys to catch typos. Check spelling against the reference table above.
 
-**Interactive prompt hangs (debconf/dpkg)** -- If test commands install system packages via apt, add `DEBIAN_FRONTEND=noninteractive` as a prefix. Faber sets this automatically in the test runner, but explicit is safer for custom commands.
+**Interactive prompt hangs (debconf/dpkg)** -- If test commands install system packages via apt, add `DEBIAN_FRONTEND=noninteractive` as a prefix. Munitor sets this automatically in the test runner, but explicit is safer for custom commands.
 
 **"Unsupported pipeline type"** -- The `pipeline` field must be one of: `node-api`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo`.
 
-**Branch name rejected** -- Faber enforces GitFlow naming. Rename your branch to match an allowed pattern.
+**Branch name rejected** -- Munitor enforces GitFlow naming. Rename your branch to match an allowed pattern.
 
-**Tests pass locally but fail in CI** -- Check Node/Java version alignment. Add an `.nvmrc` file to keep local and CI versions in sync. Faber will warn if `.nvmrc` and `.faber.yml` versions differ.
+**Tests pass locally but fail in CI** -- Check Node/Java version alignment. Add an `.nvmrc` file to keep local and CI versions in sync. Munitor will warn if `.nvmrc` and `.faber.yml` versions differ.
 
-## Development (Faber Contributors)
+## Development (Munitor Contributors)
 
 ```bash
 make lint             # yamllint + shellcheck
@@ -416,7 +416,7 @@ make test-templates   # template rendering tests
 make all              # run everything
 ```
 
-Pushes to `develop` auto-publish `dmdbrands/faber@dev:snapshot`. Production releases are tagged on `main` (`v1.2.3`).
+Pushes to `develop` auto-publish `KofTwentyTwo/munitor@dev:snapshot`. Production releases are tagged on `main` (`v1.2.3`).
 
 ### Architecture
 

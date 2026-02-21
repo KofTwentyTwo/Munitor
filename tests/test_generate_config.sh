@@ -666,7 +666,7 @@ echo "=== validate-cd-repo Template Tests ==="
 # Basic rendering
 run_test "validate-cd-repo: renders orb version" \
   "${FIXTURES_DIR}/validate-cd-repo.faber.yml" \
-  "dmdbrands/faber@dev:snapshot"
+  "KofTwentyTwo/munitor@dev:snapshot"
 
 # Workflow presence
 run_test "validate-cd-repo: has pr-checks workflow" \
@@ -771,7 +771,7 @@ run_negative_test "validate-cd-repo: no github-release job" \
 # Minimal fixture tests (defaults)
 run_test "validate-cd-repo-minimal: renders correctly" \
   "${FIXTURES_DIR}/validate-cd-repo-minimal.faber.yml" \
-  "dmdbrands/faber@dev:snapshot"
+  "KofTwentyTwo/munitor@dev:snapshot"
 
 run_test "validate-cd-repo-minimal: has all three workflows" \
   "${FIXTURES_DIR}/validate-cd-repo-minimal.faber.yml" \

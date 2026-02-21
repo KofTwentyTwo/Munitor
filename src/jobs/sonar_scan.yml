@@ -10,7 +10,7 @@ parameters:
     description: SonarCloud project key.
   sonar_org:
     type: string
-    default: dmdbrands
+    default: KofTwentyTwo
     description: SonarCloud organization.
   resource_class:
     type: enum

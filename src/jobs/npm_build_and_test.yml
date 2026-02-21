@@ -17,7 +17,7 @@ parameters:
     description: JSON array of additional npm scopes (e.g. '["@greatergoods"]').
   npm_default_scope:
     type: string
-    default: "@dmdbrands"
+    default: "@koftwentytwo"
     description: Default npm scope for the organization.
   services:
     type: string

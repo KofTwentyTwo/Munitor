@@ -6,7 +6,7 @@ FABER_HELPERS="${FABER_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd
 # shellcheck source=faber_helpers.sh
 if [[ -f "${FABER_HELPERS}" ]]; then source "${FABER_HELPERS}"
 elif ! type faber_header &>/dev/null; then
-  faber_header() { echo "=== Faber: ${1:-unknown} ==="; }
+  faber_header() { echo "=== Munitor: ${1:-unknown} ==="; }
   faber_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
   faber_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
@@ -93,8 +93,8 @@ else
 fi
 
 # Commit and push
-git config user.email "${CI_GIT_EMAIL:-faber-ci@dmdbrands.com}"
-git config user.name "${CI_GIT_NAME:-Faber CI}"
+git config user.email "${CI_GIT_EMAIL:-munitor-ci@koftwentytwo.com}"
+git config user.name "${CI_GIT_NAME:-Munitor CI}"
 
 if git diff --cached --quiet; then
   echo "No changes to commit (version already up to date)."
