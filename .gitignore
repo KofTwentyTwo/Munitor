@@ -17,3 +17,6 @@ node_modules/
 
 # Claude Code
 .claude/
+docs/TODO.md
+docs/PLAN-*.md
+docs/SESSION-STATE.md
