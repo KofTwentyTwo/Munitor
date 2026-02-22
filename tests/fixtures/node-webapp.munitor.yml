@@ -1,0 +1,40 @@
+pipeline: node-webapp
+orb_version: dev:snapshot
+
+image_name: website-frontend
+node_version: "22"
+
+sonar:
+  project_key: koftwentytwo_website-frontend
+
+docker:
+  registry: ghcr.io/KofTwentyTwo
+
+cd:
+  repo: KofTwentyTwo/website-cd-pipeline
+
+coverage:
+  min_instruction: 80
+
+e2e: true
+sbom: true
+
+sast:
+  fail_on_findings: false
+
+test:
+  commands:
+    - npm run test
+    - npm run test:integration
+  coverage:
+    tool: jest
+    min_instruction: 80
+
+health:
+  path: /api/health
+  port: 3000
+
+contexts:
+  registry: ghcr
+  github: github
+  sonar: sonarcloud

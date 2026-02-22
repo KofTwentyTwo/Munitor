@@ -70,7 +70,7 @@ validate_required_fields() {
   [[ -z "$(yq '.orb_version // ""' "${config}")" ]] && missing+=("orb_version")
 
   case "${pipeline}" in
-    java-webapp|node-api)
+    java-webapp|node-api|node-webapp)
       [[ -z "$(yq '.image_name // ""' "${config}")" ]] && missing+=("image_name")
       [[ -z "$(yq '.docker.registry // ""' "${config}")" ]] && missing+=("docker.registry")
       ;;
@@ -94,7 +94,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom contexts npm node services test terraform sast health kustomize kube_linter_config"
+KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom contexts npm node services test terraform sast health kustomize kube_linter_config package_manager"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then

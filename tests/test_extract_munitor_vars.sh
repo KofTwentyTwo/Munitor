@@ -179,6 +179,47 @@ assert_eq "kube_linter_config default (empty)" "" "${MUNITOR_KUBE_LINTER_CONFIG}
 assert_eq "yamllint_paths default" "base/ overlays/ argocd-apps/" "${MUNITOR_YAMLLINT_PATHS}"
 
 # --------------------------------------------------------------------------
+# node-webapp full fixture
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: node-webapp fixture ==="
+extract_munitor_vars "${FIXTURES_DIR}/node-webapp.munitor.yml"
+
+assert_eq "pipeline type" "node-webapp" "${MUNITOR_PIPELINE}"
+assert_eq "image_name" "website-frontend" "${MUNITOR_IMAGE_NAME}"
+assert_eq "node_version" "22" "${MUNITOR_NODE_VERSION}"
+assert_eq "sonar project_key" "koftwentytwo_website-frontend" "${MUNITOR_SONAR_PROJECT_KEY}"
+assert_eq "sonar flag" "true" "${MUNITOR_SONAR}"
+assert_eq "docker registry" "ghcr.io/KofTwentyTwo" "${MUNITOR_DOCKER_REGISTRY}"
+assert_eq "cd repo" "KofTwentyTwo/website-cd-pipeline" "${MUNITOR_CD_REPO}"
+assert_eq "cd flag" "true" "${MUNITOR_CD}"
+assert_eq "coverage min" "80" "${MUNITOR_COVERAGE_MIN}"
+assert_eq "e2e" "true" "${MUNITOR_E2E}"
+assert_eq "sbom" "true" "${MUNITOR_SBOM}"
+assert_eq "health_port default 3000" "3000" "${MUNITOR_HEALTH_PORT}"
+assert_eq "health_path" "/api/health" "${MUNITOR_HEALTH_PATH}"
+assert_eq "package_manager default" "npm" "${MUNITOR_PACKAGE_MANAGER}"
+assert_eq "sast object form" "true" "${MUNITOR_SAST}"
+assert_eq "sast fail_on_findings (object false)" "false" "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
+
+# --------------------------------------------------------------------------
+# node-webapp-minimal fixture (tests defaults)
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: node-webapp-minimal fixture ==="
+extract_munitor_vars "${FIXTURES_DIR}/node-webapp-minimal.munitor.yml"
+
+assert_eq "pipeline type" "node-webapp" "${MUNITOR_PIPELINE}"
+assert_eq "node_version" "22" "${MUNITOR_NODE_VERSION}"
+assert_eq "image_name" "simple-webapp" "${MUNITOR_IMAGE_NAME}"
+assert_eq "sonar flag (no sonar)" "false" "${MUNITOR_SONAR}"
+assert_eq "e2e" "false" "${MUNITOR_E2E}"
+assert_eq "sbom" "false" "${MUNITOR_SBOM}"
+assert_eq "health_port default 3000" "3000" "${MUNITOR_HEALTH_PORT}"
+assert_eq "coverage min default" "70" "${MUNITOR_COVERAGE_MIN}"
+assert_eq "package_manager default" "npm" "${MUNITOR_PACKAGE_MANAGER}"
+
+# --------------------------------------------------------------------------
 # Missing config file
 # --------------------------------------------------------------------------
 echo ""
@@ -216,6 +257,15 @@ fi
 
 echo -n "  TEST: get_envsubst_vars includes MUNITOR_ORB_SLUG... "
 if echo "${VARS}" | grep -q 'MUNITOR_ORB_SLUG'; then
+  echo "PASS"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL"
+  FAIL=$((FAIL + 1))
+fi
+
+echo -n "  TEST: get_envsubst_vars includes MUNITOR_PACKAGE_MANAGER... "
+if echo "${VARS}" | grep -q 'MUNITOR_PACKAGE_MANAGER'; then
   echo "PASS"
   PASS=$((PASS + 1))
 else

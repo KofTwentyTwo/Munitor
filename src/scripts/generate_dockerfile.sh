@@ -146,6 +146,15 @@ ENTRYPOINT ["sh", "-c", "java \$JAVA_OPTS -jar app.jar"]
 DOCKERFILE
     ;;
 
+  node-webapp)
+    if [[ -f "Dockerfile" ]]; then
+      echo "Using existing Dockerfile (node-webapp does not auto-generate)."
+    else
+      echo "ERROR: No Dockerfile found. node-webapp requires a user-provided Dockerfile." >&2
+      exit 1
+    fi
+    ;;
+
   *)
     echo "ERROR: Unsupported pipeline type '${MUNITOR_PIPELINE}' for Dockerfile generation." >&2
     exit 1

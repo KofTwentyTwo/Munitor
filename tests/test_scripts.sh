@@ -404,6 +404,13 @@ else
   fail "should handle java-webapp"
 fi
 
+echo -n "  TEST: handles node-webapp pipeline... "
+if grep -q 'node-webapp)' "${SRC_SCRIPTS}/generate_dockerfile.sh"; then
+  pass
+else
+  fail "should handle node-webapp"
+fi
+
 echo -n "  TEST: fails on unsupported pipeline... "
 if grep -q 'Unsupported pipeline type' "${SRC_SCRIPTS}/generate_dockerfile.sh"; then
   pass

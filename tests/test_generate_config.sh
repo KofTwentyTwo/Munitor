@@ -386,6 +386,92 @@ run_negative_test "node-api-partial: no test_setup" \
   "${FIXTURES_DIR}/node-api-partial.munitor.yml" \
   "test_setup"
 
+# Test node-webapp renders with correct values
+run_test "node-webapp: renders image_name" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "website-frontend"
+
+run_test "node-webapp: renders node_version" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "node_version: \"22\""
+
+run_test "node-webapp: includes e2e when enabled" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "e2e-tests"
+
+run_test "node-webapp: includes sonar when project_key set" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "sonar-scan"
+
+run_test "node-webapp: uses npm_sonar_scan (not mvn sonar_scan)" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "munitor/npm_sonar_scan"
+
+run_test "node-webapp: includes sbom when enabled" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "sbom"
+
+run_test "node-webapp: uses npm_sbom (not mvn sbom)" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "munitor/npm_sbom"
+
+run_test "node-webapp: uses npm_build_and_test" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "npm_build_and_test"
+
+run_test "node-webapp: includes npm code quality" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "npm_code_quality"
+
+run_test "node-webapp: includes npm coverage" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "npm_coverage"
+
+run_test "node-webapp: includes npm security scan" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "npm_security_scan"
+
+# Sonar non-blocking: sonar-scan should NOT be in docker-build-push requires
+run_negative_context_test "node-webapp: sonar-scan not in docker-build-push requires" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "name: docker-build-push" \
+  "context:" \
+  "sonar-scan"
+
+# Health check defaults
+run_context_test "node-webapp: docker-build-push health_port defaults to 3000" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "name: docker-build-push" \
+  "context:" \
+  'health_port: "3000"'
+
+run_context_test "node-webapp: docker-build-push includes health_path" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "name: docker-build-push" \
+  "context:" \
+  "health_path: /api/health"
+
+# Test node-webapp-minimal: e2e/sbom/sonar should be excluded
+run_test "node-webapp-minimal: renders node 22" \
+  "${FIXTURES_DIR}/node-webapp-minimal.munitor.yml" \
+  "node_version: \"22\""
+
+run_test "node-webapp-minimal: has build-and-test" \
+  "${FIXTURES_DIR}/node-webapp-minimal.munitor.yml" \
+  "build-and-test"
+
+run_negative_test "node-webapp-minimal: no e2e block" \
+  "${FIXTURES_DIR}/node-webapp-minimal.munitor.yml" \
+  "e2e-tests"
+
+run_negative_test "node-webapp-minimal: no sbom block" \
+  "${FIXTURES_DIR}/node-webapp-minimal.munitor.yml" \
+  "sbom"
+
+run_negative_test "node-webapp-minimal: no sonar block" \
+  "${FIXTURES_DIR}/node-webapp-minimal.munitor.yml" \
+  "sonar-scan"
+
 # Test sdk-distribution renders correctly
 run_test "sdk-distribution: renders pipeline type" \
   "${FIXTURES_DIR}/sdk-distribution.munitor.yml" \
@@ -617,6 +703,55 @@ run_context_test "node-api: release-candidate has code-quality" \
   "release-candidate:" \
   "production:" \
   "code-quality"
+
+# node-webapp: has release-candidate and production workflows
+run_test "node-webapp: has release-candidate workflow" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "release-candidate:"
+
+run_test "node-webapp: has production workflow" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "production:"
+
+run_negative_test "node-webapp: no legacy release workflow" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "^  release:"
+
+# node-webapp: production has no quality gates
+run_negative_context_test "node-webapp: production has no code-quality" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "code-quality"
+
+run_negative_context_test "node-webapp: production has no coverage" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "npm_coverage"
+
+run_negative_context_test "node-webapp: production has no security-scan" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "npm_security_scan"
+
+# node-webapp: release-candidate has quality gates
+run_context_test "node-webapp: release-candidate has code-quality" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "code-quality"
+
+# node-webapp: staging workflow present
+run_test "node-webapp: includes staging workflow" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "staging:"
+
+# node-webapp: CD update blocks when cd.repo is set
+run_test "node-webapp: includes update-cd-repo when cd.repo set" \
+  "${FIXTURES_DIR}/node-webapp.munitor.yml" \
+  "update-cd-repo"
 
 # terraform: has release-candidate and production workflows
 run_test "terraform: has release-candidate workflow" \
