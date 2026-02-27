@@ -12,6 +12,9 @@ elif ! type munitor_header &>/dev/null; then
 fi
 
 TRIVY_VERSION="${TRIVY_VERSION:-0.58.2}"
+INSTALL_DIR="${HOME}/bin"
+mkdir -p "${INSTALL_DIR}"
+export PATH="${INSTALL_DIR}:${PATH}"
 
 munitor_header "run_trivy_image"
 
@@ -32,8 +35,6 @@ fi
 # Install Trivy if not present (direct binary download, no upstream installer script)
 if ! command -v trivy &> /dev/null; then
   echo "Installing Trivy ${TRIVY_VERSION}..."
-  INSTALL_DIR="${HOME}/bin"
-  mkdir -p "${INSTALL_DIR}"
   ARCH=$(uname -m)
   case "${ARCH}" in
     x86_64)  ARCH="64bit" ;;
@@ -45,7 +46,6 @@ if ! command -v trivy &> /dev/null; then
   tar -xzf "/tmp/${TARBALL}" -C "${INSTALL_DIR}" trivy
   rm -f "/tmp/${TARBALL}"
   chmod +x "${INSTALL_DIR}/trivy"
-  export PATH="${INSTALL_DIR}:${PATH}"
 fi
 
 echo "Scanning container image: ${IMAGE}"

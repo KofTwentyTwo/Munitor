@@ -31,7 +31,9 @@ steps:
       key: nvd-cache-v1-{{ .Branch }}-{{ epoch }}
       paths:
         - ~/.dependency-check
+  - restore_trivy_cache
   - run_trivy
+  - save_trivy_cache
   - store_artifacts:
       path: target/dependency-check-report.html
       destination: owasp-report.html

@@ -16,7 +16,9 @@ steps:
   - attach_workspace:
       at: .
   - npm_audit
+  - restore_trivy_cache
   - run_trivy
+  - save_trivy_cache
   - store_artifacts:
       path: /tmp/trivy-results.json
       destination: trivy-results.json

@@ -1,0 +1,14 @@
+description: >
+  Restore cached Trivy binary and vulnerability DB to avoid
+  re-downloading on every CI run.
+steps:
+  - run:
+      name: Write Trivy version file
+      command: echo "${TRIVY_VERSION:-0.58.2}" > .trivy-version
+  - restore_cache:
+      keys:
+        - trivy-bin-v1-{{ checksum ".trivy-version" }}
+  - restore_cache:
+      keys:
+        - trivy-db-v1-{{ .Branch }}
+        - trivy-db-v1-

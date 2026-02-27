@@ -14,6 +14,7 @@ fi
 # tfsec is deprecated/archived -- use trivy config instead
 TRIVY_VERSION="${TRIVY_VERSION:-0.58.2}"
 INSTALL_DIR="${HOME}/bin"
+export PATH="${INSTALL_DIR}:${PATH}"
 
 munitor_header "install_tfsec (trivy ${TRIVY_VERSION})"
 
@@ -43,5 +44,4 @@ tar -xzf "/tmp/${TARBALL}" -C "${INSTALL_DIR}" trivy
 rm -f "/tmp/${TARBALL}"
 chmod +x "${INSTALL_DIR}/trivy"
 
-export PATH="${INSTALL_DIR}:${PATH}"
 echo "Installed trivy: $(trivy --version | head -1)"

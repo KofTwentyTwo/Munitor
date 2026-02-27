@@ -1,0 +1,14 @@
+description: >
+  Save Trivy binary and vulnerability DB to cache for future runs.
+steps:
+  - run:
+      name: Write Trivy version file
+      command: echo "${TRIVY_VERSION:-0.58.2}" > .trivy-version
+  - save_cache:
+      key: trivy-bin-v1-{{ checksum ".trivy-version" }}
+      paths:
+        - ~/bin/trivy
+  - save_cache:
+      key: trivy-db-v1-{{ .Branch }}-{{ epoch }}
+      paths:
+        - ~/.cache/trivy

@@ -16,11 +16,13 @@ parameters:
 executor: python
 steps:
   - checkout
+  - restore_trivy_cache
   - install_tfsec
   - install_checkov
   - run_tfsec:
       path: << parameters.tf_path >>
       soft_fail: << parameters.soft_fail >>
+  - save_trivy_cache
   - run_checkov:
       path: << parameters.tf_path >>
       skip_checks: << parameters.checkov_skip >>
