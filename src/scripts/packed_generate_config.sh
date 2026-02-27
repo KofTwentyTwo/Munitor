@@ -136,6 +136,7 @@ extract_munitor_vars() {
   MUNITOR_COVERAGE_MIN=$(yq '.coverage.min_instruction // "70"' "${config_file}")
   MUNITOR_E2E=$(yq '.e2e // false' "${config_file}")
   MUNITOR_SBOM=$(yq '.sbom // false' "${config_file}")
+  MUNITOR_OWASP=$(yq '.owasp // true' "${config_file}")
 
   # Contexts
   MUNITOR_CONTEXT_REGISTRY=$(yq '.contexts.registry // ""' "${config_file}")
@@ -269,7 +270,7 @@ extract_munitor_vars() {
   export MUNITOR_PIPELINE MUNITOR_ORB_VERSION MUNITOR_IMAGE_NAME MUNITOR_JAVA_VERSION MUNITOR_NODE_VERSION
   export MUNITOR_SONAR_PROJECT_KEY MUNITOR_DOCKER_REGISTRY MUNITOR_CD_REPO MUNITOR_CD_FORMAT
   export MUNITOR_CD_ENV_DEVELOP MUNITOR_CD_ENV_STAGING MUNITOR_CD_ENV_PROD MUNITOR_CD_ENV_RELEASE
-  export MUNITOR_COVERAGE_MIN MUNITOR_E2E MUNITOR_SBOM
+  export MUNITOR_COVERAGE_MIN MUNITOR_E2E MUNITOR_SBOM MUNITOR_OWASP
   export MUNITOR_CONTEXT_REGISTRY MUNITOR_CONTEXT_GITHUB MUNITOR_CONTEXT_SONAR MUNITOR_CONTEXT_NVD
   export MUNITOR_GITHUB_RELEASE
   export MUNITOR_NPM_AUTH MUNITOR_NPM_SCOPES
@@ -289,7 +290,7 @@ extract_munitor_vars() {
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER}'
 }
 MUNITOR_EXTRACT_EOF
 
@@ -351,10 +352,13 @@ workflows:
       - munitor/security_scan:
           name: security-scan
           java_version: "${MUNITOR_JAVA_VERSION}"
+          owasp: ${MUNITOR_OWASP}
+          ##IF_OWASP##
           ##IF_NVD##
           context:
             - ${MUNITOR_CONTEXT_NVD}
           ##ENDIF_NVD##
+          ##ENDIF_OWASP##
           requires:
             - build-and-test
           filters:
@@ -424,10 +428,13 @@ workflows:
       - munitor/security_scan:
           name: security-scan
           java_version: "${MUNITOR_JAVA_VERSION}"
+          owasp: ${MUNITOR_OWASP}
+          ##IF_OWASP##
           ##IF_NVD##
           context:
             - ${MUNITOR_CONTEXT_NVD}
           ##ENDIF_NVD##
+          ##ENDIF_OWASP##
           requires:
             - build-and-test
           filters:
@@ -2091,7 +2098,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom contexts npm node services test terraform sast health kustomize kube_linter_config package_manager"
+KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then
@@ -2195,7 +2202,7 @@ process_conditionals() {
   cp "${input}" "${tmpfile}"
 
   # Process each conditional flag
-  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD NVD; do
+  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD OWASP NVD; do
     local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file

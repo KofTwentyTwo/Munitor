@@ -7,7 +7,7 @@ parameters:
     description: Environment variable containing the GHCR token.
   ghcr_user_env:
     type: env_var_name
-    default: GHCR_USER
+    default: GHCR_USERNAME
     description: Environment variable containing the GHCR username.
 steps:
   - run:

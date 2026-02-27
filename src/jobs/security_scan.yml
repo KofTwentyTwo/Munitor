@@ -6,6 +6,10 @@ parameters:
     type: string
     default: "21"
     description: Java major version to install.
+  owasp:
+    type: boolean
+    default: true
+    description: Run OWASP dependency-check scan.
   resource_class:
     type: enum
     enum:
@@ -22,21 +26,27 @@ steps:
   - install_java:
       version: << parameters.java_version >>
   - restore_maven_cache
-  - restore_cache:
-      keys:
-        - nvd-cache-v1-{{ .Branch }}
-        - nvd-cache-v1-
-  - mvn_owasp
-  - save_cache:
-      key: nvd-cache-v1-{{ .Branch }}-{{ epoch }}
-      paths:
-        - ~/.dependency-check
+  - when:
+      condition: << parameters.owasp >>
+      steps:
+        - restore_cache:
+            keys:
+              - nvd-cache-v1-{{ .Branch }}
+              - nvd-cache-v1-
+        - mvn_owasp
+        - save_cache:
+            key: nvd-cache-v1-{{ .Branch }}-{{ epoch }}
+            paths:
+              - ~/.dependency-check
   - restore_trivy_cache
   - run_trivy
   - save_trivy_cache
-  - store_artifacts:
-      path: target/dependency-check-report.html
-      destination: owasp-report.html
+  - when:
+      condition: << parameters.owasp >>
+      steps:
+        - store_artifacts:
+            path: target/dependency-check-report.html
+            destination: owasp-report.html
   - store_artifacts:
       path: /tmp/trivy-results.json
       destination: trivy-results.json

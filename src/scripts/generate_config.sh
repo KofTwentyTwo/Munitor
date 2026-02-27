@@ -94,7 +94,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom contexts npm node services test terraform sast health kustomize kube_linter_config package_manager"
+KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then
@@ -198,7 +198,7 @@ process_conditionals() {
   cp "${input}" "${tmpfile}"
 
   # Process each conditional flag
-  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD NVD; do
+  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD OWASP NVD; do
     local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file
