@@ -1,0 +1,14 @@
+description: >
+  Example showing how to use Munitor with a CD/GitOps repo.
+  Validates Kustomize overlays, runs kubesec and kube-linter scans.
+  Each repo needs two files: .circleci/config.yml and .munitor.yml.
+
+usage:
+  version: 2.1
+  setup: true
+  orbs:
+    munitor: kof22/munitor@1
+  workflows:
+    setup:
+      jobs:
+        - munitor/generate_pipeline

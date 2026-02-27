@@ -1,0 +1,14 @@
+description: >
+  Example showing how to use Munitor with a Terraform/Terragrunt repo.
+  Runs fmt check, init/validate, Checkov, tfsec, and Trivy scans.
+  Each repo needs two files: .circleci/config.yml and .munitor.yml.
+
+usage:
+  version: 2.1
+  setup: true
+  orbs:
+    munitor: kof22/munitor@1
+  workflows:
+    setup:
+      jobs:
+        - munitor/generate_pipeline

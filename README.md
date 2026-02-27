@@ -135,7 +135,84 @@ contexts:
   sonar: sonarcloud
 ```
 
-**Dockerfile:** Auto-generated multi-stage build. Default framework is `nextjs`, targeting Next.js [standalone output](https://nextjs.org/docs/app/api-reference/config/next-config-js/output) (requires `output: 'standalone'` in `next.config.js`). Set `node: { framework: express }` for Express apps (production deps only, uses `node .` entrypoint).
+**Dockerfile:** Auto-generated multi-stage build. Default framework is `nextjs`, targeting Next.js [standalone output](https://nextjs.org/docs/app/api-reference/config/next-config-js/output) (requires `output: 'standalone'` in `next.config.js`). Set `node: { framework: express }` for Express apps (production deps only, uses `node .` entrypoint). If you need full control over the Dockerfile, use `node-webapp` instead.
+
+### `node-webapp`
+
+For Node.js applications that provide their own Dockerfile (unlike `node-api` which auto-generates one). Use this when your app needs a custom Docker build process.
+
+**Minimal config:**
+
+```yaml
+pipeline: node-webapp
+orb_version: dev:snapshot
+image_name: my-webapp
+docker:
+  registry: ghcr.io/KofTwentyTwo
+contexts:
+  registry: ghcr
+  github: github
+```
+
+**Full config with all options:**
+
+```yaml
+pipeline: node-webapp
+orb_version: dev:snapshot
+image_name: my-webapp
+node_version: "22"                    # default: 20
+
+sonar:
+  project_key: KofTwentyTwo_my-webapp    # omit to skip SonarCloud
+
+docker:
+  registry: ghcr.io/KofTwentyTwo
+
+cd:
+  repo: KofTwentyTwo/my-webapp-cd        # omit to skip GitOps CD updates
+  env:
+    release: staging                   # default: staging (CD target for release/* branches)
+
+coverage:
+  min_instruction: 80                 # default: 70
+
+e2e: true                             # default: false (Playwright)
+sbom: true                            # default: false
+sast: true                            # default: false (Semgrep)
+
+health:
+  path: /api/health                   # default: /api/health
+  port: 3000                          # default: 3000
+
+npm:
+  private_registry: true              # authenticate to private npm before install
+
+services:                             # start containers before tests
+  - image: postgres:17
+    port: 5432
+    healthcheck: "pg_isready -U test -d mydb"
+    env:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: mydb
+
+test:
+  setup: scripts/ci-setup.sh          # script to run before tests
+  commands:                            # replaces default Jest runner
+    - npx playwright install --with-deps chromium
+    - npx playwright test
+  coverage:
+    tool: nyc                          # default: jest
+    command: npm run coverage          # custom coverage command
+    min_instruction: 80                # overrides top-level coverage.min_instruction
+
+contexts:
+  registry: ghcr
+  github: github
+  sonar: sonarcloud
+```
+
+**Dockerfile:** You must provide your own `Dockerfile` in the repo root. Munitor builds it, runs a health check, scans with Trivy, and pushes to the registry. This is the key difference from `node-api`, which auto-generates a Dockerfile.
 
 ### `java-webapp`
 
@@ -150,7 +227,9 @@ image_name: my-service
 docker:
   registry: ghcr.io/KofTwentyTwo
 contexts:
+  registry: ghcr
   github: github
+  nvd: nvd                            # optional, for OWASP dependency check
 ```
 
 **Full config with all options:**
@@ -191,7 +270,7 @@ contexts:
   nvd: nvd                            # optional, for OWASP dependency check
 ```
 
-**What runs:** Maven build/test, Checkstyle, SpotBugs, PMD, JaCoCo coverage, OWASP + Trivy security, Docker build/push (Dockerfile auto-generated), gitleaks.
+**What runs:** Maven build/test, Checkstyle, SpotBugs, PMD, JaCoCo coverage, OWASP + Trivy security, Docker build/push (Dockerfile auto-generated), gitleaks. OWASP dependency check requires the `nvd` context; if omitted, the security scan runs without NVD database enrichment.
 
 **Dockerfile:** Auto-generated production-ready image using Eclipse Temurin JRE Alpine. Includes non-root user (uid 1001), JVM container tuning flags, Docker HEALTHCHECK, and configurable port via `health.port`. The pre-built JAR from CI is copied directly (no redundant Maven build stage).
 
@@ -345,29 +424,29 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 
 | Field | Type | Default | Pipelines | Description |
 |-------|------|---------|-----------|-------------|
-| `pipeline` | string | *required* | all | Pipeline type: `node-api`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo` |
+| `pipeline` | string | *required* | all | Pipeline type: `node-api`, `node-webapp`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo` |
 | `orb_version` | string | *required* | all | Orb version for the generated pipeline (e.g., `1`, `dev:snapshot`) |
-| `image_name` | string | *required** | node-api, java-webapp | Docker image name (without registry prefix) |
-| `node_version` | string | `20` | node-api | Node.js major version |
+| `image_name` | string | *required** | node-api, node-webapp, java-webapp | Docker image name (without registry prefix) |
+| `node_version` | string | `20` | node-api, node-webapp | Node.js major version |
 | `java_version` | string | `21` | java-webapp | Java major version |
-| `sonar.project_key` | string | -- | node-api, java-webapp | SonarCloud project key. Omit to skip |
-| `docker.registry` | string | *required** | node-api, java-webapp | Container registry URL |
-| `cd.repo` | string | -- | node-api, java-webapp | GitOps CD repo (`org/repo`). Omit to skip |
-| `cd.env.release` | string | `staging` | node-api, java-webapp | CD target environment for release branches |
-| `coverage.min_instruction` | int | `70` | node-api, java-webapp | Minimum coverage percentage |
-| `e2e` | bool | `false` | node-api, java-webapp | Enable Playwright E2E tests |
-| `sbom` | bool | `false` | node-api, java-webapp | Enable SBOM generation |
+| `sonar.project_key` | string | -- | node-api, node-webapp, java-webapp | SonarCloud project key. Omit to skip |
+| `docker.registry` | string | *required** | node-api, node-webapp, java-webapp | Container registry URL |
+| `cd.repo` | string | -- | node-api, node-webapp, java-webapp | GitOps CD repo (`org/repo`). Omit to skip |
+| `cd.env.release` | string | `staging` | node-api, node-webapp, java-webapp | CD target environment for release branches |
+| `coverage.min_instruction` | int | `70` | node-api, node-webapp, java-webapp | Minimum coverage percentage |
+| `e2e` | bool | `false` | node-api, node-webapp, java-webapp | Enable Playwright E2E tests |
+| `sbom` | bool | `false` | node-api, node-webapp, java-webapp | Enable SBOM generation |
 | `sast` | bool/object | `false` | all except sdk | Enable Semgrep SAST scanning. Use `true`/`false` or object form |
 | `sast.fail_on_findings` | bool | `true` | all except sdk | Fail build on SAST findings. Set `false` for warn-only mode |
-| `node.framework` | string | `nextjs` | node-api | Node framework: `nextjs` or `express` |
-| `health.path` | string | `/api/health` | node-api, java-webapp | Health check endpoint path |
-| `health.port` | int | `3000`/`8080` | node-api, java-webapp | Health check port (default depends on pipeline) |
-| `npm.private_registry` | bool | `false` | node-api | Authenticate to private npm registry |
-| `services` | list | `[]` | node-api | Service containers to start before tests |
-| `test.setup` | string | -- | node-api | Script to run before tests |
-| `test.commands` | list | `[]` | node-api | Custom test commands (replaces default Jest) |
-| `test.coverage.tool` | string | `jest` | node-api | Coverage tool (`jest` or `nyc`) |
-| `test.coverage.command` | string | -- | node-api | Custom coverage generation command |
+| `node.framework` | string | `nextjs` | node-api | Node framework: `nextjs` or `express` (not used by node-webapp) |
+| `health.path` | string | `/api/health` | node-api, node-webapp, java-webapp | Health check endpoint path |
+| `health.port` | int | `3000`/`8080` | node-api, node-webapp, java-webapp | Health check port (3000 for node-*, 8080 for java-*) |
+| `npm.private_registry` | bool | `false` | node-api, node-webapp | Authenticate to private npm registry |
+| `services` | list | `[]` | node-api, node-webapp | Service containers to start before tests |
+| `test.setup` | string | -- | node-api, node-webapp | Script to run before tests |
+| `test.commands` | list | `[]` | node-api, node-webapp | Custom test commands (replaces default Jest) |
+| `test.coverage.tool` | string | `jest` | node-api, node-webapp | Coverage tool (`jest` or `nyc`) |
+| `test.coverage.command` | string | -- | node-api, node-webapp | Custom coverage generation command |
 | `terraform.path` | string | `terraform/` | terraform | Root Terraform directory |
 | `terraform.live_path` | string | `terraform/live` | terraform | Terragrunt live directory |
 | `terraform.environments` | list | `[production]` | terraform | Environments to validate |
@@ -378,7 +457,10 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 | `kustomize.load_restrictor` | bool | `true` | validate-cd-repo | Use --load-restrictor LoadRestrictionsNone |
 | `kustomize.scan_overlay` | string | `production` | validate-cd-repo | Overlay to scan with kubesec/kube-linter |
 | `kube_linter_config` | string | -- | validate-cd-repo | Path to kube-linter config file |
-| `contexts.*` | object | *required* | all | CircleCI context names (registry, github, sonar, nvd) |
+| `contexts.registry` | string | -- | node-api, node-webapp, java-webapp | CircleCI context for Docker push (e.g., `ghcr`) |
+| `contexts.github` | string | -- | all | CircleCI context for Git/GitHub operations. Enables GitHub Releases when set |
+| `contexts.sonar` | string | -- | node-api, node-webapp, java-webapp | CircleCI context for SonarCloud. Required if `sonar.project_key` is set |
+| `contexts.nvd` | string | -- | java-webapp | CircleCI context for OWASP NVD database. Optional; security scan runs without it |
 
 *\* Required for pipelines that build Docker images.*
 
@@ -386,7 +468,7 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 
 Every container built by Munitor must expose a health endpoint. After the Docker image is built, Munitor starts the container and validates the endpoint returns HTTP 200. This is a mandatory gate; builds fail if the health check does not pass within 30 seconds.
 
-Default endpoint: `GET /api/health` on port 3000 (node-api) or 8080 (java-webapp). Override via `health.path` and `health.port` in `.munitor.yml`.
+Default endpoint: `GET /api/health` on port 3000 (node-api, node-webapp) or 8080 (java-webapp). Override via `health.path` and `health.port` in `.munitor.yml`.
 
 ## Troubleshooting
 
@@ -400,7 +482,9 @@ Default endpoint: `GET /api/health` on port 3000 (node-api) or 8080 (java-webapp
 
 **Interactive prompt hangs (debconf/dpkg)** -- If test commands install system packages via apt, add `DEBIAN_FRONTEND=noninteractive` as a prefix. Munitor sets this automatically in the test runner, but explicit is safer for custom commands.
 
-**"Unsupported pipeline type"** -- The `pipeline` field must be one of: `node-api`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo`.
+**"No template found for pipeline type"** -- The `pipeline` field must be one of: `node-api`, `node-webapp`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo`.
+
+**Setup succeeds but no continuation workflow appears** -- The generated config may contain invalid YAML that CircleCI accepts but can't execute. Common cause: an empty context list item from an unset optional context (e.g., `contexts.nvd`). Check the generated config by running `make publish-snapshot` and retriggering.
 
 **Branch name rejected** -- Munitor enforces GitFlow naming. Rename your branch to match an allowed pattern.
 

@@ -8,11 +8,12 @@ Munitor organizes CI/CD pipelines into **modules** (called "pipeline types" in `
 
 | Module | `.munitor.yml` name | Stack | Deploys Docker | Environments | Repos Using It |
 |--------|-------------------|-------|---------------|--------------|----------------|
-| **Node.js App** | `node-api` | Node.js, Next.js, TypeScript | Yes (auto-generated Dockerfile) | dev, staging, prod | me-health-website, me-health-dashboard-api, fulfillment APIs |
-| **Java Webapp** | `java-webapp` | Java, Maven | Yes (auto-generated Dockerfile) | dev, staging, prod | me-health-portal |
+| **Node.js API** | `node-api` | Node.js, Next.js, TypeScript | Yes (auto-generated Dockerfile) | dev, staging, prod | me-health-website, me-health-dashboard-api, fulfillment APIs |
+| **Node.js Webapp** | `node-webapp` | Node.js, TypeScript | Yes (user-provided Dockerfile) | dev, staging, prod | Website-Frontend |
+| **Java Webapp** | `java-webapp` | Java, Maven | Yes (auto-generated Dockerfile) | dev, staging, prod | Website-Backend |
 | **Terraform** | `terraform` | HCL, Terragrunt, OpenTofu | No | N/A | me-health-portal-infrastructure, terraform-sandbox, aft-* |
 | **SDK Distribution** | `sdk-distribution` | Any (binary artifacts) | No | N/A | GGBluetoothSDK, ggHealthKitPackage |
-| **CD Repo Validation** | `validate-cd-repo` | Kustomize, K8s manifests, ArgoCD | No | N/A | me-health-portal-cd |
+| **CD Repo Validation** | `validate-cd-repo` | Kustomize, K8s manifests, ArgoCD | No | N/A | Website-CD, me-health-portal-cd |
 
 ### Planned Modules
 
@@ -111,13 +112,13 @@ workflows:
       ##ENDIF_SAST##
 ```
 
-Available conditional flags: `E2E`, `SBOM`, `SONAR`, `NPM_AUTH`, `SERVICES`, `TEST_SETUP`, `CUSTOM_TEST`, `COVERAGE_CMD`, `GITHUB_RELEASE`, `SAST`, `CD`.
+Available conditional flags: `E2E`, `SBOM`, `SONAR`, `NPM_AUTH`, `SERVICES`, `TEST_SETUP`, `CUSTOM_TEST`, `COVERAGE_CMD`, `GITHUB_RELEASE`, `SAST`, `CD`, `NVD`.
 
 Templates use a split workflow pattern for release and production:
 - **`release-candidate:`** (release/* branches) -- Full quality pipeline with all gates
 - **`production:`** (main branch) -- Fast-path: build + deploy only (quality was enforced on the release branch)
 
-To add a new flag, set it in `extract_munitor_vars.sh` and add it to the processing loop in `generate_config.sh` (line ~195).
+To add a new flag, set it in `extract_munitor_vars.sh`, export it, and add it to the processing loop in `generate_config.sh` (line ~201). **Important:** any optional context (like `nvd`) that may be empty must be wrapped in a conditional to avoid generating empty YAML list items, which silently break CircleCI continuation.
 
 ### Step 2: Create deploy partials (if multi-environment)
 
@@ -241,12 +242,12 @@ pip3 install -r requirements.txt
 
 Add template to the packing loop (~line 42):
 ```bash
-for tpl in java-webapp node-api terraform sdk-distribution python-app; do
+for tpl in java-webapp node-api node-webapp terraform sdk-distribution validate-cd-repo python-app; do
 ```
 
 If you added deploy partials, add those too (~line 50):
 ```bash
-for partial in java-webapp-deploy node-api-deploy python-app-deploy; do
+for partial in java-webapp-deploy node-api-deploy node-webapp-deploy python-app-deploy; do
 ```
 
 Regenerate: `bash scripts/pack_generate_config.sh`
