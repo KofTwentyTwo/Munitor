@@ -14,13 +14,14 @@ parameters:
       - large
       - xlarge
     default: large
-    description: Docker resource class.
+    description: Machine resource class.
 executor:
-  name: java
-  java_version: << parameters.java_version >>
+  name: machine
   resource_class: << parameters.resource_class >>
 steps:
   - checkout
+  - install_java:
+      version: << parameters.java_version >>
   - restore_maven_cache
   - calculate_version
   - export_version_vars
