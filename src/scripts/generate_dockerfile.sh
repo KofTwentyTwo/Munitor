@@ -147,12 +147,24 @@ DOCKERFILE
     ;;
 
   node-webapp)
-    if [[ -f "Dockerfile" ]]; then
-      echo "Using existing Dockerfile (node-webapp does not auto-generate)."
-    else
-      echo "ERROR: No Dockerfile found. node-webapp requires a user-provided Dockerfile." >&2
-      exit 1
-    fi
+    echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
+    cat > Dockerfile <<DOCKERFILE
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM gcr.io/distroless/nodejs${MUNITOR_NODE_VERSION}-debian12 AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+EXPOSE ${MUNITOR_HEALTH_PORT}
+CMD ["server.js"]
+DOCKERFILE
     ;;
 
   *)
