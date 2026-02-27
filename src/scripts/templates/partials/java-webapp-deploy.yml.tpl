@@ -39,10 +39,13 @@
       - munitor/security_scan:
           name: security-scan
           java_version: "${MUNITOR_JAVA_VERSION}"
+          owasp: ${MUNITOR_OWASP}
+          ##IF_OWASP##
           ##IF_NVD##
           context:
             - ${MUNITOR_CONTEXT_NVD}
           ##ENDIF_NVD##
+          ##ENDIF_OWASP##
           requires:
             - build-and-test
           filters:

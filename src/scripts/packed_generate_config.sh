@@ -136,7 +136,10 @@ extract_munitor_vars() {
   MUNITOR_COVERAGE_MIN=$(yq '.coverage.min_instruction // "70"' "${config_file}")
   MUNITOR_E2E=$(yq '.e2e // false' "${config_file}")
   MUNITOR_SBOM=$(yq '.sbom // false' "${config_file}")
-  MUNITOR_OWASP=$(yq '.owasp // true' "${config_file}")
+  MUNITOR_OWASP=$(yq '.owasp' "${config_file}")
+  if [[ "${MUNITOR_OWASP}" == "null" ]]; then
+    MUNITOR_OWASP="true"
+  fi
 
   # Contexts
   MUNITOR_CONTEXT_REGISTRY=$(yq '.contexts.registry // ""' "${config_file}")
@@ -1611,10 +1614,13 @@ cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PAR
       - munitor/security_scan:
           name: security-scan
           java_version: "${MUNITOR_JAVA_VERSION}"
+          owasp: ${MUNITOR_OWASP}
+          ##IF_OWASP##
           ##IF_NVD##
           context:
             - ${MUNITOR_CONTEXT_NVD}
           ##ENDIF_NVD##
+          ##ENDIF_OWASP##
           requires:
             - build-and-test
           filters:
