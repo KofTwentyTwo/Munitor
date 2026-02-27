@@ -39,8 +39,10 @@
       - munitor/security_scan:
           name: security-scan
           java_version: "${MUNITOR_JAVA_VERSION}"
+          ##IF_NVD##
           context:
             - ${MUNITOR_CONTEXT_NVD}
+          ##ENDIF_NVD##
           requires:
             - build-and-test
           filters:

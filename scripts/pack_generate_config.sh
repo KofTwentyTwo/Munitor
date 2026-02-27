@@ -39,7 +39,7 @@ echo "Packing generate_config.sh..."
   echo ''
 
   # Embed each template
-  for tpl in java-webapp node-api terraform sdk-distribution validate-cd-repo; do
+  for tpl in java-webapp node-api node-webapp terraform sdk-distribution validate-cd-repo; do
     echo "cat > /tmp/munitor/templates/${tpl}.yml.tpl << 'MUNITOR_TPL_EOF'"
     cat "${SRC}/templates/${tpl}.yml.tpl"
     echo 'MUNITOR_TPL_EOF'
@@ -47,7 +47,7 @@ echo "Packing generate_config.sh..."
   done
 
   # Embed partials
-  for partial in java-webapp-deploy node-api-deploy; do
+  for partial in java-webapp-deploy node-api-deploy node-webapp-deploy; do
     echo "cat > /tmp/munitor/templates/partials/${partial}.yml.tpl << 'MUNITOR_PARTIAL_EOF'"
     cat "${SRC}/templates/partials/${partial}.yml.tpl"
     echo 'MUNITOR_PARTIAL_EOF'
