@@ -12,15 +12,14 @@ parameters:
       - medium
       - large
     default: large
-    description: Machine resource class.
+    description: Docker resource class.
 executor:
-  name: machine
+  name: java
+  java_version: << parameters.java_version >>
   resource_class: << parameters.resource_class >>
 steps:
   - attach_workspace:
       at: .
-  - install_java:
-      version: << parameters.java_version >>
   - restore_maven_cache
   - mvn_checkstyle
   - mvn_spotbugs

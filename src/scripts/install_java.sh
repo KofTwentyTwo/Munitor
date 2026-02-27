@@ -15,43 +15,24 @@ munitor_header "install_java"
 
 VERSION="${JAVA_VERSION:-21}"
 
-echo "Installing Java ${VERSION} via SDKMAN..."
+echo "Installing Java ${VERSION} via Adoptium APT repository..."
 
-# Install SDKMAN if not present
-if [[ ! -d "${HOME}/.sdkman" ]]; then
-  curl -s "https://get.sdkman.io" | bash
-fi
+# Add Adoptium GPG key and repository
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public \
+  | sudo tee /etc/apt/keyrings/adoptium.asc > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] \
+  https://packages.adoptium.net/artifactory/deb \
+  $(. /etc/os-release && echo "${VERSION_CODENAME}") main" \
+  | sudo tee /etc/apt/sources.list.d/adoptium.list > /dev/null
 
-# Disable nounset for all SDKMAN operations -- its internals reference
-# many unbound variables (SDKMAN_CANDIDATES_API, SDKMAN_OFFLINE_MODE, etc.)
-# shellcheck source=/dev/null
-set +u
-source "${HOME}/.sdkman/bin/sdkman-init.sh"
+sudo apt-get update -qq
+sudo apt-get install -y -qq "temurin-${VERSION}-jdk"
 
-# Find the latest available build for the requested major version
-IDENTIFIER=$(sdk list java | grep -oP "[\d.]+\.hs-adpt" | grep "^${VERSION}\." | head -1 || true)
-
-if [[ -z "${IDENTIFIER}" ]]; then
-  # Try Temurin distribution
-  IDENTIFIER=$(sdk list java | grep -oP "[\d.]+-tem" | grep "^${VERSION}\." | head -1 || true)
-fi
-
-if [[ -z "${IDENTIFIER}" ]]; then
-  # Fallback: install by major version, let SDKMAN pick the default
-  IDENTIFIER="${VERSION}-tem"
-fi
-
-echo "Installing Java: ${IDENTIFIER}"
-if ! sdk install java "${IDENTIFIER}"; then
-  echo "ERROR: Failed to install Java ${IDENTIFIER}"
-  echo "Available Java versions:"
-  sdk list java | head -20
-  exit 1
-fi
-sdk use java "${IDENTIFIER}"
-
-JAVA_HOME_DIR="$(sdk home java "${IDENTIFIER}")"
-set -u
+# Set JAVA_HOME for subsequent steps
+JAVA_HOME_DIR="/usr/lib/jvm/temurin-${VERSION}-jdk-$(dpkg --print-architecture)"
+echo "export JAVA_HOME='${JAVA_HOME_DIR}'" >> "${BASH_ENV}"
+export JAVA_HOME="${JAVA_HOME_DIR}"
+export PATH="${JAVA_HOME_DIR}/bin:${PATH}"
 
 java -version
-echo "export JAVA_HOME='${JAVA_HOME_DIR}'" >> "${BASH_ENV}"

@@ -444,69 +444,54 @@ fi
 teardown
 
 # =============================================================================
-# Test: node-webapp uses user-provided Dockerfile
+# Test: node-webapp auto-generates Dockerfile
 # =============================================================================
 echo ""
-echo "=== node-webapp Dockerfile Handling ==="
+echo "=== node-webapp Dockerfile Generation ==="
 
-echo -n "  TEST: succeeds when Dockerfile exists... "
+echo -n "  TEST: generates Dockerfile for node-webapp... "
 setup
 cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-webapp
 image_name: my-webapp
 node_version: "22"
-EOF
-cat > "${WORK_DIR}/Dockerfile" <<'EOF'
-FROM node:22-alpine
-WORKDIR /app
-COPY . .
-RUN npm ci && npm run build
-CMD ["node", "server.js"]
 EOF
 OUTPUT=$(run_generate)
-if echo "${OUTPUT}" | grep -q "Using existing Dockerfile"; then
+if echo "${OUTPUT}" | grep -q "Generating Dockerfile for node-webapp"; then
   pass
 else
-  fail "expected 'Using existing Dockerfile' message"
+  fail "expected 'Generating Dockerfile for node-webapp' message"
 fi
 teardown
 
-echo -n "  TEST: fails when no Dockerfile exists... "
+echo -n "  TEST: uses distroless runner image... "
 setup
 cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
 pipeline: node-webapp
 image_name: my-webapp
 node_version: "22"
 EOF
-OUTPUT=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" 2>&1 || true)
-RC=$(cd "${WORK_DIR}" && MUNITOR_CONFIG=".munitor.yml" bash "${SCRIPT}" >/dev/null 2>&1; echo $?) || true
-if [[ "${RC}" -ne 0 ]] && echo "${OUTPUT}" | grep -q "No Dockerfile found"; then
-  pass
-else
-  fail "expected non-zero exit when Dockerfile missing"
-fi
-teardown
-
-echo -n "  TEST: preserves original Dockerfile content... "
-setup
-cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
-pipeline: node-webapp
-image_name: my-webapp
-node_version: "22"
-EOF
-ORIGINAL_CONTENT="FROM node:22-alpine
-WORKDIR /app
-COPY . .
-RUN npm ci && npm run build
-EXPOSE 3000
-CMD [\"node\", \"server.js\"]"
-echo "${ORIGINAL_CONTENT}" > "${WORK_DIR}/Dockerfile"
 run_generate > /dev/null
-AFTER_CONTENT=$(cat "${WORK_DIR}/Dockerfile")
-if [[ "${AFTER_CONTENT}" == "${ORIGINAL_CONTENT}" ]]; then
+if grep -q "gcr.io/distroless/nodejs22-debian12" "${WORK_DIR}/Dockerfile"; then
   pass
 else
-  fail "Dockerfile content was modified"
+  fail "expected distroless runner image in Dockerfile"
+fi
+teardown
+
+echo -n "  TEST: overwrites existing Dockerfile... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+node_version: "22"
+EOF
+echo "OLD CONTENT" > "${WORK_DIR}/Dockerfile"
+run_generate > /dev/null
+if ! grep -q "OLD CONTENT" "${WORK_DIR}/Dockerfile" && grep -q "distroless" "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "Dockerfile was not overwritten with generated content"
 fi
 teardown
 

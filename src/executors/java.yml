@@ -1,0 +1,18 @@
+description: >
+  Docker executor with pre-installed Java and Maven via cimg/openjdk.
+parameters:
+  java_version:
+    type: string
+    default: "21"
+    description: Java major version.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+      - xlarge
+    default: medium
+    description: Docker resource class.
+docker:
+  - image: cimg/openjdk:<< parameters.java_version >>
+resource_class: << parameters.resource_class >>

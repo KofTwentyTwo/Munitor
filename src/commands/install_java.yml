@@ -1,5 +1,5 @@
 description: >
-  Install the specified Java version using SDKMAN.
+  Install the specified Java version using the Adoptium APT repository.
 parameters:
   version:
     type: string
