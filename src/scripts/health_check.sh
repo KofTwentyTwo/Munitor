@@ -75,6 +75,10 @@ if [[ "${HEALTH_DB}" == "true" ]]; then
     -e LB_CONTEXTS=dev \
     -e RDBMS_HOSTNAME="${DB_CONTAINER_NAME}" \
     -e RDBMS_PORT=5432 \
+    -e RDBMS_VENDOR=postgresql \
+    -e RDBMS_DATABASE_NAME=postgres \
+    -e RDBMS_USERNAME=postgres \
+    -e RDBMS_PASSWORD=postgres \
     -e PG_HOST="${DB_CONTAINER_NAME}" \
     -e PG_PORT=5432 \
     -e PG_USER=postgres \

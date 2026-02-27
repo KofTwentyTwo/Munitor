@@ -237,6 +237,16 @@ else
   fail "should pass PG_SSL=false"
 fi
 
+echo -n "  TEST: passes complete RDBMS env vars for sidecar... "
+if grep -q 'RDBMS_VENDOR=postgresql' "${SRC_SCRIPTS}/health_check.sh" \
+  && grep -q 'RDBMS_DATABASE_NAME=postgres' "${SRC_SCRIPTS}/health_check.sh" \
+  && grep -q 'RDBMS_USERNAME=postgres' "${SRC_SCRIPTS}/health_check.sh" \
+  && grep -q 'RDBMS_PASSWORD=postgres' "${SRC_SCRIPTS}/health_check.sh"; then
+  pass
+else
+  fail "should pass all six RDBMS_* env vars"
+fi
+
 # =============================================================================
 # Test: mvn_sonar.sh - Secret validation
 # =============================================================================
