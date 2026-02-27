@@ -14,5 +14,5 @@ parameters:
     default: medium
     description: Docker resource class.
 docker:
-  - image: cimg/openjdk:<< parameters.java_version >>
+  - image: cimg/openjdk:<< parameters.java_version >>.0
 resource_class: << parameters.resource_class >>
