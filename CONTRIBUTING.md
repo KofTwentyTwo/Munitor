@@ -14,6 +14,7 @@ Munitor organizes CI/CD pipelines into **modules** (called "pipeline types" in `
 | **Terraform** | `terraform` | HCL, Terragrunt, OpenTofu | No | N/A | me-health-portal-infrastructure, terraform-sandbox, aft-* |
 | **SDK Distribution** | `sdk-distribution` | Any (binary artifacts) | No | N/A | GGBluetoothSDK, ggHealthKitPackage |
 | **CD Repo Validation** | `validate-cd-repo` | Kustomize, K8s manifests, ArgoCD | No | N/A | Website-CD, me-health-portal-cd |
+| **ArgoCD App-of-Apps** | `argocd-apps` | Kustomize (envs/ layout), ArgoCD | No | N/A | k8s-app-of-apps |
 
 ### Planned Modules
 

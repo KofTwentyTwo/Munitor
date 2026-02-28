@@ -483,7 +483,7 @@ echo ""
 echo "=== kustomize_validate.sh Tests ==="
 
 echo -n "  TEST: auto-detects overlays when KUSTOMIZE_OVERLAYS is empty... "
-if grep -q 'overlays/\*/kustomization.yaml' "${SRC_SCRIPTS}/kustomize_validate.sh"; then
+if grep -q '/\*/kustomization.yaml' "${SRC_SCRIPTS}/kustomize_validate.sh"; then
   pass
 else
   fail "should auto-detect overlays"
@@ -501,6 +501,27 @@ if grep -q '/tmp/kustomize-output' "${SRC_SCRIPTS}/kustomize_validate.sh"; then
   pass
 else
   fail "should output to /tmp/kustomize-output"
+fi
+
+echo -n "  TEST: supports KUSTOMIZE_OVERLAY_DIR env var... "
+if grep -q 'KUSTOMIZE_OVERLAY_DIR' "${SRC_SCRIPTS}/kustomize_validate.sh"; then
+  pass
+else
+  fail "should support KUSTOMIZE_OVERLAY_DIR"
+fi
+
+echo -n "  TEST: skips base build when BASE_PATH is empty... "
+if grep -q 'if \[\[ -n "\${BASE_PATH}" \]\]' "${SRC_SCRIPTS}/kustomize_validate.sh"; then
+  pass
+else
+  fail "should conditionally skip base build"
+fi
+
+echo -n "  TEST: uses OVERLAY_DIR variable for overlay path... "
+if grep -q '"\${OVERLAY_DIR}/' "${SRC_SCRIPTS}/kustomize_validate.sh"; then
+  pass
+else
+  fail "should use OVERLAY_DIR variable"
 fi
 
 # =============================================================================

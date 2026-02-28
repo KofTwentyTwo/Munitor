@@ -1,0 +1,15 @@
+description: >
+  Example showing how to use Munitor with an ArgoCD app-of-apps repo.
+  Like validate-cd-repo but for repos using environment directories (envs/)
+  instead of the standard base/overlays/ kustomize layout.
+  Each repo needs two files: .circleci/config.yml and .munitor.yml.
+
+usage:
+  version: 2.1
+  setup: true
+  orbs:
+    munitor: kof22/munitor@1
+  workflows:
+    setup:
+      jobs:
+        - munitor/generate_pipeline

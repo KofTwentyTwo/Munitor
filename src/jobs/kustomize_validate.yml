@@ -9,6 +9,10 @@ parameters:
     type: string
     default: "base/"
     description: Path to the kustomize base directory.
+  overlay_dir:
+    type: string
+    default: "overlays"
+    description: Directory containing overlay subdirectories (e.g. overlays, envs).
   overlays:
     type: string
     default: ""
@@ -24,6 +28,7 @@ steps:
       version: << parameters.kustomize_version >>
   - kustomize_validate:
       base_path: << parameters.base_path >>
+      overlay_dir: << parameters.overlay_dir >>
       overlays: << parameters.overlays >>
       load_restrictor: << parameters.load_restrictor >>
   - persist_to_workspace:

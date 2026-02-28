@@ -1,0 +1,2 @@
+pipeline: argocd-apps
+orb_version: dev:snapshot

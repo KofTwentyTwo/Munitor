@@ -195,12 +195,24 @@ extract_munitor_vars() {
   MUNITOR_CHECKOV_SKIP=$(yq '.terraform.checkov_skip // ""' "${config_file}")
   # Kustomize / CD repo validation settings
   MUNITOR_KUSTOMIZE_VERSION=$(yq '.kustomize.version // "5.5.0"' "${config_file}")
-  MUNITOR_KUSTOMIZE_BASE_PATH=$(yq '.kustomize.base_path // "base/"' "${config_file}")
+  # Use 'has' check so explicit base_path: "" is preserved (yq // treats "" as falsy)
+  if yq -e '.kustomize.base_path != null' "${config_file}" &>/dev/null; then
+    MUNITOR_KUSTOMIZE_BASE_PATH=$(yq '.kustomize.base_path' "${config_file}")
+  else
+    MUNITOR_KUSTOMIZE_BASE_PATH="base/"
+  fi
   MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR=$(yq '.kustomize.load_restrictor // "true"' "${config_file}")
   MUNITOR_KUSTOMIZE_SCAN_OVERLAY=$(yq '.kustomize.scan_overlay // "production"' "${config_file}")
   MUNITOR_KUSTOMIZE_OVERLAYS=$(yq '.kustomize.overlays // [] | join(" ")' "${config_file}")
+  MUNITOR_KUSTOMIZE_OVERLAY_DIR=$(yq '.kustomize.overlay_dir // "overlays"' "${config_file}")
   MUNITOR_KUBE_LINTER_CONFIG=$(yq '.kube_linter_config // ""' "${config_file}")
-  MUNITOR_YAMLLINT_PATHS="base/ overlays/ argocd-apps/"
+  MUNITOR_YAMLLINT_PATHS=$(yq '.yamllint_paths // ""' "${config_file}")
+  if [[ -z "${MUNITOR_YAMLLINT_PATHS}" || "${MUNITOR_YAMLLINT_PATHS}" == "null" ]]; then
+    case "${MUNITOR_PIPELINE}" in
+      argocd-apps) MUNITOR_YAMLLINT_PATHS="bootstrap/ projects/ credentials/ envs/ apps/ infra/" ;;
+      *) MUNITOR_YAMLLINT_PATHS="base/ overlays/ argocd-apps/" ;;
+    esac
+  fi
 
   # SAST: supports boolean (true/false) or object form (sast: { fail_on_findings: false })
   local sast_raw
@@ -283,7 +295,8 @@ extract_munitor_vars() {
   export MUNITOR_COVERAGE_TOOL MUNITOR_COVERAGE_CMD MUNITOR_COVERAGE_COMMAND
   export MUNITOR_TF_PATH MUNITOR_TF_LIVE_PATH MUNITOR_TF_ENVIRONMENTS MUNITOR_CHECKOV_SKIP MUNITOR_SAST MUNITOR_SAST_FAIL_ON_FINDINGS
   export MUNITOR_KUSTOMIZE_VERSION MUNITOR_KUSTOMIZE_BASE_PATH MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR
-  export MUNITOR_KUSTOMIZE_SCAN_OVERLAY MUNITOR_KUSTOMIZE_OVERLAYS MUNITOR_KUBE_LINTER_CONFIG MUNITOR_YAMLLINT_PATHS
+  export MUNITOR_KUSTOMIZE_SCAN_OVERLAY MUNITOR_KUSTOMIZE_OVERLAYS MUNITOR_KUSTOMIZE_OVERLAY_DIR
+  export MUNITOR_KUBE_LINTER_CONFIG MUNITOR_YAMLLINT_PATHS
   export MUNITOR_NODE_FRAMEWORK MUNITOR_PACKAGE_MANAGER
   export MUNITOR_CI_EMAIL MUNITOR_CI_NAME MUNITOR_NPM_DEFAULT_SCOPE MUNITOR_ORB_SLUG
   export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB
@@ -293,7 +306,7 @@ extract_munitor_vars() {
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER}'
 }
 MUNITOR_EXTRACT_EOF
 
@@ -1572,6 +1585,147 @@ workflows:
               only: main
 MUNITOR_TPL_EOF
 
+cat > /tmp/munitor/templates/argocd-apps.yml.tpl << 'MUNITOR_TPL_EOF'
+version: 2.1
+
+orbs:
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
+
+workflows:
+  pr-checks:
+    jobs:
+      - munitor/yaml_lint_cd:
+          name: yaml-lint
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      - munitor/kustomize_validate:
+          name: kustomize-validate
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlay_dir: "${MUNITOR_KUSTOMIZE_OVERLAY_DIR}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      - munitor/kubesec_scan:
+          name: kubesec-scan
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          requires:
+            - kustomize-validate
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      - munitor/kube_linter:
+          name: kube-linter
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
+          requires:
+            - kustomize-validate
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      - munitor/secrets_scan:
+          name: secrets-scan
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+
+  develop:
+    jobs:
+      - munitor/yaml_lint_cd:
+          name: yaml-lint
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
+          filters:
+            branches:
+              only: develop
+      - munitor/kustomize_validate:
+          name: kustomize-validate
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlay_dir: "${MUNITOR_KUSTOMIZE_OVERLAY_DIR}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
+          filters:
+            branches:
+              only: develop
+      - munitor/kubesec_scan:
+          name: kubesec-scan
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          requires:
+            - kustomize-validate
+          filters:
+            branches:
+              only: develop
+      - munitor/kube_linter:
+          name: kube-linter
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
+          requires:
+            - kustomize-validate
+          filters:
+            branches:
+              only: develop
+      - munitor/secrets_scan:
+          name: secrets-scan
+          filters:
+            branches:
+              only: develop
+
+  release:
+    jobs:
+      - munitor/yaml_lint_cd:
+          name: yaml-lint
+          paths: "${MUNITOR_YAMLLINT_PATHS}"
+          filters:
+            branches:
+              only: main
+      - munitor/kustomize_validate:
+          name: kustomize-validate
+          kustomize_version: "${MUNITOR_KUSTOMIZE_VERSION}"
+          base_path: "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+          overlay_dir: "${MUNITOR_KUSTOMIZE_OVERLAY_DIR}"
+          overlays: "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+          load_restrictor: "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
+          filters:
+            branches:
+              only: main
+      - munitor/kubesec_scan:
+          name: kubesec-scan
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          requires:
+            - kustomize-validate
+          filters:
+            branches:
+              only: main
+      - munitor/kube_linter:
+          name: kube-linter
+          scan_overlay: "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+          config: "${MUNITOR_KUBE_LINTER_CONFIG}"
+          requires:
+            - kustomize-validate
+          filters:
+            branches:
+              only: main
+      - munitor/secrets_scan:
+          name: secrets-scan
+          filters:
+            branches:
+              only: main
+MUNITOR_TPL_EOF
+
 cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
@@ -2087,7 +2241,7 @@ validate_required_fields() {
     terraform)
       [[ -z "$(yq '.terraform.path // ""' "${config}")" ]] && missing+=("terraform.path")
       ;;
-    validate-cd-repo)
+    validate-cd-repo|argocd-apps)
       # No additional required fields beyond orb_version
       ;;
   esac
@@ -2104,7 +2258,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager"
+KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then

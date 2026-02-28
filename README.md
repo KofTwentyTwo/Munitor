@@ -337,6 +337,40 @@ kube_linter_config: .kube-linter.yaml    # default: none (auto-detect if file ex
 
 **What runs:** YAML lint, kustomize build validation (base + all overlays), kubesec security scan, kube-linter best practices check, gitleaks secrets scan.
 
+### `argocd-apps`
+
+For ArgoCD app-of-apps repositories that use environment directories (`envs/`) instead of the standard `base/` + `overlays/` kustomize layout. Functionally identical to `validate-cd-repo` but with a different default directory structure.
+
+**Minimal config:**
+
+```yaml
+pipeline: argocd-apps
+orb_version: dev:snapshot
+```
+
+**Full config:**
+
+```yaml
+pipeline: argocd-apps
+orb_version: dev:snapshot
+
+kustomize:
+  version: "5.5.0"                      # default: 5.5.0
+  base_path: ""                          # empty string skips base build
+  overlay_dir: envs                      # default: overlays
+  overlays:                              # default: auto-detect from {overlay_dir}/*/kustomization.yaml
+    - dev
+    - staging
+    - production
+  load_restrictor: true                  # default: true (--load-restrictor LoadRestrictionsNone)
+  scan_overlay: production               # default: production
+
+kube_linter_config: .kube-linter.yaml    # default: none
+yamllint_paths: "envs/ apps/"            # default: bootstrap/ projects/ credentials/ envs/ apps/ infra/
+```
+
+**What runs:** YAML lint, kustomize build validation (overlays only when `base_path` is empty), kubesec security scan, kube-linter best practices check, gitleaks secrets scan.
+
 ### `sdk-distribution`
 
 For SDK packaging and GitHub Releases. Triggered by semver tags (`v1.2.3`).
@@ -362,7 +396,7 @@ Each workflow runs on specific branches and includes jobs based on your config:
 | `release-candidate` | `release/*` | All pr-checks + Docker, CD (staging), SonarCloud, SBOM, GitHub Release (pre-release) |
 | `production` | `main` | Build + Docker + CD (prod) + GitHub Release (no quality gates) |
 
-For `validate-cd-repo`, all three workflows (`pr-checks`, `develop`, `release`) run the same 5-job set: yaml-lint, kustomize-validate, kubesec-scan, kube-linter, secrets-scan.
+For `validate-cd-repo` and `argocd-apps`, all three workflows (`pr-checks`, `develop`, `release`) run the same 5-job set: yaml-lint, kustomize-validate, kubesec-scan, kube-linter, secrets-scan.
 
 ### Job Dependency Graph (node-api pr-checks)
 
@@ -424,7 +458,7 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 
 | Field | Type | Default | Pipelines | Description |
 |-------|------|---------|-----------|-------------|
-| `pipeline` | string | *required* | all | Pipeline type: `node-api`, `node-webapp`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo` |
+| `pipeline` | string | *required* | all | Pipeline type: `node-api`, `node-webapp`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo`, `argocd-apps` |
 | `orb_version` | string | *required* | all | Orb version for the generated pipeline (e.g., `1`, `dev:snapshot`) |
 | `image_name` | string | *required** | node-api, node-webapp, java-webapp | Docker image name (without registry prefix) |
 | `node_version` | string | `20` | node-api, node-webapp | Node.js major version |
@@ -451,12 +485,14 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 | `terraform.live_path` | string | `terraform/live` | terraform | Terragrunt live directory |
 | `terraform.environments` | list | `[production]` | terraform | Environments to validate |
 | `terraform.checkov_skip` | string | -- | terraform | Comma-separated Checkov rules to skip |
-| `kustomize.version` | string | `5.5.0` | validate-cd-repo | Kustomize version to install |
-| `kustomize.base_path` | string | `base/` | validate-cd-repo | Path to kustomize base directory |
-| `kustomize.overlays` | list | auto-detect | validate-cd-repo | Overlay names to validate |
-| `kustomize.load_restrictor` | bool | `true` | validate-cd-repo | Use --load-restrictor LoadRestrictionsNone |
-| `kustomize.scan_overlay` | string | `production` | validate-cd-repo | Overlay to scan with kubesec/kube-linter |
-| `kube_linter_config` | string | -- | validate-cd-repo | Path to kube-linter config file |
+| `kustomize.version` | string | `5.5.0` | validate-cd-repo, argocd-apps | Kustomize version to install |
+| `kustomize.base_path` | string | `base/` | validate-cd-repo, argocd-apps | Path to kustomize base directory. Empty string skips base build |
+| `kustomize.overlay_dir` | string | `overlays` | validate-cd-repo, argocd-apps | Directory containing overlay subdirectories (e.g. `overlays`, `envs`) |
+| `kustomize.overlays` | list | auto-detect | validate-cd-repo, argocd-apps | Overlay names to validate |
+| `kustomize.load_restrictor` | bool | `true` | validate-cd-repo, argocd-apps | Use --load-restrictor LoadRestrictionsNone |
+| `kustomize.scan_overlay` | string | `production` | validate-cd-repo, argocd-apps | Overlay to scan with kubesec/kube-linter |
+| `kube_linter_config` | string | -- | validate-cd-repo, argocd-apps | Path to kube-linter config file |
+| `yamllint_paths` | string | *pipeline-dependent* | validate-cd-repo, argocd-apps | Space-separated directories for YAML linting |
 | `contexts.registry` | string | -- | node-api, node-webapp, java-webapp | CircleCI context for Docker push (e.g., `ghcr`) |
 | `contexts.github` | string | -- | all | CircleCI context for Git/GitHub operations. Enables GitHub Releases when set |
 | `contexts.sonar` | string | -- | node-api, node-webapp, java-webapp | CircleCI context for SonarCloud. Required if `sonar.project_key` is set |
@@ -482,7 +518,7 @@ Default endpoint: `GET /api/health` on port 3000 (node-api, node-webapp) or 8080
 
 **Interactive prompt hangs (debconf/dpkg)** -- If test commands install system packages via apt, add `DEBIAN_FRONTEND=noninteractive` as a prefix. Munitor sets this automatically in the test runner, but explicit is safer for custom commands.
 
-**"No template found for pipeline type"** -- The `pipeline` field must be one of: `node-api`, `node-webapp`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo`.
+**"No template found for pipeline type"** -- The `pipeline` field must be one of: `node-api`, `node-webapp`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo`, `argocd-apps`.
 
 **Setup succeeds but no continuation workflow appears** -- The generated config may contain invalid YAML that CircleCI accepts but can't execute. Common cause: an empty context list item from an unset optional context (e.g., `contexts.nvd`). Check the generated config by running `make publish-snapshot` and retriggering.
 

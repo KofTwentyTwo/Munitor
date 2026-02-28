@@ -5,6 +5,10 @@ parameters:
     type: string
     default: "base/"
     description: Path to the kustomize base directory.
+  overlay_dir:
+    type: string
+    default: "overlays"
+    description: Directory containing overlay subdirectories (e.g. overlays, envs).
   overlays:
     type: string
     default: ""
@@ -18,6 +22,7 @@ steps:
       name: Validate Kustomize Manifests
       environment:
         KUSTOMIZE_BASE_PATH: << parameters.base_path >>
+        KUSTOMIZE_OVERLAY_DIR: << parameters.overlay_dir >>
         KUSTOMIZE_OVERLAYS: << parameters.overlays >>
         KUSTOMIZE_LOAD_RESTRICTOR: << parameters.load_restrictor >>
       command: << include(scripts/kustomize_validate.sh) >>

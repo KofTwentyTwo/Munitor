@@ -924,6 +924,162 @@ run_test "validate-cd-repo-minimal: default base_path" \
   "${FIXTURES_DIR}/validate-cd-repo-minimal.munitor.yml" \
   'base_path: "base/"'
 
+# --------------------------------------------------------------------------
+# argocd-apps Template Tests
+# --------------------------------------------------------------------------
+echo ""
+echo "=== argocd-apps Template Tests ==="
+
+# Basic rendering
+run_test "argocd-apps: renders orb version" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "kof22/munitor@dev:snapshot"
+
+# Workflow presence
+run_test "argocd-apps: has pr-checks workflow" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "pr-checks:"
+
+run_test "argocd-apps: has develop workflow" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "develop:"
+
+run_test "argocd-apps: has release workflow" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "release:"
+
+# Job presence
+run_test "argocd-apps: has yaml-lint job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "name: yaml-lint"
+
+run_test "argocd-apps: has kustomize-validate job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "name: kustomize-validate"
+
+run_test "argocd-apps: has kubesec-scan job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "name: kubesec-scan"
+
+run_test "argocd-apps: has kube-linter job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "name: kube-linter"
+
+run_test "argocd-apps: has secrets-scan job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "name: secrets-scan"
+
+# overlay_dir rendering
+run_test "argocd-apps: renders overlay_dir as envs" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  'overlay_dir: "envs"'
+
+# base_path rendering (empty string)
+run_test "argocd-apps: renders empty base_path" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  'base_path: ""'
+
+# yamllint_paths rendering
+run_test "argocd-apps: renders argocd-apps yamllint paths" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "bootstrap/ projects/ credentials/ envs/ apps/ infra/"
+
+# Version rendering
+run_test "argocd-apps: renders kustomize version" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  'kustomize_version: "5.5.0"'
+
+run_test "argocd-apps: renders overlays" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "overlays: \"dev staging production\""
+
+run_test "argocd-apps: renders scan_overlay" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  'scan_overlay: "production"'
+
+run_test "argocd-apps: renders kube_linter config" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "config: \".kube-linter.yaml\""
+
+# Job dependencies
+run_context_test "argocd-apps: kubesec-scan requires kustomize-validate" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "name: kubesec-scan" \
+  "filters:" \
+  "kustomize-validate"
+
+run_context_test "argocd-apps: kube-linter requires kustomize-validate" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "name: kube-linter" \
+  "filters:" \
+  "kustomize-validate"
+
+# Branch filters
+run_context_test "argocd-apps: pr-checks has feature branch filter" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "pr-checks:" \
+  "develop:" \
+  "feature"
+
+run_context_test "argocd-apps: develop has develop branch filter" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "develop:" \
+  "release:" \
+  "only: develop"
+
+run_context_test "argocd-apps: release has main branch filter" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "release:" \
+  "Results:" \
+  "only: main"
+
+# Negative tests: no app-pipeline artifacts
+run_negative_test "argocd-apps: no docker job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "docker-build-push"
+
+run_negative_test "argocd-apps: no build-and-test job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "build-and-test"
+
+run_negative_test "argocd-apps: no update-cd-repo job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "update-cd-repo"
+
+run_negative_test "argocd-apps: no github-release job" \
+  "${FIXTURES_DIR}/argocd-apps.munitor.yml" \
+  "github-release"
+
+# Minimal fixture tests (defaults)
+run_test "argocd-apps-minimal: renders correctly" \
+  "${FIXTURES_DIR}/argocd-apps-minimal.munitor.yml" \
+  "kof22/munitor@dev:snapshot"
+
+run_test "argocd-apps-minimal: has all three workflows" \
+  "${FIXTURES_DIR}/argocd-apps-minimal.munitor.yml" \
+  "pr-checks:"
+
+run_test "argocd-apps-minimal: default kustomize version" \
+  "${FIXTURES_DIR}/argocd-apps-minimal.munitor.yml" \
+  'kustomize_version: "5.5.0"'
+
+run_test "argocd-apps-minimal: default scan_overlay" \
+  "${FIXTURES_DIR}/argocd-apps-minimal.munitor.yml" \
+  'scan_overlay: "production"'
+
+run_test "argocd-apps-minimal: default overlay_dir" \
+  "${FIXTURES_DIR}/argocd-apps-minimal.munitor.yml" \
+  'overlay_dir: "overlays"'
+
+run_test "argocd-apps-minimal: default base_path" \
+  "${FIXTURES_DIR}/argocd-apps-minimal.munitor.yml" \
+  'base_path: "base/"'
+
+# Regression: validate-cd-repo does NOT have overlay_dir param
+run_negative_test "validate-cd-repo: no overlay_dir param (regression)" \
+  "${FIXTURES_DIR}/validate-cd-repo.munitor.yml" \
+  "overlay_dir:"
+
 echo ""
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="
 

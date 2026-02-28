@@ -77,7 +77,7 @@ validate_required_fields() {
     terraform)
       [[ -z "$(yq '.terraform.path // ""' "${config}")" ]] && missing+=("terraform.path")
       ;;
-    validate-cd-repo)
+    validate-cd-repo|argocd-apps)
       # No additional required fields beyond orb_version
       ;;
   esac
@@ -94,7 +94,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager"
+KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then

@@ -179,6 +179,50 @@ assert_eq "kube_linter_config default (empty)" "" "${MUNITOR_KUBE_LINTER_CONFIG}
 assert_eq "yamllint_paths default" "base/ overlays/ argocd-apps/" "${MUNITOR_YAMLLINT_PATHS}"
 
 # --------------------------------------------------------------------------
+# argocd-apps full fixture
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: argocd-apps fixture ==="
+extract_munitor_vars "${FIXTURES_DIR}/argocd-apps.munitor.yml"
+
+assert_eq "pipeline type" "argocd-apps" "${MUNITOR_PIPELINE}"
+assert_eq "kustomize_version" "5.5.0" "${MUNITOR_KUSTOMIZE_VERSION}"
+assert_eq "kustomize_base_path (empty)" "" "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+assert_eq "kustomize_overlay_dir" "envs" "${MUNITOR_KUSTOMIZE_OVERLAY_DIR}"
+assert_eq "kustomize_load_restrictor" "true" "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
+assert_eq "kustomize_scan_overlay" "production" "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+assert_eq "kustomize_overlays" "dev staging production" "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+assert_eq "kube_linter_config" ".kube-linter.yaml" "${MUNITOR_KUBE_LINTER_CONFIG}"
+assert_eq "yamllint_paths (argocd-apps default)" "bootstrap/ projects/ credentials/ envs/ apps/ infra/" "${MUNITOR_YAMLLINT_PATHS}"
+
+# --------------------------------------------------------------------------
+# argocd-apps minimal fixture (tests defaults)
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: argocd-apps-minimal fixture ==="
+extract_munitor_vars "${FIXTURES_DIR}/argocd-apps-minimal.munitor.yml"
+
+assert_eq "pipeline type" "argocd-apps" "${MUNITOR_PIPELINE}"
+assert_eq "kustomize_version default" "5.5.0" "${MUNITOR_KUSTOMIZE_VERSION}"
+assert_eq "kustomize_base_path default" "base/" "${MUNITOR_KUSTOMIZE_BASE_PATH}"
+assert_eq "kustomize_overlay_dir default" "overlays" "${MUNITOR_KUSTOMIZE_OVERLAY_DIR}"
+assert_eq "kustomize_load_restrictor default" "true" "${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR}"
+assert_eq "kustomize_scan_overlay default" "production" "${MUNITOR_KUSTOMIZE_SCAN_OVERLAY}"
+assert_eq "kustomize_overlays default (empty)" "" "${MUNITOR_KUSTOMIZE_OVERLAYS}"
+assert_eq "kube_linter_config default (empty)" "" "${MUNITOR_KUBE_LINTER_CONFIG}"
+assert_eq "yamllint_paths (argocd-apps default)" "bootstrap/ projects/ credentials/ envs/ apps/ infra/" "${MUNITOR_YAMLLINT_PATHS}"
+
+# --------------------------------------------------------------------------
+# Regression: validate-cd-repo overlay_dir and yamllint_paths unchanged
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: validate-cd-repo regression guard ==="
+extract_munitor_vars "${FIXTURES_DIR}/validate-cd-repo.munitor.yml"
+
+assert_eq "validate-cd-repo overlay_dir default" "overlays" "${MUNITOR_KUSTOMIZE_OVERLAY_DIR}"
+assert_eq "validate-cd-repo yamllint_paths unchanged" "base/ overlays/ argocd-apps/" "${MUNITOR_YAMLLINT_PATHS}"
+
+# --------------------------------------------------------------------------
 # node-webapp full fixture
 # --------------------------------------------------------------------------
 echo ""
@@ -266,6 +310,15 @@ fi
 
 echo -n "  TEST: get_envsubst_vars includes MUNITOR_PACKAGE_MANAGER... "
 if echo "${VARS}" | grep -q 'MUNITOR_PACKAGE_MANAGER'; then
+  echo "PASS"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL"
+  FAIL=$((FAIL + 1))
+fi
+
+echo -n "  TEST: get_envsubst_vars includes MUNITOR_KUSTOMIZE_OVERLAY_DIR... "
+if echo "${VARS}" | grep -q 'MUNITOR_KUSTOMIZE_OVERLAY_DIR'; then
   echo "PASS"
   PASS=$((PASS + 1))
 else

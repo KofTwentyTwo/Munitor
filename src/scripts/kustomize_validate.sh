@@ -14,7 +14,8 @@ fi
 munitor_header "kustomize_validate"
 munitor_check_tool kustomize version
 
-BASE_PATH="${KUSTOMIZE_BASE_PATH:-base/}"
+BASE_PATH="${KUSTOMIZE_BASE_PATH-base/}"
+OVERLAY_DIR="${KUSTOMIZE_OVERLAY_DIR:-overlays}"
 OVERLAYS="${KUSTOMIZE_OVERLAYS:-}"
 LOAD_RESTRICTOR="${KUSTOMIZE_LOAD_RESTRICTOR:-true}"
 
@@ -29,21 +30,25 @@ fi
 
 FAILURES=0
 
-# Build base
-echo "=== Building base: ${BASE_PATH} ==="
-# shellcheck disable=SC2086
-if kustomize build ${RESTRICTOR_FLAG} "${BASE_PATH}" > "${OUTPUT_DIR}/base.yaml"; then
-  echo "  base: OK"
+# Build base (skip when BASE_PATH is empty, e.g. argocd-apps layout)
+if [[ -n "${BASE_PATH}" ]]; then
+  echo "=== Building base: ${BASE_PATH} ==="
+  # shellcheck disable=SC2086
+  if kustomize build ${RESTRICTOR_FLAG} "${BASE_PATH}" > "${OUTPUT_DIR}/base.yaml"; then
+    echo "  base: OK"
+  else
+    echo "  ERROR: base build failed"
+    FAILURES=$((FAILURES + 1))
+  fi
 else
-  echo "  ERROR: base build failed"
-  FAILURES=$((FAILURES + 1))
+  echo "=== Skipping base build (no base_path configured) ==="
 fi
 
 # Auto-detect overlays if not specified
 if [[ -z "${OVERLAYS}" ]]; then
   echo "=== Auto-detecting overlays ==="
   OVERLAYS=""
-  for kfile in overlays/*/kustomization.yaml; do
+  for kfile in "${OVERLAY_DIR}"/*/kustomization.yaml; do
     if [[ -f "${kfile}" ]]; then
       overlay_name=$(basename "$(dirname "${kfile}")")
       OVERLAYS="${OVERLAYS} ${overlay_name}"
@@ -51,7 +56,7 @@ if [[ -z "${OVERLAYS}" ]]; then
   done
   OVERLAYS=$(echo "${OVERLAYS}" | xargs)
   if [[ -z "${OVERLAYS}" ]]; then
-    echo "  No overlays found in overlays/*/"
+    echo "  No overlays found in ${OVERLAY_DIR}/*/"
   else
     echo "  Detected overlays: ${OVERLAYS}"
   fi
@@ -59,7 +64,7 @@ fi
 
 # Build each overlay
 for overlay in ${OVERLAYS}; do
-  overlay_path="overlays/${overlay}/"
+  overlay_path="${OVERLAY_DIR}/${overlay}/"
   echo "=== Building overlay: ${overlay} ==="
   if [[ ! -d "${overlay_path}" ]]; then
     echo "  ERROR: overlay directory '${overlay_path}' not found"
