@@ -27,7 +27,7 @@ BUILD_CMD=(docker build -f "${DOCKERFILE}" -t "${FULL_IMAGE}:${VERSION}")
 if [[ -n "${ENV_TAG}" ]]; then
   BUILD_CMD+=(-t "${FULL_IMAGE}:${ENV_TAG}")
 fi
-BUILD_CMD+=(--build-arg "VERSION=${VERSION}" .)
+BUILD_CMD+=(--build-arg "VERSION=${VERSION}" --build-arg "GIT_COMMIT_SHA=${CIRCLE_SHA1:-}" .)
 
 "${BUILD_CMD[@]}"
 

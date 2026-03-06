@@ -53,6 +53,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV STANDALONE=true
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
 RUN npm run build
 
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS runner
@@ -154,6 +156,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
 RUN npm run build
 
 FROM gcr.io/distroless/nodejs${MUNITOR_NODE_VERSION}-debian12 AS runner
