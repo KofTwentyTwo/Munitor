@@ -272,6 +272,7 @@ extract_munitor_vars "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml"
 
 assert_eq "supplemental flag" "true" "${MUNITOR_SUPPLEMENTAL}"
 assert_eq "supplemental JSON is non-empty" "true" "$([[ "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" != "[]" ]] && echo true || echo false)"
+assert_eq "supplemental JSON is single-line" "1" "$(echo "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" | wc -l | tr -d ' ')"
 assert_eq "supplemental JSON has migrations" "true" "$(echo "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" | jq -r '.[0].name' 2>/dev/null | grep -q migrations && echo true || echo false)"
 assert_eq "supplemental migrations base" "liquibase/liquibase:4.31" "$(echo "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" | jq -r '.[0].base')"
 assert_eq "supplemental migrations cd.image_key" "migrations.image.tag" "$(echo "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" | jq -r '.[0].cd.image_key')"
