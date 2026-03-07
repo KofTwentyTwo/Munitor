@@ -166,7 +166,7 @@ extract_munitor_vars() {
   MUNITOR_HEALTH_DB=$(yq '.health.db // false' "${config_file}")
 
   # Supplemental images (e.g., migrations, db-backup)
-  MUNITOR_SUPPLEMENTAL_IMAGES_JSON=$(yq '.supplemental_images // [] | tojson' "${config_file}")
+  MUNITOR_SUPPLEMENTAL_IMAGES_JSON=$(yq -o=json -I=0 '.supplemental_images // []' "${config_file}")
   if [[ "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" == "[]" || "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" == "null" ]]; then
     MUNITOR_SUPPLEMENTAL="false"
     MUNITOR_SUPPLEMENTAL_IMAGES_JSON="[]"
