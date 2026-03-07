@@ -262,6 +262,15 @@ extract_munitor_vars() {
   fi
   MUNITOR_HEALTH_DB=$(yq '.health.db // false' "${config_file}")
 
+  # Supplemental images (e.g., migrations, db-backup)
+  MUNITOR_SUPPLEMENTAL_IMAGES_JSON=$(yq '.supplemental_images // [] | tojson' "${config_file}")
+  if [[ "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" == "[]" || "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" == "null" ]]; then
+    MUNITOR_SUPPLEMENTAL="false"
+    MUNITOR_SUPPLEMENTAL_IMAGES_JSON="[]"
+  else
+    MUNITOR_SUPPLEMENTAL="true"
+  fi
+
   # Derived flags
   if [[ -n "${MUNITOR_SONAR_PROJECT_KEY}" ]]; then
     MUNITOR_SONAR="true"
@@ -300,13 +309,14 @@ extract_munitor_vars() {
   export MUNITOR_NODE_FRAMEWORK MUNITOR_PACKAGE_MANAGER
   export MUNITOR_CI_EMAIL MUNITOR_CI_NAME MUNITOR_NPM_DEFAULT_SCOPE MUNITOR_ORB_SLUG
   export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB
+  export MUNITOR_SUPPLEMENTAL MUNITOR_SUPPLEMENTAL_IMAGES_JSON
   export MUNITOR_SONAR MUNITOR_CD MUNITOR_NVD
 }
 
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
 }
 MUNITOR_EXTRACT_EOF
 
@@ -490,6 +500,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - code-quality
             - coverage
@@ -538,6 +551,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -579,6 +595,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - build-and-test
           context:
@@ -593,6 +612,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -810,6 +832,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - code-quality
             - coverage
@@ -852,6 +877,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -907,6 +935,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - build-and-test
           context:
@@ -921,6 +952,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -1138,6 +1172,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - code-quality
             - coverage
@@ -1180,6 +1217,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -1235,6 +1275,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - build-and-test
           context:
@@ -1249,6 +1292,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -1811,6 +1857,9 @@ cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - code-quality
             - coverage
@@ -1857,6 +1906,9 @@ cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -1961,6 +2013,9 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - code-quality
             - coverage
@@ -2001,6 +2056,9 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -2105,6 +2163,9 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - code-quality
             - coverage
@@ -2145,6 +2206,9 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -2258,7 +2322,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths"
+KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths supplemental_images"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then
@@ -2362,7 +2426,7 @@ process_conditionals() {
   cp "${input}" "${tmpfile}"
 
   # Process each conditional flag
-  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD OWASP NVD; do
+  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD OWASP NVD SUPPLEMENTAL; do
     local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file

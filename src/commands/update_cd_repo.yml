@@ -38,6 +38,12 @@ parameters:
     type: string
     default: ""
     description: Git author name for CD repo commits.
+  supplemental_images:
+    type: string
+    default: "[]"
+    description: >
+      JSON array of supplemental images. Each entry may contain cd.image_key (Helm)
+      or cd.image_name (Kustomize) for updating the CD repo with supplemental image tags.
 steps:
   - run:
       name: Update CD repo
@@ -50,4 +56,5 @@ steps:
         CD_IMAGE_NAME: << parameters.cd_image_name >>
         CI_GIT_EMAIL: << parameters.ci_git_email >>
         CI_GIT_NAME: << parameters.ci_git_name >>
+        SUPPLEMENTAL_IMAGES_JSON: << parameters.supplemental_images >>
       command: << include(scripts/update_cd_repo.sh) >>

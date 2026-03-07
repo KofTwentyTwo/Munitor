@@ -1080,6 +1080,57 @@ run_negative_test "validate-cd-repo: no overlay_dir param (regression)" \
   "${FIXTURES_DIR}/validate-cd-repo.munitor.yml" \
   "overlay_dir:"
 
+# --------------------------------------------------------------------------
+# Supplemental Images Tests
+# --------------------------------------------------------------------------
+echo ""
+echo "=== Supplemental Images Template Tests ==="
+
+# java-webapp-supplemental: supplemental_images parameter appears in docker-build-push
+run_context_test "java-webapp-supplemental: docker-build-push has supplemental_images param" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "name: docker-build-push" \
+  "context:" \
+  "supplemental_images:"
+
+# java-webapp-supplemental: supplemental_images parameter appears in update-cd-repo
+run_context_test "java-webapp-supplemental: update-cd-repo has supplemental_images param" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "name: update-cd-repo" \
+  "context:" \
+  "supplemental_images:"
+
+# java-webapp (no supplemental): supplemental_images should NOT appear
+run_negative_test "java-webapp: no supplemental_images param when not configured" \
+  "${FIXTURES_DIR}/java-webapp.munitor.yml" \
+  "supplemental_images:"
+
+# java-webapp-minimal: supplemental_images should NOT appear
+run_negative_test "java-webapp-minimal: no supplemental_images param" \
+  "${FIXTURES_DIR}/java-webapp-minimal.munitor.yml" \
+  "supplemental_images:"
+
+# java-webapp-supplemental: still has all normal features (regression)
+run_test "java-webapp-supplemental: still has e2e" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "e2e-tests"
+
+run_test "java-webapp-supplemental: still has sonar" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "sonar-scan"
+
+run_test "java-webapp-supplemental: still has update-cd-repo" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "update-cd-repo"
+
+run_test "java-webapp-supplemental: has release-candidate workflow" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "release-candidate:"
+
+run_test "java-webapp-supplemental: has production workflow" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "production:"
+
 echo ""
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="
 

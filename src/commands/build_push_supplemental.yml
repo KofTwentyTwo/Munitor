@@ -1,0 +1,15 @@
+description: >
+  Build, scan, and push supplemental Docker images alongside the main application image.
+  Each supplemental image shares the same version tag. Requires docker_push_ghcr to have
+  run first (for registry auth and Trivy installation).
+parameters:
+  supplemental_images:
+    type: string
+    default: "[]"
+    description: JSON array of supplemental image definitions.
+steps:
+  - run:
+      name: Build and push supplemental images
+      environment:
+        SUPPLEMENTAL_IMAGES_JSON: << parameters.supplemental_images >>
+      command: << include(scripts/build_push_supplemental.sh) >>

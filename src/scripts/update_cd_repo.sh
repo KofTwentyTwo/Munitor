@@ -92,6 +92,35 @@ else
   git add "${VALUES}"
 fi
 
+# Update supplemental image tags (if any)
+SUPP_JSON="${SUPPLEMENTAL_IMAGES_JSON:-[]}"
+if [[ "${SUPP_JSON}" != "[]" && "${SUPP_JSON}" != "null" ]]; then
+  SUPP_COUNT=$(echo "${SUPP_JSON}" | jq 'length')
+  echo "Updating ${SUPP_COUNT} supplemental image tag(s)..."
+
+  for ((i = 0; i < SUPP_COUNT; i++)); do
+    SUPP_NAME=$(echo "${SUPP_JSON}" | jq -r ".[$i].name")
+
+    if [[ "${FORMAT}" == "kustomize" ]]; then
+      SUPP_CD_IMAGE=$(echo "${SUPP_JSON}" | jq -r ".[$i].cd.image_name // \"\"")
+      if [[ -z "${SUPP_CD_IMAGE}" ]]; then
+        SUPP_CD_IMAGE="${IMAGE_NAME}-${SUPP_NAME}"
+      fi
+      echo "  Kustomize: ${SUPP_CD_IMAGE} -> ${VERSION}"
+      yq -i "(.images[] | select(.name == \"${SUPP_CD_IMAGE}\")).newTag = \"${VERSION}\"" "${KUST_FILE}"
+      yq -i "del((.images[] | select(.name == \"${SUPP_CD_IMAGE}\")).digest)" "${KUST_FILE}"
+      git add "${KUST_FILE}"
+    else
+      SUPP_IMAGE_KEY=$(echo "${SUPP_JSON}" | jq -r ".[$i].cd.image_key // \"\"")
+      if [[ -n "${SUPP_IMAGE_KEY}" ]]; then
+        echo "  Helm: ${SUPP_IMAGE_KEY} -> ${VERSION}"
+        yq -i ".${SUPP_IMAGE_KEY} = \"${VERSION}\"" "${VALUES}"
+        git add "${VALUES}"
+      fi
+    fi
+  done
+fi
+
 # Commit and push
 git config user.email "${CI_GIT_EMAIL:-munitor-ci@koftwentytwo.com}"
 git config user.name "${CI_GIT_NAME:-Munitor CI}"

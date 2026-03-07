@@ -639,6 +639,89 @@ else
 fi
 
 # =============================================================================
+# Test: build_push_supplemental.sh - Supplemental image build
+# =============================================================================
+echo ""
+echo "=== build_push_supplemental.sh Tests ==="
+
+echo -n "  TEST: sources munitor_helpers... "
+if grep -q 'MUNITOR_HELPERS' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should source munitor_helpers"
+fi
+
+echo -n "  TEST: calls munitor_header... "
+if grep -q 'munitor_header' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should call munitor_header"
+fi
+
+echo -n "  TEST: reads SUPPLEMENTAL_IMAGES_JSON... "
+if grep -q 'SUPPLEMENTAL_IMAGES_JSON' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should read SUPPLEMENTAL_IMAGES_JSON"
+fi
+
+echo -n "  TEST: skips when JSON is empty... "
+if grep -q 'exit 0' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should exit 0 when no supplemental images"
+fi
+
+echo -n "  TEST: uses jq to parse JSON... "
+if grep -q 'jq' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should use jq"
+fi
+
+echo -n "  TEST: builds Docker images... "
+if grep -q 'docker build' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should run docker build"
+fi
+
+echo -n "  TEST: scans with Trivy... "
+if grep -q 'trivy image' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should scan with trivy"
+fi
+
+echo -n "  TEST: pushes images... "
+if grep -q 'docker push' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should push images"
+fi
+
+echo -n "  TEST: supports custom Dockerfile... "
+if grep -q 'dockerfile' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should support custom dockerfile"
+fi
+
+echo -n "  TEST: auto-generates Dockerfile from base+copy... "
+if grep -q 'Dockerfile\.' "${SRC_SCRIPTS}/build_push_supplemental.sh" && grep -q 'FROM' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should auto-generate Dockerfile"
+fi
+
+echo -n "  TEST: uses set -euo pipefail... "
+if grep -q 'set -euo pipefail' "${SRC_SCRIPTS}/build_push_supplemental.sh"; then
+  pass
+else
+  fail "should use strict mode"
+fi
+
+# =============================================================================
 # Test: Scripts have proper error handling
 # =============================================================================
 echo ""

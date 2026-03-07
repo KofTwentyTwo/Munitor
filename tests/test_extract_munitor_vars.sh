@@ -264,6 +264,29 @@ assert_eq "coverage min default" "70" "${MUNITOR_COVERAGE_MIN}"
 assert_eq "package_manager default" "npm" "${MUNITOR_PACKAGE_MANAGER}"
 
 # --------------------------------------------------------------------------
+# supplemental_images (enabled)
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: supplemental_images (enabled) ==="
+extract_munitor_vars "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml"
+
+assert_eq "supplemental flag" "true" "${MUNITOR_SUPPLEMENTAL}"
+assert_eq "supplemental JSON is non-empty" "true" "$([[ "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" != "[]" ]] && echo true || echo false)"
+assert_eq "supplemental JSON has migrations" "true" "$(echo "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" | jq -r '.[0].name' 2>/dev/null | grep -q migrations && echo true || echo false)"
+assert_eq "supplemental migrations base" "liquibase/liquibase:4.31" "$(echo "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" | jq -r '.[0].base')"
+assert_eq "supplemental migrations cd.image_key" "migrations.image.tag" "$(echo "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" | jq -r '.[0].cd.image_key')"
+
+# --------------------------------------------------------------------------
+# supplemental_images (default: disabled)
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: supplemental_images (default disabled) ==="
+extract_munitor_vars "${FIXTURES_DIR}/java-webapp.munitor.yml"
+
+assert_eq "supplemental flag default" "false" "${MUNITOR_SUPPLEMENTAL}"
+assert_eq "supplemental JSON default empty" "[]" "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}"
+
+# --------------------------------------------------------------------------
 # Missing config file
 # --------------------------------------------------------------------------
 echo ""
@@ -319,6 +342,15 @@ fi
 
 echo -n "  TEST: get_envsubst_vars includes MUNITOR_KUSTOMIZE_OVERLAY_DIR... "
 if echo "${VARS}" | grep -q 'MUNITOR_KUSTOMIZE_OVERLAY_DIR'; then
+  echo "PASS"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL"
+  FAIL=$((FAIL + 1))
+fi
+
+echo -n "  TEST: get_envsubst_vars includes MUNITOR_SUPPLEMENTAL_IMAGES_JSON... "
+if echo "${VARS}" | grep -q 'MUNITOR_SUPPLEMENTAL_IMAGES_JSON'; then
   echo "PASS"
   PASS=$((PASS + 1))
 else

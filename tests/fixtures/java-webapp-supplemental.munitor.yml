@@ -1,0 +1,35 @@
+pipeline: java-webapp
+orb_version: dev:snapshot
+
+image_name: me-health-portal
+java_version: "21"
+
+sonar:
+  project_key: dmdbrands_me-health-portal
+
+docker:
+  registry: ghcr.io/dmdbrands
+
+cd:
+  repo: dmdbrands/me-health-portal-cd-pipeline
+
+coverage:
+  min_instruction: 80
+
+e2e: true
+sbom: true
+
+contexts:
+  registry: ghcr
+  github: github
+  sonar: sonarcloud
+  nvd: nvd
+
+supplemental_images:
+  - name: migrations
+    base: liquibase/liquibase:4.31
+    copy:
+      - src: db/changelog/
+        dest: /liquibase/changelog/
+    cd:
+      image_key: migrations.image.tag

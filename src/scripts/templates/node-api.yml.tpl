@@ -191,6 +191,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - code-quality
             - coverage
@@ -233,6 +236,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:
@@ -288,6 +294,9 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           requires:
             - build-and-test
           context:
@@ -302,6 +311,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
           ci_git_email: '${MUNITOR_CI_EMAIL}'
           ci_git_name: '${MUNITOR_CI_NAME}'
           requires:

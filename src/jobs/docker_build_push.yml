@@ -31,6 +31,10 @@ parameters:
     type: boolean
     default: true
     description: Enable Docker Layer Caching for faster builds.
+  supplemental_images:
+    type: string
+    default: "[]"
+    description: JSON array of supplemental images to build, scan, and push alongside the main image.
 executor:
   name: machine
   resource_class: << parameters.resource_class >>
@@ -54,3 +58,5 @@ steps:
       image_tag: << parameters.registry >>/<< parameters.image_name >>:${DOCKER_TAG}
   - save_trivy_cache
   - docker_push_ghcr
+  - build_push_supplemental:
+      supplemental_images: << parameters.supplemental_images >>
