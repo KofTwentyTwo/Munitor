@@ -327,6 +327,58 @@ else
   fail "should delete digest field to prevent kustomize from ignoring newTag"
 fi
 
+echo -n "  TEST: upserts supplemental images (creates new entry)... "
+if grep -q '.images += \[{' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+  pass
+else
+  fail "should create new image entries for supplemental images"
+fi
+
+echo -n "  TEST: checks for existing entry before upsert... "
+if grep -q 'EXISTING=' "${SRC_SCRIPTS}/update_cd_repo.sh" && grep -q 'if \[\[ -z "${EXISTING}"' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+  pass
+else
+  fail "should check if image entry exists before deciding to create or update"
+fi
+
+# Functional test: verify upsert creates entries in a real kustomization file
+echo -n "  TEST: upsert creates new image entry in kustomization (functional)... "
+UPSERT_TMPDIR=$(mktemp -d)
+cat > "${UPSERT_TMPDIR}/kustomization.yaml" <<'KUSTYAML'
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+  - name: ghcr.io/koftwentytwo/website-backend
+    newTag: "0.1.0"
+KUSTYAML
+SUPP_CD_IMAGE="ghcr.io/koftwentytwo/website-backend-migrations"
+VERSION_TEST="0.2.0-SNAPSHOT.abc1234"
+EXISTING=$(yq ".images[] | select(.name == \"${SUPP_CD_IMAGE}\") | .name" "${UPSERT_TMPDIR}/kustomization.yaml")
+if [[ -z "${EXISTING}" ]]; then
+  yq -i ".images += [{\"name\": \"${SUPP_CD_IMAGE}\", \"newTag\": \"${VERSION_TEST}\"}]" "${UPSERT_TMPDIR}/kustomization.yaml"
+fi
+RESULT_TAG=$(yq ".images[] | select(.name == \"${SUPP_CD_IMAGE}\") | .newTag" "${UPSERT_TMPDIR}/kustomization.yaml")
+if [[ "${RESULT_TAG}" == "${VERSION_TEST}" ]]; then
+  pass
+else
+  fail "expected newTag=${VERSION_TEST}, got ${RESULT_TAG}"
+fi
+
+echo -n "  TEST: upsert updates existing image entry in kustomization (functional)... "
+VERSION_TEST2="0.3.0-SNAPSHOT.def5678"
+EXISTING=$(yq ".images[] | select(.name == \"${SUPP_CD_IMAGE}\") | .name" "${UPSERT_TMPDIR}/kustomization.yaml")
+if [[ -n "${EXISTING}" ]]; then
+  yq -i "(.images[] | select(.name == \"${SUPP_CD_IMAGE}\")).newTag = \"${VERSION_TEST2}\"" "${UPSERT_TMPDIR}/kustomization.yaml"
+fi
+RESULT_TAG2=$(yq ".images[] | select(.name == \"${SUPP_CD_IMAGE}\") | .newTag" "${UPSERT_TMPDIR}/kustomization.yaml")
+ENTRY_COUNT=$(yq "[.images[] | select(.name == \"${SUPP_CD_IMAGE}\")] | length" "${UPSERT_TMPDIR}/kustomization.yaml")
+if [[ "${RESULT_TAG2}" == "${VERSION_TEST2}" && "${ENTRY_COUNT}" == "1" ]]; then
+  pass
+else
+  fail "expected newTag=${VERSION_TEST2} with 1 entry, got tag=${RESULT_TAG2} count=${ENTRY_COUNT}"
+fi
+rm -rf "${UPSERT_TMPDIR}"
+
 # =============================================================================
 # Test: docker_build.sh - DOCKER_ENV_TAG support
 # =============================================================================
