@@ -107,8 +107,15 @@ if [[ "${SUPP_JSON}" != "[]" && "${SUPP_JSON}" != "null" ]]; then
         SUPP_CD_IMAGE="${IMAGE_NAME}-${SUPP_NAME}"
       fi
       echo "  Kustomize: ${SUPP_CD_IMAGE} -> ${VERSION}"
-      yq -i "(.images[] | select(.name == \"${SUPP_CD_IMAGE}\")).newTag = \"${VERSION}\"" "${KUST_FILE}"
-      yq -i "del((.images[] | select(.name == \"${SUPP_CD_IMAGE}\")).digest)" "${KUST_FILE}"
+      # Upsert: add entry if it doesn't exist, then update
+      EXISTING=$(yq ".images[] | select(.name == \"${SUPP_CD_IMAGE}\") | .name" "${KUST_FILE}")
+      if [[ -z "${EXISTING}" ]]; then
+        echo "    (creating new image entry)"
+        yq -i ".images += [{\"name\": \"${SUPP_CD_IMAGE}\", \"newTag\": \"${VERSION}\"}]" "${KUST_FILE}"
+      else
+        yq -i "(.images[] | select(.name == \"${SUPP_CD_IMAGE}\")).newTag = \"${VERSION}\"" "${KUST_FILE}"
+        yq -i "del((.images[] | select(.name == \"${SUPP_CD_IMAGE}\")).digest)" "${KUST_FILE}"
+      fi
       git add "${KUST_FILE}"
     else
       SUPP_IMAGE_KEY=$(echo "${SUPP_JSON}" | jq -r ".[$i].cd.image_key // \"\"")
