@@ -7,9 +7,18 @@ parameters:
     type: string
     default: "[]"
     description: JSON array of supplemental image definitions.
+  image_name:
+    type: string
+    description: Docker image name (without registry prefix).
+  registry:
+    type: string
+    default: ghcr.io/KofTwentyTwo
+    description: Container registry URL.
 steps:
   - run:
       name: Build and push supplemental images
       environment:
         SUPPLEMENTAL_IMAGES_JSON: << parameters.supplemental_images >>
+        IMAGE_NAME: << parameters.image_name >>
+        REGISTRY: << parameters.registry >>
       command: << include(scripts/build_push_supplemental.sh) >>

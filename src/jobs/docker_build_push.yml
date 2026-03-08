@@ -60,3 +60,5 @@ steps:
   - docker_push_ghcr
   - build_push_supplemental:
       supplemental_images: << parameters.supplemental_images >>
+      image_name: << parameters.image_name >>
+      registry: << parameters.registry >>
