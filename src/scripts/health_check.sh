@@ -14,6 +14,8 @@ fi
 HEALTH_PATH="${HEALTH_PATH:-/api/health}"
 HEALTH_PORT="${HEALTH_PORT:-3000}"
 HEALTH_DB="${HEALTH_DB:-false}"
+HEALTH_MIGRATIONS="${HEALTH_MIGRATIONS:-}"
+HEALTH_SMOKE_PATHS="${HEALTH_SMOKE_PATHS:-}"
 
 # DOCKER_IMAGE and DOCKER_TAG are exported to BASH_ENV by docker_build.sh
 IMAGE="${DOCKER_IMAGE:?DOCKER_IMAGE not set -- run docker_build first}"
@@ -63,6 +65,23 @@ if [[ "${HEALTH_DB}" == "true" ]]; then
     fi
     sleep 1
   done
+
+  # Run migrations if a migrations image is specified
+  if [[ -n "${HEALTH_MIGRATIONS}" ]]; then
+    MIGRATIONS_IMAGE="${DOCKER_IMAGE}-${HEALTH_MIGRATIONS}:${TAG}"
+    echo "Running migrations image: ${MIGRATIONS_IMAGE}"
+    docker run --rm \
+      --name "munitor-health-migrations-$$" \
+      --network "${NETWORK_NAME}" \
+      -e RDBMS_HOSTNAME="${DB_CONTAINER_NAME}" \
+      -e RDBMS_PORT=5432 \
+      -e RDBMS_DATABASE_NAME=postgres \
+      -e RDBMS_USERNAME=postgres \
+      -e RDBMS_PASSWORD=postgres \
+      -e LB_CONTEXTS=dev \
+      "${MIGRATIONS_IMAGE}"
+    echo "Migrations completed."
+  fi
 
   # Start app container on the same network with DB env vars
   docker run -d \
@@ -128,4 +147,41 @@ if [[ "${HEALTHY}" != "true" ]]; then
   docker logs --tail 50 "${CONTAINER_NAME}" 2>&1 || true
   echo "--- End container logs ---"
   exit 1
+fi
+
+# --- API smoke tests ---
+if [[ -n "${HEALTH_SMOKE_PATHS}" ]]; then
+  echo ""
+  echo "Running API smoke tests..."
+  SMOKE_FAILED=false
+
+  IFS=',' read -ra SMOKE_ENDPOINTS <<< "${HEALTH_SMOKE_PATHS}"
+  for endpoint in "${SMOKE_ENDPOINTS[@]}"; do
+    endpoint=$(echo "${endpoint}" | xargs)  # trim whitespace
+    SMOKE_URL="http://localhost:${HEALTH_PORT}${endpoint}"
+    echo "  Smoke test: GET ${endpoint}"
+
+    SMOKE_CODE=$(curl -s -o /tmp/smoke_response.txt -w "%{http_code}" "${SMOKE_URL}" 2>/dev/null || echo "000")
+
+    if [[ "${SMOKE_CODE}" == "200" ]]; then
+      echo "    PASSED (HTTP ${SMOKE_CODE})"
+    else
+      BODY=$(cat /tmp/smoke_response.txt 2>/dev/null || echo "")
+      echo "    FAILED (HTTP ${SMOKE_CODE})"
+      echo "    Response: ${BODY:0:500}"
+      SMOKE_FAILED=true
+    fi
+  done
+
+  if [[ "${SMOKE_FAILED}" == "true" ]]; then
+    echo ""
+    echo "ERROR: API smoke tests FAILED"
+    echo ""
+    echo "--- Container logs (last 50 lines) ---"
+    docker logs --tail 50 "${CONTAINER_NAME}" 2>&1 || true
+    echo "--- End container logs ---"
+    exit 1
+  fi
+
+  echo "All smoke tests PASSED."
 fi

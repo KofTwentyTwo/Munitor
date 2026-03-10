@@ -15,6 +15,14 @@ parameters:
     type: string
     default: "false"
     description: Start a PostgreSQL sidecar for apps that require a database to boot.
+  health_migrations:
+    type: string
+    default: ""
+    description: Name of supplemental image to run as migrations before the app (e.g. "migrations").
+  health_smoke_paths:
+    type: string
+    default: ""
+    description: Comma-separated API paths to smoke test after health check passes (e.g. "/api/v1/site/query").
 steps:
   - run:
       name: Health check
@@ -22,4 +30,6 @@ steps:
         HEALTH_PATH: << parameters.health_path >>
         HEALTH_PORT: << parameters.health_port >>
         HEALTH_DB: << parameters.health_db >>
+        HEALTH_MIGRATIONS: << parameters.health_migrations >>
+        HEALTH_SMOKE_PATHS: << parameters.health_smoke_paths >>
       command: << include(scripts/health_check.sh) >>

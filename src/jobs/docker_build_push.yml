@@ -20,6 +20,14 @@ parameters:
     type: string
     default: "false"
     description: Start a PostgreSQL sidecar for apps that require a database to boot.
+  health_migrations:
+    type: string
+    default: ""
+    description: Name of supplemental image to run as migrations before the app (e.g. "migrations").
+  health_smoke_paths:
+    type: string
+    default: ""
+    description: Comma-separated API paths to smoke test after health check passes.
   resource_class:
     type: enum
     enum:
@@ -53,6 +61,8 @@ steps:
       health_path: << parameters.health_path >>
       health_port: << parameters.health_port >>
       health_db: << parameters.health_db >>
+      health_migrations: << parameters.health_migrations >>
+      health_smoke_paths: << parameters.health_smoke_paths >>
   - restore_trivy_cache
   - run_trivy_image:
       image_tag: << parameters.registry >>/<< parameters.image_name >>:${DOCKER_TAG}

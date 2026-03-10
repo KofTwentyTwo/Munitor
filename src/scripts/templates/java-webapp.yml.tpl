@@ -177,6 +177,8 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          health_migrations: "${MUNITOR_HEALTH_MIGRATIONS}"
+          health_smoke_paths: "${MUNITOR_HEALTH_SMOKE_PATHS}"
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -272,6 +274,8 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          health_migrations: "${MUNITOR_HEALTH_MIGRATIONS}"
+          health_smoke_paths: "${MUNITOR_HEALTH_SMOKE_PATHS}"
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
