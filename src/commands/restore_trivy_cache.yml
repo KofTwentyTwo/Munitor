@@ -4,7 +4,7 @@ description: >
 steps:
   - run:
       name: Write Trivy version file
-      command: echo "${TRIVY_VERSION:-0.58.2}" > .trivy-version
+      command: echo "${TRIVY_VERSION:-0.69.3}" > .trivy-version
   - restore_cache:
       keys:
         - trivy-bin-v1-{{ checksum ".trivy-version" }}

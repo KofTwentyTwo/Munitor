@@ -11,7 +11,7 @@ elif ! type munitor_header &>/dev/null; then
   munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-TRIVY_VERSION="${TRIVY_VERSION:-0.58.2}"
+TRIVY_VERSION="${TRIVY_VERSION:-0.69.3}"
 INSTALL_DIR="${HOME}/bin"
 mkdir -p "${INSTALL_DIR}"
 export PATH="${INSTALL_DIR}:${PATH}"
