@@ -872,6 +872,52 @@ else
 fi
 
 # =============================================================================
+# Test: External download URLs are reachable
+# =============================================================================
+echo ""
+echo "=== External Download URL Tests ==="
+
+# Extract pinned versions from scripts (single source of truth)
+extract_version() { sed -n "s/.*${1}:-\([v0-9.]*\).*/\1/p" "$2" | head -1; }
+TRIVY_VER=$(extract_version TRIVY_VERSION "${SRC_SCRIPTS}/run_trivy.sh")
+GH_VER=$(extract_version GH_VERSION "${SRC_SCRIPTS}/install_gh.sh")
+GITLEAKS_VER=$(extract_version GITLEAKS_VERSION "${SRC_SCRIPTS}/install_gitleaks.sh")
+KUBE_LINTER_VER=$(extract_version KUBE_LINTER_VERSION "${SRC_SCRIPTS}/install_kube_linter.sh")
+TERRAGRUNT_VER=$(extract_version TERRAGRUNT_VERSION "${SRC_SCRIPTS}/install_terragrunt.sh")
+YQ_VER=$(extract_version YQ_VERSION "${SRC_SCRIPTS}/install_yq.sh")
+KUSTOMIZE_VER=$(extract_version KUSTOMIZE_VERSION "${SRC_SCRIPTS}/install_kustomize.sh")
+KUBESEC_VER=$(extract_version KUBESEC_VERSION "${SRC_SCRIPTS}/install_kubesec.sh")
+TFSEC_TRIVY_VER=$(extract_version TRIVY_VERSION "${SRC_SCRIPTS}/install_tfsec.sh")
+SONAR_VER=$(extract_version SONAR_SCANNER_VERSION "${SRC_SCRIPTS}/npm_sonar.sh")
+
+# All URLs target linux/amd64 -- matches the CI executor
+URLS=(
+  "Trivy ${TRIVY_VER}|https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VER}/trivy_${TRIVY_VER}_Linux-64bit.tar.gz"
+  "Trivy/tfsec ${TFSEC_TRIVY_VER}|https://github.com/aquasecurity/trivy/releases/download/v${TFSEC_TRIVY_VER}/trivy_${TFSEC_TRIVY_VER}_Linux-64bit.tar.gz"
+  "gh ${GH_VER}|https://github.com/cli/cli/releases/download/v${GH_VER}/gh_${GH_VER}_linux_amd64.tar.gz"
+  "gitleaks ${GITLEAKS_VER}|https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VER}/gitleaks_${GITLEAKS_VER}_linux_x64.tar.gz"
+  "kube-linter ${KUBE_LINTER_VER}|https://github.com/stackrox/kube-linter/releases/download/v${KUBE_LINTER_VER}/kube-linter-linux.tar.gz"
+  "terragrunt ${TERRAGRUNT_VER}|https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VER}/terragrunt_linux_amd64"
+  "yq ${YQ_VER}|https://github.com/mikefarah/yq/releases/download/${YQ_VER}/yq_linux_amd64"
+  "kustomize ${KUSTOMIZE_VER}|https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VER}/kustomize_v${KUSTOMIZE_VER}_linux_amd64.tar.gz"
+  "kubesec ${KUBESEC_VER}|https://github.com/controlplaneio/kubesec/releases/download/v${KUBESEC_VER}/kubesec_linux_amd64.tar.gz"
+  "OpenTofu installer|https://get.opentofu.org/install-opentofu.sh"
+  "sonar-scanner ${SONAR_VER}|https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VER}-linux-x64.zip"
+)
+
+for entry in "${URLS[@]}"; do
+  LABEL="${entry%%|*}"
+  URL="${entry##*|}"
+  echo -n "  TEST: ${LABEL} download URL is reachable... "
+  HTTP_CODE=$(curl -sI -o /dev/null -w "%{http_code}" -L --retry 2 "${URL}" 2>/dev/null || echo "000")
+  if [[ "${HTTP_CODE}" == "200" ]]; then
+    pass
+  else
+    fail "HTTP ${HTTP_CODE} for ${URL}"
+  fi
+done
+
+# =============================================================================
 # Summary
 # =============================================================================
 echo ""

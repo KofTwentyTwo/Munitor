@@ -12,7 +12,7 @@ elif ! type munitor_header &>/dev/null; then
 fi
 
 # tfsec is deprecated/archived -- use trivy config instead
-TRIVY_VERSION="${TRIVY_VERSION:-0.58.2}"
+TRIVY_VERSION="${TRIVY_VERSION:-0.69.3}"
 INSTALL_DIR="${HOME}/bin"
 export PATH="${INSTALL_DIR}:${PATH}"
 
