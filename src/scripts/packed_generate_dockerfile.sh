@@ -109,12 +109,12 @@ extract_munitor_vars() {
     return 1
   fi
 
-  # --- Org defaults (change this block when forking for another org) ---
-  local ORG_DOCKER_REGISTRY="ghcr.io/KofTwentyTwo"
-  local ORG_NPM_SCOPE="@koftwentytwo"
-  local ORG_CI_EMAIL="munitor-ci@koftwentytwo.com"
-  local ORG_CI_NAME="Munitor CI"
-  local ORG_ORB_SLUG="kof22/munitor"
+  # --- Org defaults (overridable via .munitor.yml org section) ---
+  local ORG_DOCKER_REGISTRY=$(yq '.org.docker_registry // "ghcr.io/KofTwentyTwo"' "${config_file}")
+  local ORG_NPM_SCOPE=$(yq '.org.npm_scope // "@koftwentytwo"' "${config_file}")
+  local ORG_CI_EMAIL=$(yq '.org.ci_email // "munitor-ci@koftwentytwo.com"' "${config_file}")
+  local ORG_CI_NAME=$(yq '.org.ci_name // "Munitor CI"' "${config_file}")
+  local ORG_ORB_SLUG=$(yq '.org.orb_slug // "kof22/munitor"' "${config_file}")
 
   # Core pipeline settings
   MUNITOR_PIPELINE=$(yq '.pipeline' "${config_file}")

@@ -1,10 +1,11 @@
 version: 2.1
 
 description: >
-  Munitor (Latin: fortifier, protector) -- KofTwentyTwo's unified CircleCI orb
-  for building, testing, and deploying all repositories. Provides standardized
-  CI/CD pipelines via dynamic configuration so each repo needs only a tiny
-  .munitor.yml to define its pipeline.
+  Munitor (Latin: fortifier, protector) -- a unified CircleCI orb for building,
+  testing, and deploying repositories. Provides standardized CI/CD pipelines via
+  dynamic configuration so each repo needs only a tiny .munitor.yml to define
+  its pipeline. Org-agnostic: override defaults via the optional org section in
+  .munitor.yml.
 
 display:
   home_url: https://github.com/KofTwentyTwo/Munitor
