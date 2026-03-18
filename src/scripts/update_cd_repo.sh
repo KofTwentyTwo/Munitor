@@ -129,8 +129,8 @@ if [[ "${SUPP_JSON}" != "[]" && "${SUPP_JSON}" != "null" ]]; then
 fi
 
 # Commit and push
-git config user.email "${CI_GIT_EMAIL:-munitor-ci@koftwentytwo.com}"
-git config user.name "${CI_GIT_NAME:-Munitor CI}"
+git config user.email "${CI_GIT_EMAIL:-${MUNITOR_CI_EMAIL:-munitor-ci@koftwentytwo.com}}"
+git config user.name "${CI_GIT_NAME:-${MUNITOR_CI_NAME:-Munitor CI}}"
 
 if git diff --cached --quiet; then
   echo "No changes to commit (version already up to date)."
