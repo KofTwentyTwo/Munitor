@@ -148,6 +148,54 @@ ENTRYPOINT ["sh", "-c", "java \$JAVA_OPTS -jar app.jar"]
 DOCKERFILE
     ;;
 
+  gradle-webapp)
+    echo "Generating Dockerfile for gradle-webapp (java ${MUNITOR_JAVA_VERSION})"
+
+    # Find the shadow JAR in the server module's build output
+    SEARCH_DIR="build/libs"
+    if [[ -n "${MUNITOR_SERVER_MODULE:-}" ]]; then
+      SEARCH_DIR="${MUNITOR_SERVER_MODULE}/build/libs"
+    fi
+
+    APP_JAR=$(find "${SEARCH_DIR}" -maxdepth 1 -name "*.jar" \
+      ! -name "*-plain.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" \
+      2>/dev/null | head -1) || true
+
+    if [[ -z "${APP_JAR}" ]]; then
+      echo "ERROR: No application JAR found in ${SEARCH_DIR}/" >&2
+      echo "Ensure shadowJar or bootJar is configured in build.gradle.kts" >&2
+      exit 1
+    fi
+
+    echo "Using JAR: ${APP_JAR}"
+
+    cat > Dockerfile <<DOCKERFILE
+FROM eclipse-temurin:${MUNITOR_JAVA_VERSION}-jre-alpine
+
+RUN apk update && apk upgrade --no-cache
+
+RUN addgroup -g 1001 -S appgroup && \\
+    adduser -u 1001 -S appuser -G appgroup
+
+WORKDIR /app
+
+COPY ${APP_JAR} app.jar
+
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+
+EXPOSE ${MUNITOR_HEALTH_PORT}
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${MUNITOR_HEALTH_PORT}${MUNITOR_HEALTH_PATH} || exit 1
+
+ENTRYPOINT ["sh", "-c", "java \$JAVA_OPTS -jar app.jar"]
+DOCKERFILE
+    ;;
+
   node-webapp)
     echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
     cat > Dockerfile <<DOCKERFILE

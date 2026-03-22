@@ -1,0 +1,7 @@
+description: >
+  Restore the Gradle caches based on wrapper and settings checksums.
+steps:
+  - restore_cache:
+      keys:
+        - gradle-v1-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ checksum "settings.gradle.kts" }}
+        - gradle-v1-

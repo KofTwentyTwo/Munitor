@@ -110,17 +110,23 @@ extract_munitor_vars() {
   fi
 
   # --- Org defaults (overridable via .munitor.yml org section) ---
-  local ORG_DOCKER_REGISTRY=$(yq '.org.docker_registry // "ghcr.io/KofTwentyTwo"' "${config_file}")
-  local ORG_NPM_SCOPE=$(yq '.org.npm_scope // "@koftwentytwo"' "${config_file}")
-  local ORG_CI_EMAIL=$(yq '.org.ci_email // "munitor-ci@koftwentytwo.com"' "${config_file}")
-  local ORG_CI_NAME=$(yq '.org.ci_name // "Munitor CI"' "${config_file}")
-  local ORG_ORB_SLUG=$(yq '.org.orb_slug // "kof22/munitor"' "${config_file}")
+  local ORG_DOCKER_REGISTRY
+  ORG_DOCKER_REGISTRY=$(yq '.org.docker_registry // "ghcr.io/KofTwentyTwo"' "${config_file}")
+  local ORG_NPM_SCOPE
+  ORG_NPM_SCOPE=$(yq '.org.npm_scope // "@koftwentytwo"' "${config_file}")
+  local ORG_CI_EMAIL
+  ORG_CI_EMAIL=$(yq '.org.ci_email // "munitor-ci@koftwentytwo.com"' "${config_file}")
+  local ORG_CI_NAME
+  ORG_CI_NAME=$(yq '.org.ci_name // "Munitor CI"' "${config_file}")
+  local ORG_ORB_SLUG
+  ORG_ORB_SLUG=$(yq '.org.orb_slug // "kof22/munitor"' "${config_file}")
 
   # Core pipeline settings
   MUNITOR_PIPELINE=$(yq '.pipeline' "${config_file}")
   MUNITOR_ORB_VERSION=$(yq '.orb_version // ""' "${config_file}")
   MUNITOR_IMAGE_NAME=$(yq '.image_name // ""' "${config_file}")
   MUNITOR_JAVA_VERSION=$(yq '.java_version // "21"' "${config_file}")
+  MUNITOR_SERVER_MODULE=$(yq '.server_module // ""' "${config_file}")
   MUNITOR_NODE_VERSION=$(yq '.node_version // "20"' "${config_file}")
   MUNITOR_SONAR_PROJECT_KEY=$(yq '.sonar.project_key // ""' "${config_file}")
   MUNITOR_DOCKER_REGISTRY=$(yq '.docker.registry // ""' "${config_file}")
@@ -261,9 +267,13 @@ extract_munitor_vars() {
     esac
   fi
   MUNITOR_HEALTH_DB=$(yq '.health.db // false' "${config_file}")
+  MUNITOR_HEALTH_MIGRATIONS=$(yq '.health.migrations // ""' "${config_file}")
+  if [[ "${MUNITOR_HEALTH_MIGRATIONS}" == "null" ]]; then MUNITOR_HEALTH_MIGRATIONS=""; fi
+  MUNITOR_HEALTH_SMOKE_PATHS=$(yq '.health.smoke_paths // [] | join(",")' "${config_file}")
+  if [[ "${MUNITOR_HEALTH_SMOKE_PATHS}" == "null" ]]; then MUNITOR_HEALTH_SMOKE_PATHS=""; fi
 
   # Supplemental images (e.g., migrations, db-backup)
-  MUNITOR_SUPPLEMENTAL_IMAGES_JSON=$(yq '.supplemental_images // [] | tojson' "${config_file}")
+  MUNITOR_SUPPLEMENTAL_IMAGES_JSON=$(yq -o=json -I=0 '.supplemental_images // []' "${config_file}")
   if [[ "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" == "[]" || "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}" == "null" ]]; then
     MUNITOR_SUPPLEMENTAL="false"
     MUNITOR_SUPPLEMENTAL_IMAGES_JSON="[]"
@@ -291,7 +301,7 @@ extract_munitor_vars() {
   fi
 
   # Export all variables
-  export MUNITOR_PIPELINE MUNITOR_ORB_VERSION MUNITOR_IMAGE_NAME MUNITOR_JAVA_VERSION MUNITOR_NODE_VERSION
+  export MUNITOR_PIPELINE MUNITOR_ORB_VERSION MUNITOR_IMAGE_NAME MUNITOR_JAVA_VERSION MUNITOR_NODE_VERSION MUNITOR_SERVER_MODULE
   export MUNITOR_SONAR_PROJECT_KEY MUNITOR_DOCKER_REGISTRY MUNITOR_CD_REPO MUNITOR_CD_FORMAT
   export MUNITOR_CD_ENV_DEVELOP MUNITOR_CD_ENV_STAGING MUNITOR_CD_ENV_PROD MUNITOR_CD_ENV_RELEASE
   export MUNITOR_COVERAGE_MIN MUNITOR_E2E MUNITOR_SBOM MUNITOR_OWASP
@@ -308,7 +318,7 @@ extract_munitor_vars() {
   export MUNITOR_KUBE_LINTER_CONFIG MUNITOR_YAMLLINT_PATHS
   export MUNITOR_NODE_FRAMEWORK MUNITOR_PACKAGE_MANAGER
   export MUNITOR_CI_EMAIL MUNITOR_CI_NAME MUNITOR_NPM_DEFAULT_SCOPE MUNITOR_ORB_SLUG
-  export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB
+  export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB MUNITOR_HEALTH_MIGRATIONS MUNITOR_HEALTH_SMOKE_PATHS
   export MUNITOR_SUPPLEMENTAL MUNITOR_SUPPLEMENTAL_IMAGES_JSON
   export MUNITOR_SONAR MUNITOR_CD MUNITOR_NVD
 }
@@ -316,7 +326,7 @@ extract_munitor_vars() {
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_HEALTH_MIGRATIONS} ${MUNITOR_HEALTH_SMOKE_PATHS} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON} ${MUNITOR_SERVER_MODULE}'
 }
 MUNITOR_EXTRACT_EOF
 
@@ -500,6 +510,8 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          health_migrations: "${MUNITOR_HEALTH_MIGRATIONS}"
+          health_smoke_paths: "${MUNITOR_HEALTH_SMOKE_PATHS}"
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -595,6 +607,8 @@ workflows:
           health_path: ${MUNITOR_HEALTH_PATH}
           health_port: "${MUNITOR_HEALTH_PORT}"
           health_db: "${MUNITOR_HEALTH_DB}"
+          health_migrations: "${MUNITOR_HEALTH_MIGRATIONS}"
+          health_smoke_paths: "${MUNITOR_HEALTH_SMOKE_PATHS}"
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2298,7 +2312,7 @@ validate_required_fields() {
   [[ -z "$(yq '.orb_version // ""' "${config}")" ]] && missing+=("orb_version")
 
   case "${pipeline}" in
-    java-webapp|node-api|node-webapp)
+    java-webapp|gradle-webapp|node-api|node-webapp)
       [[ -z "$(yq '.image_name // ""' "${config}")" ]] && missing+=("image_name")
       [[ -z "$(yq '.docker.registry // ""' "${config}")" ]] && missing+=("docker.registry")
       ;;
@@ -2322,7 +2336,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version image_name java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths supplemental_images"
+KNOWN_KEYS="pipeline orb_version image_name server_module java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths supplemental_images"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then

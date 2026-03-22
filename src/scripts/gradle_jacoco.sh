@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Source shared helpers
+MUNITOR_HELPERS="${MUNITOR_HELPERS:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/munitor_helpers.sh}"
+# shellcheck source=munitor_helpers.sh
+if [[ -f "${MUNITOR_HELPERS}" ]]; then source "${MUNITOR_HELPERS}"
+elif ! type munitor_header &>/dev/null; then
+  munitor_header() { echo "=== Munitor: ${1:-unknown} ==="; }
+  munitor_check_tool() { command -v "$1" &>/dev/null || { echo "ERROR: $1 not found"; exit 1; }; }
+  munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
+fi
+
+MIN="${MIN_INSTRUCTION:-70}"
+
+munitor_header "gradle_jacoco (min: ${MIN}%)"
+
+# Validate MIN_INSTRUCTION is numeric
+if ! [[ "${MIN}" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: MIN_INSTRUCTION must be a whole number, got '${MIN}'."
+  exit 1
+fi
+
+if [[ ! -f "./gradlew" ]]; then
+  echo "ERROR: ./gradlew not found. Ensure the Gradle wrapper is present."
+  exit 1
+fi
+if [[ ! -x "./gradlew" ]]; then
+  chmod +x ./gradlew
+fi
+
+echo "Generating JaCoCo report..."
+
+./gradlew jacocoTestReport --no-daemon --console=plain
+
+# Find ALL CSV report files across all subprojects
+CSV_FILES=$(find . -path "*/build/reports/jacoco/test/jacocoTestReport.csv" -type f)
+
+if [[ -z "${CSV_FILES}" ]]; then
+  echo "ERROR: No JaCoCo CSV reports found."
+  echo "Ensure the jacoco plugin is configured in build.gradle with csv report enabled."
+  exit 1
+fi
+
+# Parse CSV: sum INSTRUCTION_MISSED (col 4) and INSTRUCTION_COVERED (col 5) across ALL files
+# CSV header: GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,...
+read -r MISSED COVERED <<< "$(awk -F',' 'NR>1 { m+=$4; c+=$5 } END { print m, c }' ${CSV_FILES})"
+
+TOTAL=$((MISSED + COVERED))
+
+if [[ "${TOTAL}" -eq 0 ]]; then
+  echo "WARNING: No instruction data found in JaCoCo report (0 instructions total)."
+  echo "JaCoCo coverage: N/A (no code to measure)"
+  exit 0
+fi
+
+# Calculate percentage (integer arithmetic, truncated)
+PCT=$((COVERED * 100 / TOTAL))
+
+echo "JaCoCo coverage: ${PCT}% (${COVERED}/${TOTAL} instructions covered, minimum: ${MIN}%)"
+
+if [[ "${PCT}" -lt "${MIN}" ]]; then
+  echo "FAILED: Coverage ${PCT}% is below minimum threshold of ${MIN}%."
+  exit 1
+fi
+
+echo "JaCoCo coverage passed (>= ${MIN}%)."

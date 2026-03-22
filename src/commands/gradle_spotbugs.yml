@@ -1,0 +1,6 @@
+description: >
+  Run Gradle SpotBugs static analysis (skips gracefully if plugin not applied).
+steps:
+  - run:
+      name: Gradle SpotBugs
+      command: << include(scripts/gradle_spotbugs.sh) >>

@@ -918,6 +918,108 @@ for entry in "${URLS[@]}"; do
 done
 
 # =============================================================================
+# Test: Gradle scripts - structural tests
+# =============================================================================
+echo ""
+echo "=== Gradle Scripts Tests ==="
+
+for GRADLE_SCRIPT in gradle_build gradle_test gradle_jacoco gradle_checkstyle gradle_spotbugs gradle_pmd; do
+  SCRIPT_FILE="${SRC_SCRIPTS}/${GRADLE_SCRIPT}.sh"
+
+  echo -n "  TEST: ${GRADLE_SCRIPT}.sh exists... "
+  if [[ -f "${SCRIPT_FILE}" ]]; then
+    pass
+  else
+    fail "file not found"
+    continue
+  fi
+
+  echo -n "  TEST: ${GRADLE_SCRIPT}.sh is executable... "
+  if [[ -x "${SCRIPT_FILE}" ]]; then
+    pass
+  else
+    fail "not executable"
+  fi
+
+  echo -n "  TEST: ${GRADLE_SCRIPT}.sh sources munitor_helpers.sh... "
+  if grep -q 'munitor_helpers.sh' "${SCRIPT_FILE}"; then
+    pass
+  else
+    fail "should source munitor_helpers.sh"
+  fi
+
+  echo -n "  TEST: ${GRADLE_SCRIPT}.sh uses set -euo pipefail... "
+  if grep -q 'set -euo pipefail' "${SCRIPT_FILE}"; then
+    pass
+  else
+    fail "should use set -euo pipefail"
+  fi
+
+  echo -n "  TEST: ${GRADLE_SCRIPT}.sh uses gradlew... "
+  if grep -q 'gradlew' "${SCRIPT_FILE}"; then
+    pass
+  else
+    fail "should use ./gradlew"
+  fi
+done
+
+echo -n "  TEST: gradle_build.sh uses --no-daemon... "
+if grep -q '\-\-no-daemon' "${SRC_SCRIPTS}/gradle_build.sh"; then
+  pass
+else
+  fail "should use --no-daemon"
+fi
+
+echo -n "  TEST: gradle_build.sh skips tests (-x test)... "
+if grep -q '\-x test' "${SRC_SCRIPTS}/gradle_build.sh"; then
+  pass
+else
+  fail "should skip tests with -x test"
+fi
+
+echo -n "  TEST: gradle_jacoco.sh validates MIN_INSTRUCTION... "
+if grep -q 'MIN_INSTRUCTION' "${SRC_SCRIPTS}/gradle_jacoco.sh"; then
+  pass
+else
+  fail "should use MIN_INSTRUCTION"
+fi
+
+echo -n "  TEST: gradle_jacoco.sh aggregates multi-module CSVs... "
+if grep -q 'find' "${SRC_SCRIPTS}/gradle_jacoco.sh" && grep -q 'jacocoTestReport.csv' "${SRC_SCRIPTS}/gradle_jacoco.sh"; then
+  pass
+else
+  fail "should find jacocoTestReport.csv files"
+fi
+
+echo -n "  TEST: gradle_checkstyle.sh detects plugin availability... "
+if grep -q 'tasks --all' "${SRC_SCRIPTS}/gradle_checkstyle.sh" && grep -q 'checkstyleMain' "${SRC_SCRIPTS}/gradle_checkstyle.sh"; then
+  pass
+else
+  fail "should detect checkstyleMain task"
+fi
+
+echo -n "  TEST: gradle_checkstyle.sh skips gracefully... "
+if grep -q 'skipping\|Skipping\|skip\|not applied' "${SRC_SCRIPTS}/gradle_checkstyle.sh"; then
+  pass
+else
+  fail "should skip gracefully when plugin not applied"
+fi
+
+echo -n "  TEST: gradle_spotbugs.sh detects plugin availability... "
+if grep -q 'tasks --all' "${SRC_SCRIPTS}/gradle_spotbugs.sh" && grep -q 'spotbugsMain' "${SRC_SCRIPTS}/gradle_spotbugs.sh"; then
+  pass
+else
+  fail "should detect spotbugsMain task"
+fi
+
+echo -n "  TEST: gradle_pmd.sh detects plugin availability... "
+if grep -q 'tasks --all' "${SRC_SCRIPTS}/gradle_pmd.sh" && grep -q 'pmdMain' "${SRC_SCRIPTS}/gradle_pmd.sh"; then
+  pass
+else
+  fail "should detect pmdMain task"
+fi
+
+# =============================================================================
 # Summary
 # =============================================================================
 echo ""

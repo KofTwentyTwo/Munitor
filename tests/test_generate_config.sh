@@ -1131,6 +1131,88 @@ run_test "java-webapp-supplemental: has production workflow" \
   "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
   "production:"
 
+# ==========================================================================
+# gradle-webapp template rendering
+# ==========================================================================
+echo ""
+echo "=== gradle-webapp Template Rendering Tests ==="
+
+run_test "gradle-webapp: renders image_name" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "concilium"
+
+run_test "gradle-webapp: renders java_version" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "java_version: \"21\""
+
+run_test "gradle-webapp: uses gradle_build_and_test job" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "munitor/gradle_build_and_test"
+
+run_test "gradle-webapp: uses gradle_code_quality job" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "munitor/gradle_code_quality"
+
+run_test "gradle-webapp: uses gradle_coverage job" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "munitor/gradle_coverage"
+
+run_negative_test "gradle-webapp: does not use mvn_build_and_test" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "munitor/mvn_build_and_test"
+
+run_negative_test "gradle-webapp: does not use mvn_code_quality" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "munitor/mvn_code_quality"
+
+run_negative_test "gradle-webapp: does not use mvn_coverage" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "munitor/mvn_coverage"
+
+run_test "gradle-webapp: includes sast-scan" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "sast-scan"
+
+run_test "gradle-webapp: includes sbom when enabled" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "sbom"
+
+run_test "gradle-webapp: owasp disabled when false" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "owasp: false"
+
+run_test "gradle-webapp: has cd repo update" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "update-cd-repo"
+
+run_test "gradle-webapp: has release-candidate workflow" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "release-candidate:"
+
+run_test "gradle-webapp: has production workflow" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "production:"
+
+run_test "gradle-webapp: has pr-checks workflow" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "pr-checks:"
+
+run_test "gradle-webapp: coverage min is 50" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  'min_instruction: "50"'
+
+run_test "gradle-webapp: health_port is 8000" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  'health_port: "8000"'
+
+run_negative_test "gradle-webapp: no e2e block (e2e not enabled)" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "e2e-tests"
+
+run_negative_test "gradle-webapp: no sonar block (sonar not configured)" \
+  "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
+  "sonar-scan"
+
 echo ""
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="
 

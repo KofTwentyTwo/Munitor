@@ -1,0 +1,8 @@
+description: >
+  Save the Gradle caches for future builds.
+steps:
+  - save_cache:
+      key: gradle-v1-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ checksum "settings.gradle.kts" }}
+      paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
