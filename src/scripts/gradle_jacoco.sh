@@ -33,14 +33,38 @@ echo "Generating JaCoCo report..."
 
 ./gradlew jacocoTestReport --no-daemon --console=plain
 
+# Show what JaCoCo produced for diagnostics
+echo ""
+echo "Searching for JaCoCo reports..."
+find . -path "*/build/reports/jacoco" -type d 2>/dev/null | while read -r dir; do
+  echo "  Found: ${dir}/"
+  for f in "${dir}"/test/*; do
+    [[ -e "${f}" ]] && echo "    $(basename "${f}")"
+  done
+done
+
 # Find ALL CSV report files across all subprojects
 CSV_FILES=$(find . -path "*/build/reports/jacoco/test/jacocoTestReport.csv" -type f)
 
 if [[ -z "${CSV_FILES}" ]]; then
+  echo ""
   echo "ERROR: No JaCoCo CSV reports found."
-  echo "Ensure the jacoco plugin is configured in build.gradle with csv report enabled."
+  echo ""
+  echo "Gradle does not generate CSV reports by default. Add this to your"
+  echo "build.gradle.kts (in each module or via allprojects/subprojects):"
+  echo ""
+  echo '  tasks.jacocoTestReport {'
+  echo '    dependsOn(tasks.test)'
+  echo '    reports {'
+  echo '      csv.required.set(true)'
+  echo '    }'
+  echo '  }'
   exit 1
 fi
+
+echo ""
+echo "Found CSV reports:"
+echo "${CSV_FILES}" | sed 's/^/  /'
 
 # Parse CSV: sum INSTRUCTION_MISSED (col 4) and INSTRUCTION_COVERED (col 5) across ALL files
 # CSV header: GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,...
