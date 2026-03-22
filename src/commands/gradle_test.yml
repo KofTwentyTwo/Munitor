@@ -1,0 +1,15 @@
+description: >
+  Run Gradle tests and store JUnit XML results.
+steps:
+  - run:
+      name: Gradle test
+      command: << include(scripts/gradle_test.sh) >>
+  - run:
+      name: Collect test results
+      command: << include(scripts/collect_gradle_test_results.sh) >>
+      when: always
+  - store_test_results:
+      path: /tmp/test-results
+  - store_artifacts:
+      path: /tmp/test-results
+      destination: test-results

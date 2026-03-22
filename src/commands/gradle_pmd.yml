@@ -1,0 +1,6 @@
+description: >
+  Run Gradle PMD static analysis (skips gracefully if plugin not applied).
+steps:
+  - run:
+      name: Gradle PMD
+      command: << include(scripts/gradle_pmd.sh) >>

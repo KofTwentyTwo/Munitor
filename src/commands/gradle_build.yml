@@ -1,0 +1,6 @@
+description: >
+  Run Gradle build (compile + package, skip tests).
+steps:
+  - run:
+      name: Gradle build
+      command: << include(scripts/gradle_build.sh) >>

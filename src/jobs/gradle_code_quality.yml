@@ -1,0 +1,27 @@
+description: >
+  Run code quality checks: Checkstyle, SpotBugs, and PMD.
+  Requires workspace from gradle_build_and_test.
+  Skips individual tools gracefully if their Gradle plugin is not applied.
+parameters:
+  java_version:
+    type: string
+    default: "21"
+    description: Java major version to install.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+    default: large
+    description: Docker resource class.
+executor:
+  name: java
+  java_version: << parameters.java_version >>
+  resource_class: << parameters.resource_class >>
+steps:
+  - attach_workspace:
+      at: .
+  - restore_gradle_cache
+  - gradle_checkstyle
+  - gradle_spotbugs
+  - gradle_pmd

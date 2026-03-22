@@ -288,6 +288,54 @@ assert_eq "supplemental flag default" "false" "${MUNITOR_SUPPLEMENTAL}"
 assert_eq "supplemental JSON default empty" "[]" "${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}"
 
 # --------------------------------------------------------------------------
+# gradle-webapp fixture
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: gradle-webapp fixture ==="
+extract_munitor_vars "${FIXTURES_DIR}/gradle-webapp.munitor.yml"
+
+assert_eq "pipeline type" "gradle-webapp" "${MUNITOR_PIPELINE}"
+assert_eq "image_name" "concilium" "${MUNITOR_IMAGE_NAME}"
+assert_eq "java_version" "21" "${MUNITOR_JAVA_VERSION}"
+assert_eq "server_module" "concilium-server" "${MUNITOR_SERVER_MODULE}"
+assert_eq "docker registry" "ghcr.io/koftwentytwo" "${MUNITOR_DOCKER_REGISTRY}"
+assert_eq "cd repo" "KofTwentyTwo/Concilium-CD" "${MUNITOR_CD_REPO}"
+assert_eq "cd flag" "true" "${MUNITOR_CD}"
+assert_eq "cd format" "kustomize" "${MUNITOR_CD_FORMAT}"
+assert_eq "cd env develop" "dev" "${MUNITOR_CD_ENV_DEVELOP}"
+assert_eq "coverage min" "50" "${MUNITOR_COVERAGE_MIN}"
+assert_eq "sbom" "true" "${MUNITOR_SBOM}"
+assert_eq "owasp" "false" "${MUNITOR_OWASP}"
+assert_eq "sast" "true" "${MUNITOR_SAST}"
+assert_eq "sast fail_on_findings" "true" "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
+assert_eq "health_path" "/api/health" "${MUNITOR_HEALTH_PATH}"
+assert_eq "health_port" "8000" "${MUNITOR_HEALTH_PORT}"
+assert_eq "context registry" "ghcr" "${MUNITOR_CONTEXT_REGISTRY}"
+assert_eq "context github" "github" "${MUNITOR_CONTEXT_GITHUB}"
+assert_eq "github_release flag" "true" "${MUNITOR_GITHUB_RELEASE}"
+
+# --------------------------------------------------------------------------
+# server_module defaults (empty when not set)
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: server_module default ==="
+extract_munitor_vars "${FIXTURES_DIR}/java-webapp.munitor.yml"
+assert_eq "server_module default (empty)" "" "${MUNITOR_SERVER_MODULE}"
+
+# --------------------------------------------------------------------------
+# get_envsubst_vars includes MUNITOR_SERVER_MODULE
+# --------------------------------------------------------------------------
+echo -n "  TEST: get_envsubst_vars includes MUNITOR_SERVER_MODULE... "
+VARS_CHECK=$(get_envsubst_vars)
+if echo "${VARS_CHECK}" | grep -q 'MUNITOR_SERVER_MODULE'; then
+  echo "PASS"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL"
+  FAIL=$((FAIL + 1))
+fi
+
+# --------------------------------------------------------------------------
 # Missing config file
 # --------------------------------------------------------------------------
 echo ""

@@ -1,0 +1,43 @@
+description: >
+  Full Gradle build and test job. Installs Java, restores cache, calculates
+  version, builds, tests, saves cache, and persists the workspace for
+  downstream jobs.
+parameters:
+  java_version:
+    type: string
+    default: "21"
+    description: Java major version to install.
+  resource_class:
+    type: enum
+    enum:
+      - medium
+      - large
+      - xlarge
+    default: large
+    description: Machine resource class.
+executor:
+  name: machine
+  resource_class: << parameters.resource_class >>
+steps:
+  - checkout
+  - install_java:
+      version: << parameters.java_version >>
+  - restore_gradle_cache
+  - calculate_version
+  - export_version_vars
+  - gradle_build
+  - gradle_test
+  - run:
+      name: Collect test results
+      command: << include(scripts/collect_gradle_test_results.sh) >>
+      when: always
+  - store_test_results:
+      path: /tmp/test-results
+  - run:
+      name: Persist version metadata
+      command: <<include(scripts/persist_version_metadata.sh)>>
+  - save_gradle_cache
+  - persist_to_workspace:
+      root: .
+      paths:
+        - "."

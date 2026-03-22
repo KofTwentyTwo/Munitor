@@ -1,0 +1,6 @@
+description: >
+  Run Gradle Checkstyle analysis (skips gracefully if plugin not applied).
+steps:
+  - run:
+      name: Gradle Checkstyle
+      command: << include(scripts/gradle_checkstyle.sh) >>
