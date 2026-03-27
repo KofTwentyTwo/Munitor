@@ -175,13 +175,13 @@ run_test "java-webapp: includes sbom when enabled" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
   "sbom"
 
-run_test "java-webapp: uses mvn sbom (not npm_sbom)" \
+run_test "java-webapp: uses mvn sbom (not node_sbom)" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
   "munitor/sbom"
 
-run_negative_test "java-webapp: does not use npm_sbom" \
+run_negative_test "java-webapp: does not use node_sbom" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
 # Java-webapp sonar should still gate docker-build-push (regression guard)
 run_context_test "java-webapp: sonar-scan blocks docker-build-push" \
@@ -228,26 +228,26 @@ run_test "node-api: includes sonar when project_key set" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "sonar-scan"
 
-run_test "node-api: uses npm_sonar_scan (not mvn sonar_scan)" \
+run_test "node-api: uses node_sonar_scan (not mvn sonar_scan)" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "munitor/npm_sonar_scan"
+  "munitor/node_sonar_scan"
 
 run_test "node-api: includes sbom when enabled" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "sbom"
 
-run_test "node-api: uses npm_sbom (not mvn sbom)" \
+run_test "node-api: uses node_sbom (not mvn sbom)" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
 run_negative_test "node-api: does not use mvn sbom job" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "munitor/sbom:"
 
-# Verify the npm_sbom block includes the node_version parameter
-run_context_test "node-api: npm_sbom passes node_version" \
+# Verify the node_sbom block includes the node_version parameter
+run_context_test "node-api: node_sbom passes node_version" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "munitor/npm_sbom" \
+  "munitor/node_sbom" \
   "requires:" \
   "node_version:"
 
@@ -263,17 +263,17 @@ run_test "node-api: sonar-scan job still present in workflow" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "name: sonar-scan"
 
-run_test "node-api: uses npm jobs" \
+run_test "node-api: uses node jobs" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "npm_build_and_test"
+  "node_build_and_test"
 
-run_test "node-api: includes npm code quality" \
+run_test "node-api: includes node code quality" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "npm_code_quality"
+  "node_code_quality"
 
-run_test "node-api: includes npm security scan" \
+run_test "node-api: includes node security scan" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # Test node-api-minimal: e2e/sbom/sonar/extended features should be excluded
 run_test "node-api-minimal: renders node 22" \
@@ -349,9 +349,9 @@ run_test "node-api-services: coverage min from test.coverage.min_instruction" \
   "${FIXTURES_DIR}/node-api-services.munitor.yml" \
   'min_coverage: "70"'
 
-run_test "node-api-services: uses npm_sbom for sbom" \
+run_test "node-api-services: uses node_sbom for sbom" \
   "${FIXTURES_DIR}/node-api-services.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
 run_negative_test "node-api-services: does not use mvn sbom job" \
   "${FIXTURES_DIR}/node-api-services.munitor.yml" \
@@ -403,33 +403,33 @@ run_test "node-webapp: includes sonar when project_key set" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "sonar-scan"
 
-run_test "node-webapp: uses npm_sonar_scan (not mvn sonar_scan)" \
+run_test "node-webapp: uses node_sonar_scan (not mvn sonar_scan)" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "munitor/npm_sonar_scan"
+  "munitor/node_sonar_scan"
 
 run_test "node-webapp: includes sbom when enabled" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "sbom"
 
-run_test "node-webapp: uses npm_sbom (not mvn sbom)" \
+run_test "node-webapp: uses node_sbom (not mvn sbom)" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
-run_test "node-webapp: uses npm_build_and_test" \
+run_test "node-webapp: uses node_build_and_test" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_build_and_test"
+  "node_build_and_test"
 
-run_test "node-webapp: includes npm code quality" \
+run_test "node-webapp: includes node code quality" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_code_quality"
+  "node_code_quality"
 
-run_test "node-webapp: includes npm coverage" \
+run_test "node-webapp: includes node coverage" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_coverage"
+  "node_coverage"
 
-run_test "node-webapp: includes npm security scan" \
+run_test "node-webapp: includes node security scan" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # Sonar non-blocking: sonar-scan should NOT be in docker-build-push requires
 run_negative_context_test "node-webapp: sonar-scan not in docker-build-push requires" \
@@ -689,13 +689,13 @@ run_negative_context_test "node-api: production has no coverage" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_coverage"
+  "node_coverage"
 
 run_negative_context_test "node-api: production has no security-scan" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # node-api: release-candidate has quality gates
 run_context_test "node-api: release-candidate has code-quality" \
@@ -728,13 +728,13 @@ run_negative_context_test "node-webapp: production has no coverage" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_coverage"
+  "node_coverage"
 
 run_negative_context_test "node-webapp: production has no security-scan" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # node-webapp: release-candidate has quality gates
 run_context_test "node-webapp: release-candidate has code-quality" \

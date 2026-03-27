@@ -20,27 +20,27 @@ fail() {
 }
 
 # =============================================================================
-# Test: npm_test.sh - Custom test commands
+# Test: node_test.sh - Custom test commands
 # =============================================================================
-echo "=== npm_test.sh Tests ==="
+echo "=== node_test.sh Tests ==="
 
 echo -n "  TEST: runs custom test commands via bash -c (not eval)... "
 # Verify the script uses bash -c, not eval
-if grep -q 'bash -c "\${CMD}"' "${SRC_SCRIPTS}/npm_test.sh"; then
+if grep -q 'bash -c "\${CMD}"' "${SRC_SCRIPTS}/node_test.sh"; then
   pass
 else
   fail "script should use 'bash -c' not 'eval'"
 fi
 
 echo -n "  TEST: creates reports/junit directory... "
-if grep -q 'mkdir -p reports/junit' "${SRC_SCRIPTS}/npm_test.sh"; then
+if grep -q 'mkdir -p reports/junit' "${SRC_SCRIPTS}/node_test.sh"; then
   pass
 else
   fail "should create reports/junit"
 fi
 
 echo -n "  TEST: handles empty TEST_COMMANDS_JSON... "
-if grep -q '\[\]' "${SRC_SCRIPTS}/npm_test.sh" && grep -q 'null' "${SRC_SCRIPTS}/npm_test.sh"; then
+if grep -q '\[\]' "${SRC_SCRIPTS}/node_test.sh" && grep -q 'null' "${SRC_SCRIPTS}/node_test.sh"; then
   pass
 else
   fail "should handle empty/null JSON"
@@ -288,13 +288,13 @@ else
 fi
 
 # =============================================================================
-# Test: npm_coverage_check.sh - Security
+# Test: node_coverage_check.sh - Security
 # =============================================================================
 echo ""
-echo "=== npm_coverage_check.sh Tests ==="
+echo "=== node_coverage_check.sh Tests ==="
 
 echo -n "  TEST: uses bash -c for coverage command (not eval)... "
-if grep -q 'bash -c "\${COVERAGE_COMMAND}"' "${SRC_SCRIPTS}/npm_coverage_check.sh"; then
+if grep -q 'bash -c "\${COVERAGE_COMMAND}"' "${SRC_SCRIPTS}/node_coverage_check.sh"; then
   pass
 else
   fail "should use 'bash -c' not 'eval'"
@@ -888,7 +888,7 @@ YQ_VER=$(extract_version YQ_VERSION "${SRC_SCRIPTS}/install_yq.sh")
 KUSTOMIZE_VER=$(extract_version KUSTOMIZE_VERSION "${SRC_SCRIPTS}/install_kustomize.sh")
 KUBESEC_VER=$(extract_version KUBESEC_VERSION "${SRC_SCRIPTS}/install_kubesec.sh")
 TFSEC_TRIVY_VER=$(extract_version TRIVY_VERSION "${SRC_SCRIPTS}/install_tfsec.sh")
-SONAR_VER=$(extract_version SONAR_SCANNER_VERSION "${SRC_SCRIPTS}/npm_sonar.sh")
+SONAR_VER=$(extract_version SONAR_SCANNER_VERSION "${SRC_SCRIPTS}/node_sonar.sh")
 
 # All URLs target linux/amd64 -- matches the CI executor
 URLS=(

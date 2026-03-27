@@ -983,7 +983,7 @@ orbs:
 workflows:
   pr-checks:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -1022,7 +1022,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
           requires:
             - build-and-test
@@ -1031,7 +1031,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
@@ -1045,7 +1045,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -1055,7 +1055,7 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -1071,7 +1071,7 @@ workflows:
 
   release-candidate:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -1107,7 +1107,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
           requires:
             - build-and-test
@@ -1115,7 +1115,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
@@ -1128,7 +1128,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -1137,7 +1137,7 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -1147,7 +1147,7 @@ workflows:
                 - /release\/.*/
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
@@ -1187,7 +1187,7 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
           context:
@@ -1242,7 +1242,7 @@ workflows:
 
   production:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -1323,7 +1323,7 @@ orbs:
 workflows:
   pr-checks:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -1362,7 +1362,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
           requires:
             - build-and-test
@@ -1371,7 +1371,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
@@ -1385,7 +1385,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -1395,7 +1395,7 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -1411,7 +1411,7 @@ workflows:
 
   release-candidate:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -1447,7 +1447,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
           requires:
             - build-and-test
@@ -1455,7 +1455,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
@@ -1468,7 +1468,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -1477,7 +1477,7 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -1487,7 +1487,7 @@ workflows:
                 - /release\/.*/
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
@@ -1527,7 +1527,7 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
           context:
@@ -1582,7 +1582,7 @@ workflows:
 
   production:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -2409,7 +2409,7 @@ MUNITOR_PARTIAL_EOF
 cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -2442,14 +2442,14 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
@@ -2461,7 +2461,7 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -2469,7 +2469,7 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
             branches:
               only: __BRANCH_FILTER__
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -2478,7 +2478,7 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
               only: __BRANCH_FILTER__
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
@@ -2516,7 +2516,7 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
             branches:
               only: __BRANCH_FILTER__
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
           context:
@@ -2559,7 +2559,7 @@ MUNITOR_PARTIAL_EOF
 cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
           ##IF_NPM_AUTH##
@@ -2592,14 +2592,14 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
@@ -2611,7 +2611,7 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
           requires:
             - build-and-test
@@ -2619,7 +2619,7 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
             branches:
               only: __BRANCH_FILTER__
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
           requires:
             - build-and-test
@@ -2628,7 +2628,7 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
               only: __BRANCH_FILTER__
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
@@ -2666,7 +2666,7 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
             branches:
               only: __BRANCH_FILTER__
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
           context:
