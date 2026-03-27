@@ -9,6 +9,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -97,6 +98,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -268,6 +270,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
