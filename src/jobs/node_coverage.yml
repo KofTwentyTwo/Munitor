@@ -1,6 +1,6 @@
 description: >
   Enforce minimum coverage threshold from coverage output.
-  Requires workspace from npm_build_and_test.
+  Requires workspace from node_build_and_test.
 parameters:
   min_coverage:
     type: string
@@ -27,7 +27,7 @@ executor:
 steps:
   - attach_workspace:
       at: .
-  - npm_coverage_check:
+  - node_coverage_check:
       min_coverage: << parameters.min_coverage >>
       coverage_tool: << parameters.coverage_tool >>
       coverage_command: << parameters.coverage_command >>

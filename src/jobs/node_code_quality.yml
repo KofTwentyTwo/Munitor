@@ -1,13 +1,13 @@
 description: >
-  Run npm audit and Trivy filesystem scan.
-  Requires workspace from npm_build_and_test.
+  Run ESLint code quality checks.
+  Requires workspace from node_build_and_test.
 parameters:
   resource_class:
     type: enum
     enum:
       - medium
       - large
-    default: large
+    default: medium
     description: Machine resource class.
 executor:
   name: machine
@@ -15,10 +15,7 @@ executor:
 steps:
   - attach_workspace:
       at: .
-  - npm_audit
-  - restore_trivy_cache
-  - run_trivy
-  - save_trivy_cache
+  - node_lint
   - store_artifacts:
-      path: /tmp/trivy-results.json
-      destination: trivy-results.json
+      path: /tmp/eslint-report.json
+      destination: eslint-report.json

@@ -1,6 +1,6 @@
 description: >
   Generate SBOM and submit dependency graph for Node.js projects.
-  Requires workspace from npm_build_and_test.
+  Requires workspace from node_build_and_test.
 parameters:
   node_version:
     type: string
@@ -21,7 +21,7 @@ steps:
       at: .
   - install_node:
       version: << parameters.node_version >>
-  - npm_sbom
+  - node_sbom
   - submit_dependency_graph:
       sbom_path: bom.json
       detector_name: CycloneDX npm
