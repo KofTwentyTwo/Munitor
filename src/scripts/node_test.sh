@@ -11,7 +11,7 @@ elif ! type munitor_header &>/dev/null; then
   munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-munitor_header "npm_test"
+munitor_header "node_test"
 
 # Prevent interactive prompts from apt/dpkg when test commands install system deps
 export DEBIAN_FRONTEND=noninteractive

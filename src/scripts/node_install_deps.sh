@@ -11,7 +11,7 @@ elif ! type munitor_header &>/dev/null; then
   munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-munitor_header "npm_install"
+munitor_header "node_install_deps"
 munitor_check_tool node --version
 munitor_check_tool npm --version
 

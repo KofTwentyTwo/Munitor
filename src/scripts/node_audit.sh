@@ -11,16 +11,14 @@ elif ! type munitor_header &>/dev/null; then
   munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-munitor_header "npm_sbom"
-munitor_check_tool node --version
-munitor_check_tool npx --version
+munitor_header "node_audit"
 
-CYCLONEDX_NPM_VERSION="${CYCLONEDX_NPM_VERSION:-1.19.3}"
+echo "Running npm audit..."
 
-echo "Generating CycloneDX SBOM via @cyclonedx/cyclonedx-npm..."
+npm audit --audit-level=high || {
+  EXIT_CODE=$?
+  echo "npm audit found high/critical vulnerabilities."
+  exit "${EXIT_CODE}"
+}
 
-npx --yes "@cyclonedx/cyclonedx-npm@${CYCLONEDX_NPM_VERSION}" \
-  --output-file bom.json \
-  --output-format json
-
-echo "SBOM generated at bom.json"
+echo "npm audit passed."

@@ -16,7 +16,7 @@ COVERAGE_TOOL="${MUNITOR_COVERAGE_TOOL:-jest}"
 COVERAGE_COMMAND="${MUNITOR_COVERAGE_COMMAND:-}"
 SUMMARY_FILE="coverage/coverage-summary.json"
 
-munitor_header "npm_coverage_check (min: ${MIN}%)"
+munitor_header "node_coverage_check (min: ${MIN}%)"
 munitor_check_tool node --version
 
 # Validate MIN_COVERAGE is numeric

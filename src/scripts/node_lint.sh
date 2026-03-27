@@ -11,14 +11,16 @@ elif ! type munitor_header &>/dev/null; then
   munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-munitor_header "npm_audit"
+munitor_header "node_lint"
 
-echo "Running npm audit..."
+echo "Running ESLint..."
 
-npm audit --audit-level=high || {
+# Generate JSON report for artifacts
+npx eslint . --format json --output-file /tmp/eslint-report.json || {
   EXIT_CODE=$?
-  echo "npm audit found high/critical vulnerabilities."
+  # Also output human-readable format
+  npx eslint . || true
   exit "${EXIT_CODE}"
 }
 
-echo "npm audit passed."
+echo "ESLint passed."
