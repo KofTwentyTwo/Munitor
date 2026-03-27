@@ -83,32 +83,39 @@ if [[ -n "${PRISMA_SCHEMAS}" ]]; then
   echo ""
   echo "=== Prisma schema(s) detected ==="
 
-  # Check if prisma CLI is available
-  PRISMA_AVAILABLE=false
-  case "${PACKAGE_MANAGER}" in
-    npm)
-      if npx prisma --version &>/dev/null 2>&1; then
-        PRISMA_AVAILABLE=true
-      fi
-      ;;
-    pnpm)
-      if pnpm exec prisma --version &>/dev/null 2>&1; then
-        PRISMA_AVAILABLE=true
-      fi
-      ;;
-  esac
+  PRISMA_GENERATED=0
+  while IFS= read -r SCHEMA_PATH; do
+    # Resolve the package directory (parent of prisma/)
+    PKG_DIR=$(dirname "$(dirname "${SCHEMA_PATH}")")
 
-  if [[ "${PRISMA_AVAILABLE}" == "true" ]]; then
-    while IFS= read -r SCHEMA_PATH; do
+    # Check if prisma CLI is available from the package directory.
+    # In monorepos, prisma may only be installed in a workspace package,
+    # not at the root, so we must check from the package's own context.
+    PRISMA_CMD=""
+    case "${PACKAGE_MANAGER}" in
+      npm)
+        if (cd "${PKG_DIR}" && npx prisma --version) &>/dev/null; then
+          PRISMA_CMD="npx prisma"
+        fi
+        ;;
+      pnpm)
+        if (cd "${PKG_DIR}" && pnpm exec prisma --version) &>/dev/null; then
+          PRISMA_CMD="pnpm exec prisma"
+        fi
+        ;;
+    esac
+
+    if [[ -n "${PRISMA_CMD}" ]]; then
       echo "  Generating Prisma client for: ${SCHEMA_PATH}"
-      case "${PACKAGE_MANAGER}" in
-        npm)  npx prisma generate --schema="${SCHEMA_PATH}" ;;
-        pnpm) pnpm exec prisma generate --schema="${SCHEMA_PATH}" ;;
-      esac
-    done <<< "${PRISMA_SCHEMAS}"
-    echo "Prisma generate complete."
-  else
-    echo "WARNING: Prisma schema(s) found but prisma CLI is not available."
-    echo "  Add @prisma/client to your dependencies to enable auto-generation."
+      (cd "${PKG_DIR}" && ${PRISMA_CMD} generate --schema=prisma/schema.prisma)
+      PRISMA_GENERATED=$((PRISMA_GENERATED + 1))
+    else
+      echo "  WARNING: Found ${SCHEMA_PATH} but prisma CLI not available in ${PKG_DIR}."
+      echo "    Add prisma as a dev dependency in that package."
+    fi
+  done <<< "${PRISMA_SCHEMAS}"
+
+  if [[ "${PRISMA_GENERATED}" -gt 0 ]]; then
+    echo "Prisma generate complete (${PRISMA_GENERATED} schema(s))."
   fi
 fi
