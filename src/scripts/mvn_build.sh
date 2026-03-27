@@ -18,6 +18,7 @@ munitor_check_tool java -version
 echo "Running Maven build..."
 
 mvn clean install \
+  -U \
   -DskipTests \
   --batch-mode \
   --fail-at-end \
