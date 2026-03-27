@@ -14,6 +14,12 @@ parameters:
     type: string
     default: ""
     description: Custom command to generate coverage report before threshold check.
+  coverage_summary_path:
+    type: string
+    default: "coverage/coverage-summary.json"
+    description: >
+      Path to coverage-summary.json. Supports glob patterns for monorepos
+      (e.g., packages/*/coverage/coverage-summary.json).
 steps:
   - run:
       name: Coverage threshold check
@@ -21,4 +27,5 @@ steps:
         MIN_COVERAGE: << parameters.min_coverage >>
         MUNITOR_COVERAGE_TOOL: << parameters.coverage_tool >>
         MUNITOR_COVERAGE_COMMAND: << parameters.coverage_command >>
+        MUNITOR_COVERAGE_SUMMARY_PATH: << parameters.coverage_summary_path >>
       command: << include(scripts/node_coverage_check.sh) >>

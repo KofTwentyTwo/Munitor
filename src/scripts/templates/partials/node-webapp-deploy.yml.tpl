@@ -36,6 +36,8 @@
               only: __BRANCH_FILTER__
       - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -43,8 +45,11 @@
               only: __BRANCH_FILTER__
       - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -55,6 +60,8 @@
               only: __BRANCH_FILTER__
       - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -63,6 +70,8 @@
       ##IF_E2E##
       - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -73,6 +82,7 @@
       - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
@@ -111,6 +121,7 @@
       - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:

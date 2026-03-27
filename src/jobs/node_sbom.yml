@@ -6,6 +6,10 @@ parameters:
     type: string
     default: "20"
     description: Node.js major version to install.
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager (npm, pnpm, yarn).
   resource_class:
     type: enum
     enum:
@@ -21,6 +25,7 @@ steps:
       at: .
   - install_node:
       version: << parameters.node_version >>
+      package_manager: << parameters.package_manager >>
   - node_sbom
   - submit_dependency_graph:
       sbom_path: bom.json

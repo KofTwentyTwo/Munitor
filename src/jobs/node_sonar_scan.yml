@@ -6,6 +6,10 @@ parameters:
     type: string
     default: "20"
     description: Node.js major version to install.
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager (npm, pnpm, yarn).
   sonar_project_key:
     type: string
     description: SonarCloud project key.
@@ -29,6 +33,7 @@ steps:
       at: .
   - install_node:
       version: << parameters.node_version >>
+      package_manager: << parameters.package_manager >>
   - node_sonar:
       sonar_project_key: << parameters.sonar_project_key >>
       sonar_org: << parameters.sonar_org >>

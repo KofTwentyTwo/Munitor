@@ -2,6 +2,14 @@ description: >
   Run ESLint code quality checks.
   Requires workspace from node_build_and_test.
 parameters:
+  node_version:
+    type: string
+    default: "20"
+    description: Node.js major version to install.
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager (npm, pnpm, yarn).
   resource_class:
     type: enum
     enum:
@@ -15,6 +23,9 @@ executor:
 steps:
   - attach_workspace:
       at: .
+  - install_node:
+      version: << parameters.node_version >>
+      package_manager: << parameters.package_manager >>
   - node_lint
   - store_artifacts:
       path: /tmp/eslint-report.json
