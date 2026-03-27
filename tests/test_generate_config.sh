@@ -753,6 +753,24 @@ run_test "node-webapp: includes update-cd-repo when cd.repo set" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "update-cd-repo"
 
+# ============================================================
+# pnpm node-webapp
+# ============================================================
+echo ""
+echo "=== pnpm node-webapp tests ==="
+
+run_test "pnpm-webapp: uses node_build_and_test" \
+  "${FIXTURES_DIR}/pnpm-webapp.munitor.yml" \
+  "node_build_and_test"
+
+run_test "pnpm-webapp: passes package_manager param" \
+  "${FIXTURES_DIR}/pnpm-webapp.munitor.yml" \
+  'package_manager: "pnpm"'
+
+run_negative_test "pnpm-webapp: does not reference npm_build_and_test" \
+  "${FIXTURES_DIR}/pnpm-webapp.munitor.yml" \
+  "npm_build_and_test"
+
 # terraform: has release-candidate and production workflows
 run_test "terraform: has release-candidate workflow" \
   "${FIXTURES_DIR}/terraform.munitor.yml" \

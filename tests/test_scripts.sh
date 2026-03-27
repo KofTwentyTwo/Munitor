@@ -494,6 +494,44 @@ else
   fail "should use Alpine JRE with non-root user"
 fi
 
+echo ""
+echo "=== node_install_deps.sh pnpm support ==="
+
+echo -n "  TEST: node_install_deps.sh handles pnpm case... "
+if grep -q 'pnpm install --frozen-lockfile' "${SRC_SCRIPTS}/node_install_deps.sh"; then
+  pass
+else
+  fail "missing pnpm install --frozen-lockfile"
+fi
+
+echo -n "  TEST: node_install_deps.sh has Prisma auto-detection... "
+if grep -q 'prisma/schema.prisma' "${SRC_SCRIPTS}/node_install_deps.sh"; then
+  pass
+else
+  fail "missing Prisma auto-detection"
+fi
+
+echo -n "  TEST: node_test.sh handles pnpm fallback... "
+if grep -q 'pnpm test' "${SRC_SCRIPTS}/node_test.sh"; then
+  pass
+else
+  fail "missing pnpm test fallback"
+fi
+
+echo -n "  TEST: run_test_setup.sh supports inline commands... "
+if grep -q 'bash -c' "${SRC_SCRIPTS}/run_test_setup.sh"; then
+  pass
+else
+  fail "missing bash -c inline command support"
+fi
+
+echo -n "  TEST: generate_dockerfile.sh has pnpm Dockerfile variant... "
+if grep -q 'pnpm install --frozen-lockfile' "${SRC_SCRIPTS}/generate_dockerfile.sh"; then
+  pass
+else
+  fail "missing pnpm Dockerfile variant"
+fi
+
 # =============================================================================
 # Test: install_kustomize.sh - Pinned binary install
 # =============================================================================

@@ -263,6 +263,9 @@ assert_eq "health_port default 3000" "3000" "${MUNITOR_HEALTH_PORT}"
 assert_eq "coverage min default" "70" "${MUNITOR_COVERAGE_MIN}"
 assert_eq "package_manager default" "npm" "${MUNITOR_PACKAGE_MANAGER}"
 
+extract_munitor_vars "${FIXTURES_DIR}/pnpm-webapp.munitor.yml"
+assert_eq "pnpm package_manager is extracted" "pnpm" "${MUNITOR_PACKAGE_MANAGER}"
+
 # --------------------------------------------------------------------------
 # supplemental_images (enabled)
 # --------------------------------------------------------------------------
