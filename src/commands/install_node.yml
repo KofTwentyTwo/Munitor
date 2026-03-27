@@ -5,9 +5,14 @@ parameters:
     type: string
     default: "20"
     description: Node.js major version to install (e.g., 20, 22).
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager to use (npm, pnpm, yarn).
 steps:
   - run:
       name: Install Node.js << parameters.version >>
       environment:
         NODE_VERSION: << parameters.version >>
+        MUNITOR_PACKAGE_MANAGER: << parameters.package_manager >>
       command: << include(scripts/install_node.sh) >>
