@@ -61,6 +61,7 @@ steps:
   - run_trivy_image:
       image_tag: << parameters.registry >>/<< parameters.image_name >>:${DOCKER_TAG}
   - save_trivy_cache
+  - docker_push_ghcr
   - build_push_supplemental:
       supplemental_images: << parameters.supplemental_images >>
       image_name: << parameters.image_name >>
@@ -71,4 +72,3 @@ steps:
       health_db: << parameters.health_db >>
       health_migrations: << parameters.health_migrations >>
       health_smoke_paths: << parameters.health_smoke_paths >>
-  - docker_push_ghcr
