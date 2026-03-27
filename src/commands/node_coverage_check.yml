@@ -21,4 +21,4 @@ steps:
         MIN_COVERAGE: << parameters.min_coverage >>
         MUNITOR_COVERAGE_TOOL: << parameters.coverage_tool >>
         MUNITOR_COVERAGE_COMMAND: << parameters.coverage_command >>
-      command: << include(scripts/npm_coverage_check.sh) >>
+      command: << include(scripts/node_coverage_check.sh) >>

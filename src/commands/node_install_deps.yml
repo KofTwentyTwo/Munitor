@@ -1,0 +1,6 @@
+description: >
+  Install dependencies using the project package manager.
+steps:
+  - run:
+      name: Install dependencies
+      command: << include(scripts/node_install_deps.sh) >>

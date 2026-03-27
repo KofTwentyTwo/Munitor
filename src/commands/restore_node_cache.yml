@@ -1,5 +1,5 @@
 description: >
-  Restore the npm cache based on package-lock.json checksum.
+  Restore the dependency cache based on lockfile checksum.
 steps:
   - restore_cache:
       keys:

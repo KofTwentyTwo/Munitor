@@ -1,6 +1,0 @@
-description: >
-  Generate a CycloneDX SBOM from an npm project.
-steps:
-  - run:
-      name: Generate SBOM (npm)
-      command: << include(scripts/npm_sbom.sh) >>

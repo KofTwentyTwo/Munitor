@@ -1,6 +1,6 @@
 description: >
   Run tests with CI flags, coverage, and JUnit reporter. Supports custom
-  test commands via JSON array or falls back to Jest defaults.
+  test commands via JSON array or falls back to package manager defaults.
 parameters:
   test_commands:
     type: string
@@ -8,10 +8,10 @@ parameters:
     description: JSON array of custom test commands to run instead of Jest.
 steps:
   - run:
-      name: npm test
+      name: Run tests
       environment:
         MUNITOR_TEST_COMMANDS_JSON: << parameters.test_commands >>
-      command: << include(scripts/npm_test.sh) >>
+      command: << include(scripts/node_test.sh) >>
   - store_test_results:
       path: reports/junit
   - store_artifacts:
