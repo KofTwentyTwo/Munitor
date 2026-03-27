@@ -986,6 +986,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1074,6 +1075,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1245,6 +1247,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1326,6 +1329,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1414,6 +1418,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1585,6 +1590,7 @@ workflows:
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -2412,6 +2418,7 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -2562,6 +2569,7 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
       - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
