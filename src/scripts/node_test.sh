@@ -34,36 +34,44 @@ if [[ -n "${TEST_COMMANDS_JSON}" && "${TEST_COMMANDS_JSON}" != "[]" && "${TEST_C
 
   echo "Custom test commands complete."
 else
-  # Default: Jest with coverage and JUnit reporter
-  if ! npx jest --version &>/dev/null; then
-    echo ""
-    echo "ERROR: Jest is not installed and no custom test commands are configured."
-    echo ""
-    echo "  Munitor defaults to 'npx jest' but this project doesn't have Jest."
-    echo "  Add custom test commands to your .munitor.yml:"
-    echo ""
-    echo "    test:"
-    echo "      commands:"
-    echo "        - \"npm test\""
-    echo ""
-    echo "  Or install Jest: npm install --save-dev jest"
-    echo ""
-    exit 1
+  PACKAGE_MANAGER="${MUNITOR_PACKAGE_MANAGER:-npm}"
+
+  if [[ "${PACKAGE_MANAGER}" == "pnpm" ]]; then
+    echo "Running pnpm test..."
+    pnpm test
+    echo "pnpm test complete."
+  else
+    # Default: Jest with coverage and JUnit reporter
+    if ! npx jest --version &>/dev/null; then
+      echo ""
+      echo "ERROR: Jest is not installed and no custom test commands are configured."
+      echo ""
+      echo "  Munitor defaults to 'npx jest' but this project doesn't have Jest."
+      echo "  Add custom test commands to your .munitor.yml:"
+      echo ""
+      echo "    test:"
+      echo "      commands:"
+      echo "        - \"npm test\""
+      echo ""
+      echo "  Or install Jest: npm install --save-dev jest"
+      echo ""
+      exit 1
+    fi
+
+    echo "Running Jest tests..."
+
+    export JEST_JUNIT_OUTPUT_DIR="reports/junit"
+    export JEST_JUNIT_OUTPUT_NAME="results.xml"
+
+    npx jest \
+      --ci \
+      --forceExit \
+      --coverage \
+      --coverageReporters=json-summary \
+      --coverageReporters=lcov \
+      --reporters=default \
+      --reporters=jest-junit
+
+    echo "Jest tests complete."
   fi
-
-  echo "Running Jest tests..."
-
-  export JEST_JUNIT_OUTPUT_DIR="reports/junit"
-  export JEST_JUNIT_OUTPUT_NAME="results.xml"
-
-  npx jest \
-    --ci \
-    --forceExit \
-    --coverage \
-    --coverageReporters=json-summary \
-    --coverageReporters=lcov \
-    --reporters=default \
-    --reporters=jest-junit
-
-  echo "Jest tests complete."
 fi

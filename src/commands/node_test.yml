@@ -6,11 +6,16 @@ parameters:
     type: string
     default: ""
     description: JSON array of custom test commands to run instead of Jest.
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager to use (npm, pnpm, yarn).
 steps:
   - run:
       name: Run tests
       environment:
         MUNITOR_TEST_COMMANDS_JSON: << parameters.test_commands >>
+        MUNITOR_PACKAGE_MANAGER: << parameters.package_manager >>
       command: << include(scripts/node_test.sh) >>
   - store_test_results:
       path: reports/junit
