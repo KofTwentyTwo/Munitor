@@ -56,4 +56,20 @@ else
   echo "GitHub Release ${TAG} created."
 fi
 
+# Upload release artifacts if specified
+if [[ -n "${MUNITOR_RELEASE_ARTIFACTS:-}" ]]; then
+  echo "Uploading release artifacts: ${MUNITOR_RELEASE_ARTIFACTS}"
+  for artifact in ${MUNITOR_RELEASE_ARTIFACTS}; do
+    if [[ ! -f "${artifact}" ]]; then
+      echo "ERROR: Release artifact '${artifact}' not found."
+      echo "  Working directory: $(pwd)"
+      echo "  Available files: $(ls -la)"
+      exit 1
+    fi
+  done
+  # shellcheck disable=SC2086
+  gh release upload "${TAG}" ${MUNITOR_RELEASE_ARTIFACTS} --clobber
+  echo "Artifacts uploaded to ${TAG}."
+fi
+
 echo "github_release completed"

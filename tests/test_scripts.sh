@@ -1058,6 +1058,47 @@ else
 fi
 
 # =============================================================================
+# Test: github_release.sh - Release artifact upload support
+# =============================================================================
+echo ""
+echo "=== github_release.sh Artifact Upload Tests ==="
+
+echo -n "  TEST: supports MUNITOR_RELEASE_ARTIFACTS env var... "
+if grep -q 'MUNITOR_RELEASE_ARTIFACTS' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should support MUNITOR_RELEASE_ARTIFACTS"
+fi
+
+echo -n "  TEST: uses gh release upload for artifacts... "
+if grep -q 'gh release upload' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should use gh release upload"
+fi
+
+echo -n "  TEST: validates artifact files exist before upload... "
+if grep -q 'not found' "${SRC_SCRIPTS}/github_release.sh" && grep -q '! -f' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should validate artifact files exist"
+fi
+
+echo -n "  TEST: uses --clobber for idempotent uploads... "
+if grep -q '\-\-clobber' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should use --clobber flag"
+fi
+
+echo -n "  TEST: skips upload when MUNITOR_RELEASE_ARTIFACTS is empty... "
+if grep -q 'if \[\[ -n "\${MUNITOR_RELEASE_ARTIFACTS:-}"' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should skip upload when artifacts is empty"
+fi
+
+# =============================================================================
 # Summary
 # =============================================================================
 echo ""

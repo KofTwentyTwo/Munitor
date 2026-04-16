@@ -1,6 +1,12 @@
 description: >
   Create an annotated git tag and GitHub Release on main branch merges.
   Uses PROJECT_VERSION from GitVersion (persisted by the build job).
+  Optionally uploads release artifacts (e.g., main.js, manifest.json).
+parameters:
+  release_artifacts:
+    type: string
+    default: ""
+    description: "Space-separated list of files to upload to the GitHub Release."
 executor: base
 steps:
   - checkout
@@ -10,4 +16,5 @@ steps:
       name: Restore version metadata
       command: <<include(scripts/restore_version_metadata.sh)>>
   - install_gh
-  - github_release
+  - github_release:
+      release_artifacts: << parameters.release_artifacts >>

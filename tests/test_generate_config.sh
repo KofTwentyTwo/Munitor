@@ -1231,6 +1231,150 @@ run_negative_test "gradle-webapp: no sonar block (sonar not configured)" \
   "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
   "sonar-scan"
 
+# ============================================================
+# obsidian-plugin template rendering
+# ============================================================
+echo ""
+echo "=== obsidian-plugin Template Rendering Tests ==="
+
+# Basic rendering
+run_test "obsidian-plugin: renders node_version" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_version: \"20\""
+
+run_test "obsidian-plugin: uses node_build_and_test" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_build_and_test"
+
+run_test "obsidian-plugin: includes node code quality" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_code_quality"
+
+run_test "obsidian-plugin: includes node coverage" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_coverage"
+
+run_test "obsidian-plugin: includes node security scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_security_scan"
+
+run_test "obsidian-plugin: includes sast-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "sast-scan"
+
+run_test "obsidian-plugin: includes secrets-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "secrets-scan"
+
+run_test "obsidian-plugin: includes sbom when enabled" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "sbom"
+
+run_test "obsidian-plugin: includes test_commands" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "test_commands:"
+
+run_test "obsidian-plugin: includes coverage_command" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "coverage_command:"
+
+run_test "obsidian-plugin: includes coverage_tool vitest" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "coverage_tool: vitest"
+
+# Workflow presence
+run_test "obsidian-plugin: has pr-checks workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "pr-checks:"
+
+run_test "obsidian-plugin: has develop workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "develop:"
+
+run_test "obsidian-plugin: has release-candidate workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:"
+
+run_test "obsidian-plugin: has production workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:"
+
+# GitHub Release with artifacts
+run_test "obsidian-plugin: has github-release job" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "github-release"
+
+run_test "obsidian-plugin: github-release has release_artifacts" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release_artifacts:"
+
+run_test "obsidian-plugin: release_artifacts includes main.js" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "main.js manifest.json styles.css"
+
+# Release-candidate has quality gates
+run_context_test "obsidian-plugin: release-candidate has code-quality" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "code-quality"
+
+run_context_test "obsidian-plugin: release-candidate has coverage" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "node_coverage"
+
+run_context_test "obsidian-plugin: release-candidate has security-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "node_security_scan"
+
+# Production has NO quality gates (fast-path)
+run_negative_context_test "obsidian-plugin: production has no code-quality" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "code-quality"
+
+run_negative_context_test "obsidian-plugin: production has no coverage" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "node_coverage"
+
+run_negative_context_test "obsidian-plugin: production has no security-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "node_security_scan"
+
+# Negative tests: no Docker/CD artifacts
+run_negative_test "obsidian-plugin: no docker-build-push" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "docker-build-push"
+
+run_negative_test "obsidian-plugin: no update-cd-repo" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "update-cd-repo"
+
+run_negative_test "obsidian-plugin: no image_name" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "image_name:"
+
+run_negative_test "obsidian-plugin: no registry" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "registry:"
+
+run_negative_test "obsidian-plugin: no INCLUDE_DEPLOY" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "INCLUDE_DEPLOY"
+
+run_negative_test "obsidian-plugin: no staging workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "staging:"
+
 echo ""
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="
 

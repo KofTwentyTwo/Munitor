@@ -1,7 +1,15 @@
 description: >
   Create an annotated git tag and GitHub Release using the version
   calculated by GitVersion. Skips if tag or release already exists.
+  Optionally uploads release artifacts to the created release.
+parameters:
+  release_artifacts:
+    type: string
+    default: ""
+    description: "Space-separated list of files to upload to the GitHub Release."
 steps:
   - run:
       name: Create GitHub Release
+      environment:
+        MUNITOR_RELEASE_ARTIFACTS: << parameters.release_artifacts >>
       command: << include(scripts/github_release.sh) >>
