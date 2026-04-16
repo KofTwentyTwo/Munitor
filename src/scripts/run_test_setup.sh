@@ -16,16 +16,17 @@ munitor_header "run_test_setup"
 SETUP_SCRIPT="${MUNITOR_TEST_SETUP_SCRIPT:-}"
 
 if [[ -z "${SETUP_SCRIPT}" ]]; then
-  echo "No test setup script configured."
+  echo "No test setup configured."
   exit 0
 fi
 
-if [[ ! -f "${SETUP_SCRIPT}" ]]; then
-  echo "ERROR: Test setup script '${SETUP_SCRIPT}' not found."
-  exit 1
+if [[ -f "${SETUP_SCRIPT}" ]]; then
+  echo "Running test setup script: ${SETUP_SCRIPT}"
+  chmod +x "${SETUP_SCRIPT}"
+  "${SETUP_SCRIPT}"
+else
+  echo "Running test setup command: ${SETUP_SCRIPT}"
+  bash -c "${SETUP_SCRIPT}"
 fi
 
-echo "Running test setup: ${SETUP_SCRIPT}"
-chmod +x "${SETUP_SCRIPT}"
-"${SETUP_SCRIPT}"
 echo "Test setup complete."

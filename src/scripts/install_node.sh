@@ -64,3 +64,41 @@ NODE_BIN_DIR="$(dirname "$(command -v node)")"
 } >> "${BASH_ENV}"
 
 echo "  BASH_ENV: exported PATH with ${NODE_BIN_DIR}"
+
+# Activate non-npm package managers via corepack
+PACKAGE_MANAGER="${MUNITOR_PACKAGE_MANAGER:-npm}"
+if [[ "${PACKAGE_MANAGER}" != "npm" ]]; then
+  echo ""
+  echo "=== Activating ${PACKAGE_MANAGER} via corepack ==="
+  corepack enable
+
+  PM_VERSION=""
+  if [[ -f "package.json" ]]; then
+    # Priority 1: packageManager field (corepack-native, e.g. "pnpm@9.15.9")
+    PM_FIELD=$(node -e "try{const p=require('./package.json').packageManager||'';console.log(p)}catch{console.log('')}" 2>/dev/null)
+    if [[ "${PM_FIELD}" == "${PACKAGE_MANAGER}@"* ]]; then
+      PM_VERSION="${PM_FIELD#*@}"
+    fi
+
+    # Priority 2: engines field (e.g. "engines": {"pnpm": ">=9"})
+    if [[ -z "${PM_VERSION}" ]]; then
+      PM_VERSION=$(node -e "try{console.log(require('./package.json').engines?.['${PACKAGE_MANAGER}']||'')}catch{console.log('')}" 2>/dev/null)
+    fi
+  fi
+
+  if [[ -n "${PM_VERSION}" ]]; then
+    echo "  Detected version: ${PM_VERSION}"
+    corepack prepare "${PACKAGE_MANAGER}@${PM_VERSION}" --activate
+  else
+    echo "  No version constraint found, using corepack default"
+  fi
+
+  echo "  ${PACKAGE_MANAGER}: $(${PACKAGE_MANAGER} --version)"
+
+  # Export PM binary to BASH_ENV for downstream steps
+  PM_BIN_DIR="$(dirname "$(command -v "${PACKAGE_MANAGER}")")"
+  if [[ "${PM_BIN_DIR}" != "${NODE_BIN_DIR}" ]]; then
+    echo "export PATH=\"${PM_BIN_DIR}:\${PATH}\"" >> "${BASH_ENV}"
+    echo "  BASH_ENV: exported PATH with ${PM_BIN_DIR}"
+  fi
+fi

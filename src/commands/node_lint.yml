@@ -3,4 +3,4 @@ description: >
 steps:
   - run:
       name: ESLint
-      command: << include(scripts/npm_lint.sh) >>
+      command: << include(scripts/node_lint.sh) >>

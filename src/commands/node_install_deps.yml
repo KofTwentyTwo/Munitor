@@ -1,0 +1,13 @@
+description: >
+  Install project dependencies using the configured package manager.
+parameters:
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager to use (npm, pnpm, yarn).
+steps:
+  - run:
+      name: Install dependencies
+      environment:
+        MUNITOR_PACKAGE_MANAGER: << parameters.package_manager >>
+      command: << include(scripts/node_install_deps.sh) >>

@@ -1,7 +1,15 @@
 description: >
   Run npm audit and Trivy filesystem scan.
-  Requires workspace from npm_build_and_test.
+  Requires workspace from node_build_and_test.
 parameters:
+  node_version:
+    type: string
+    default: "20"
+    description: Node.js major version to install.
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager (npm, pnpm, yarn).
   resource_class:
     type: enum
     enum:
@@ -15,7 +23,10 @@ executor:
 steps:
   - attach_workspace:
       at: .
-  - npm_audit
+  - install_node:
+      version: << parameters.node_version >>
+      package_manager: << parameters.package_manager >>
+  - node_audit
   - restore_trivy_cache
   - run_trivy
   - save_trivy_cache

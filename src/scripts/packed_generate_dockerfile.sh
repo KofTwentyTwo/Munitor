@@ -193,6 +193,7 @@ extract_munitor_vars() {
   if [[ -n "${MUNITOR_TEST_COVERAGE_MIN}" ]]; then
     MUNITOR_COVERAGE_MIN="${MUNITOR_TEST_COVERAGE_MIN}"
   fi
+  MUNITOR_COVERAGE_SUMMARY_PATH=$(yq '.test.coverage.summary_path // "coverage/coverage-summary.json"' "${config_file}")
 
   # Terraform pipeline settings
   MUNITOR_TF_PATH=$(yq '.terraform.path // "terraform/"' "${config_file}")
@@ -311,7 +312,7 @@ extract_munitor_vars() {
   export MUNITOR_SERVICES MUNITOR_SERVICES_JSON
   export MUNITOR_TEST_SETUP MUNITOR_TEST_SETUP_SCRIPT
   export MUNITOR_CUSTOM_TEST MUNITOR_TEST_COMMANDS_JSON
-  export MUNITOR_COVERAGE_TOOL MUNITOR_COVERAGE_CMD MUNITOR_COVERAGE_COMMAND
+  export MUNITOR_COVERAGE_TOOL MUNITOR_COVERAGE_CMD MUNITOR_COVERAGE_COMMAND MUNITOR_COVERAGE_SUMMARY_PATH
   export MUNITOR_TF_PATH MUNITOR_TF_LIVE_PATH MUNITOR_TF_ENVIRONMENTS MUNITOR_CHECKOV_SKIP MUNITOR_SAST MUNITOR_SAST_FAIL_ON_FINDINGS
   export MUNITOR_KUSTOMIZE_VERSION MUNITOR_KUSTOMIZE_BASE_PATH MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR
   export MUNITOR_KUSTOMIZE_SCAN_OVERLAY MUNITOR_KUSTOMIZE_OVERLAYS MUNITOR_KUSTOMIZE_OVERLAY_DIR
@@ -326,7 +327,7 @@ extract_munitor_vars() {
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_HEALTH_MIGRATIONS} ${MUNITOR_HEALTH_SMOKE_PATHS} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON} ${MUNITOR_SERVER_MODULE}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_HEALTH_MIGRATIONS} ${MUNITOR_HEALTH_SMOKE_PATHS} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON} ${MUNITOR_SERVER_MODULE} ${MUNITOR_COVERAGE_SUMMARY_PATH}'
 }
 MUNITOR_EXTRACT_EOF
 
@@ -377,7 +378,42 @@ case "${MUNITOR_PIPELINE}" in
       nextjs)
         # Multi-stage Next.js standalone Dockerfile.
         # Assumes `output: 'standalone'` in next.config.js.
-        cat > Dockerfile <<DOCKERFILE
+        case "${MUNITOR_PACKAGE_MANAGER}" in
+          pnpm)
+            cat > Dockerfile <<DOCKERFILE
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
+WORKDIR /app
+RUN corepack enable
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV STANDALONE=true
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
+RUN pnpm run build
+
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS runner
+WORKDIR /app
+RUN apk update && apk upgrade --no-cache && rm -rf /var/cache/apk/*
+RUN npm cache clean --force && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx
+RUN addgroup --system --gid 1001 nodejs \\
+ && adduser --system --uid 1001 nextjs
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
+EXPOSE 3000
+ENV PORT=3000
+CMD ["node", "server.js"]
+DOCKERFILE
+            ;;
+          *)
+            cat > Dockerfile <<DOCKERFILE
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
@@ -408,11 +444,38 @@ EXPOSE 3000
 ENV PORT=3000
 CMD ["node", "server.js"]
 DOCKERFILE
+            ;;
+        esac
         ;;
 
       express)
         # Two-stage Express Dockerfile. Uses package.json "main" field via `node .`.
-        cat > Dockerfile <<DOCKERFILE
+        case "${MUNITOR_PACKAGE_MANAGER}" in
+          pnpm)
+            cat > Dockerfile <<DOCKERFILE
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS runner
+WORKDIR /app
+RUN apk update && apk upgrade --no-cache && rm -rf /var/cache/apk/*
+RUN npm cache clean --force && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx
+RUN addgroup --system --gid 1001 nodejs \\
+ && adduser --system --uid 1001 appuser -G nodejs
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+USER appuser
+EXPOSE ${MUNITOR_HEALTH_PORT}
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${MUNITOR_HEALTH_PORT}${MUNITOR_HEALTH_PATH} || exit 1
+CMD ["node", "."]
+DOCKERFILE
+            ;;
+          *)
+            cat > Dockerfile <<DOCKERFILE
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
@@ -432,6 +495,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\
     CMD wget --no-verbose --tries=1 --spider http://localhost:${MUNITOR_HEALTH_PORT}${MUNITOR_HEALTH_PATH} || exit 1
 CMD ["node", "."]
 DOCKERFILE
+            ;;
+        esac
         ;;
 
       *)
@@ -533,7 +598,31 @@ DOCKERFILE
 
   node-webapp)
     echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
-    cat > Dockerfile <<DOCKERFILE
+    case "${MUNITOR_PACKAGE_MANAGER}" in
+      pnpm)
+        cat > Dockerfile <<DOCKERFILE
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
+RUN pnpm run build
+
+FROM gcr.io/distroless/nodejs${MUNITOR_NODE_VERSION}-debian12 AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+EXPOSE ${MUNITOR_HEALTH_PORT}
+CMD ["server.js"]
+DOCKERFILE
+        ;;
+      *)
+        cat > Dockerfile <<DOCKERFILE
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
@@ -552,6 +641,8 @@ COPY --from=builder /app/public ./public
 EXPOSE ${MUNITOR_HEALTH_PORT}
 CMD ["server.js"]
 DOCKERFILE
+        ;;
+    esac
     ;;
 
   *)

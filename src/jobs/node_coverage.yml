@@ -1,7 +1,15 @@
 description: >
   Enforce minimum coverage threshold from coverage output.
-  Requires workspace from npm_build_and_test.
+  Requires workspace from node_build_and_test.
 parameters:
+  node_version:
+    type: string
+    default: "20"
+    description: Node.js major version to install.
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager (npm, pnpm, yarn).
   min_coverage:
     type: string
     default: "70"
@@ -14,6 +22,11 @@ parameters:
     type: string
     default: ""
     description: Custom command to generate coverage report before threshold check.
+  coverage_summary_path:
+    type: string
+    default: "coverage/coverage-summary.json"
+    description: >
+      Path to coverage-summary.json. Supports glob patterns for monorepos.
   resource_class:
     type: enum
     enum:
@@ -27,10 +40,14 @@ executor:
 steps:
   - attach_workspace:
       at: .
-  - npm_coverage_check:
+  - install_node:
+      version: << parameters.node_version >>
+      package_manager: << parameters.package_manager >>
+  - node_coverage_check:
       min_coverage: << parameters.min_coverage >>
       coverage_tool: << parameters.coverage_tool >>
       coverage_command: << parameters.coverage_command >>
+      coverage_summary_path: << parameters.coverage_summary_path >>
   - store_artifacts:
       path: coverage
       destination: coverage-report

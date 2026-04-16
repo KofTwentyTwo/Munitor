@@ -80,6 +80,9 @@ validate_required_fields() {
     validate-cd-repo|argocd-apps)
       # No additional required fields beyond orb_version
       ;;
+    obsidian-plugin)
+      [[ -z "$(yq '.contexts.github // ""' "${config}")" ]] && missing+=("contexts.github")
+      ;;
   esac
 
   if [[ ${#missing[@]} -gt 0 ]]; then

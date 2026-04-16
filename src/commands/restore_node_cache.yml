@@ -1,0 +1,24 @@
+description: >
+  Restore the dependency cache based on lockfile checksum.
+parameters:
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager (npm, pnpm, yarn).
+steps:
+  - when:
+      condition:
+        equal: ["npm", << parameters.package_manager >>]
+      steps:
+        - restore_cache:
+            keys:
+              - npm-v1-{{ checksum "package-lock.json" }}
+              - npm-v1-
+  - when:
+      condition:
+        equal: ["pnpm", << parameters.package_manager >>]
+      steps:
+        - restore_cache:
+            keys:
+              - pnpm-v1-{{ checksum "pnpm-lock.yaml" }}
+              - pnpm-v1-

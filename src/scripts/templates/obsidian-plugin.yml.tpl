@@ -38,6 +38,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
+      ##IF_SAST##
       - munitor/sast_scan:
           name: sast-scan
           fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
@@ -46,6 +47,7 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
+      ##ENDIF_SAST##
       - munitor/node_code_quality:
           name: code-quality
           node_version: "${MUNITOR_NODE_VERSION}"
@@ -99,8 +101,31 @@ workflows:
                 - /hotfix\/.*/
       ##ENDIF_E2E##
 
-  ##INCLUDE_DEPLOY node-api-deploy develop develop ${MUNITOR_CD_ENV_DEVELOP}##
-  ##INCLUDE_DEPLOY node-api-deploy staging staging ${MUNITOR_CD_ENV_STAGING}##
+  develop:
+    jobs:
+      - munitor/node_build_and_test:
+          name: build-and-test
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          ##IF_NPM_AUTH##
+          npm_auth: true
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
+          ##ENDIF_NPM_AUTH##
+          ##IF_SERVICES##
+          services: '${MUNITOR_SERVICES_JSON}'
+          ##ENDIF_SERVICES##
+          ##IF_TEST_SETUP##
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
+          ##ENDIF_TEST_SETUP##
+          ##IF_CUSTOM_TEST##
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
+          ##ENDIF_CUSTOM_TEST##
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          filters:
+            branches:
+              only: develop
 
   release-candidate:
     jobs:
@@ -134,6 +159,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
+      ##IF_SAST##
       - munitor/sast_scan:
           name: sast-scan
           fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
@@ -141,6 +167,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
+      ##ENDIF_SAST##
       - munitor/node_code_quality:
           name: code-quality
           node_version: "${MUNITOR_NODE_VERSION}"
@@ -205,31 +232,6 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SONAR##
-      - munitor/docker_build_push:
-          name: docker-build-push
-          image_name: ${MUNITOR_IMAGE_NAME}
-          registry: ${MUNITOR_DOCKER_REGISTRY}
-          health_path: ${MUNITOR_HEALTH_PATH}
-          health_port: "${MUNITOR_HEALTH_PORT}"
-          health_db: "${MUNITOR_HEALTH_DB}"
-          ##IF_SUPPLEMENTAL##
-          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
-          ##ENDIF_SUPPLEMENTAL##
-          requires:
-            - code-quality
-            - coverage
-            - secrets-scan
-            - sast-scan
-            - security-scan
-            ##IF_E2E##
-            - e2e-tests
-            ##ENDIF_E2E##
-          context:
-            - ${MUNITOR_CONTEXT_REGISTRY}
-          filters:
-            branches:
-              only:
-                - /release\/.*/
       ##IF_SBOM##
       - munitor/node_sbom:
           name: sbom
@@ -241,7 +243,9 @@ workflows:
             - code-quality
             - coverage
             - secrets-scan
+            ##IF_SAST##
             - sast-scan
+            ##ENDIF_SAST##
             - security-scan
             ##IF_E2E##
             - e2e-tests
@@ -251,39 +255,26 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SBOM##
-      ##IF_CD##
-      - munitor/update_cd_repo:
-          name: update-cd-repo
-          cd_repo: ${MUNITOR_CD_REPO}
-          environment: ${MUNITOR_CD_ENV_RELEASE}
-          cd_format: ${MUNITOR_CD_FORMAT}
-          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
-          ##IF_SUPPLEMENTAL##
-          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
-          ##ENDIF_SUPPLEMENTAL##
-          ci_git_email: '${MUNITOR_CI_EMAIL}'
-          ci_git_name: '${MUNITOR_CI_NAME}'
-          requires:
-            - docker-build-push
-          context:
-            - ${MUNITOR_CONTEXT_GITHUB}
-          filters:
-            branches:
-              only:
-                - /release\/.*/
-      ##ENDIF_CD##
-      ##IF_GITHUB_RELEASE##
       - munitor/github_release:
           name: github-release
+          release_artifacts: "main.js manifest.json styles.css"
           requires:
-            - docker-build-push
+            - code-quality
+            - coverage
+            - secrets-scan
+            ##IF_SAST##
+            - sast-scan
+            ##ENDIF_SAST##
+            - security-scan
+            ##IF_E2E##
+            - e2e-tests
+            ##ENDIF_E2E##
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only:
                 - /release\/.*/
-      ##ENDIF_GITHUB_RELEASE##
 
   production:
     jobs:
@@ -310,51 +301,13 @@ workflows:
           filters:
             branches:
               only: main
-      - munitor/docker_build_push:
-          name: docker-build-push
-          image_name: ${MUNITOR_IMAGE_NAME}
-          registry: ${MUNITOR_DOCKER_REGISTRY}
-          health_path: ${MUNITOR_HEALTH_PATH}
-          health_port: "${MUNITOR_HEALTH_PORT}"
-          health_db: "${MUNITOR_HEALTH_DB}"
-          ##IF_SUPPLEMENTAL##
-          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
-          ##ENDIF_SUPPLEMENTAL##
+      - munitor/github_release:
+          name: github-release
+          release_artifacts: "main.js manifest.json styles.css"
           requires:
             - build-and-test
           context:
-            - ${MUNITOR_CONTEXT_REGISTRY}
-          filters:
-            branches:
-              only: main
-      ##IF_CD##
-      - munitor/update_cd_repo:
-          name: update-cd-repo
-          cd_repo: ${MUNITOR_CD_REPO}
-          environment: ${MUNITOR_CD_ENV_PROD}
-          cd_format: ${MUNITOR_CD_FORMAT}
-          cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
-          ##IF_SUPPLEMENTAL##
-          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
-          ##ENDIF_SUPPLEMENTAL##
-          ci_git_email: '${MUNITOR_CI_EMAIL}'
-          ci_git_name: '${MUNITOR_CI_NAME}'
-          requires:
-            - docker-build-push
-          context:
             - ${MUNITOR_CONTEXT_GITHUB}
           filters:
             branches:
               only: main
-      ##ENDIF_CD##
-      ##IF_GITHUB_RELEASE##
-      - munitor/github_release:
-          name: github-release
-          requires:
-            - docker-build-push
-          context:
-            - ${MUNITOR_CONTEXT_GITHUB}
-          filters:
-            branches:
-              only: main
-      ##ENDIF_GITHUB_RELEASE##

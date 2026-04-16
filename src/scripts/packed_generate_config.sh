@@ -193,6 +193,7 @@ extract_munitor_vars() {
   if [[ -n "${MUNITOR_TEST_COVERAGE_MIN}" ]]; then
     MUNITOR_COVERAGE_MIN="${MUNITOR_TEST_COVERAGE_MIN}"
   fi
+  MUNITOR_COVERAGE_SUMMARY_PATH=$(yq '.test.coverage.summary_path // "coverage/coverage-summary.json"' "${config_file}")
 
   # Terraform pipeline settings
   MUNITOR_TF_PATH=$(yq '.terraform.path // "terraform/"' "${config_file}")
@@ -311,7 +312,7 @@ extract_munitor_vars() {
   export MUNITOR_SERVICES MUNITOR_SERVICES_JSON
   export MUNITOR_TEST_SETUP MUNITOR_TEST_SETUP_SCRIPT
   export MUNITOR_CUSTOM_TEST MUNITOR_TEST_COMMANDS_JSON
-  export MUNITOR_COVERAGE_TOOL MUNITOR_COVERAGE_CMD MUNITOR_COVERAGE_COMMAND
+  export MUNITOR_COVERAGE_TOOL MUNITOR_COVERAGE_CMD MUNITOR_COVERAGE_COMMAND MUNITOR_COVERAGE_SUMMARY_PATH
   export MUNITOR_TF_PATH MUNITOR_TF_LIVE_PATH MUNITOR_TF_ENVIRONMENTS MUNITOR_CHECKOV_SKIP MUNITOR_SAST MUNITOR_SAST_FAIL_ON_FINDINGS
   export MUNITOR_KUSTOMIZE_VERSION MUNITOR_KUSTOMIZE_BASE_PATH MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR
   export MUNITOR_KUSTOMIZE_SCAN_OVERLAY MUNITOR_KUSTOMIZE_OVERLAYS MUNITOR_KUSTOMIZE_OVERLAY_DIR
@@ -326,7 +327,7 @@ extract_munitor_vars() {
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_HEALTH_MIGRATIONS} ${MUNITOR_HEALTH_SMOKE_PATHS} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON} ${MUNITOR_SERVER_MODULE}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_HEALTH_MIGRATIONS} ${MUNITOR_HEALTH_SMOKE_PATHS} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON} ${MUNITOR_SERVER_MODULE} ${MUNITOR_COVERAGE_SUMMARY_PATH}'
 }
 MUNITOR_EXTRACT_EOF
 
@@ -983,9 +984,10 @@ orbs:
 workflows:
   pr-checks:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1022,8 +1024,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1031,10 +1035,13 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -1045,8 +1052,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1055,8 +1064,10 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1071,9 +1082,10 @@ workflows:
 
   release-candidate:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1107,18 +1119,23 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -1128,8 +1145,10 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1137,8 +1156,10 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1147,9 +1168,10 @@ workflows:
                 - /release\/.*/
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
@@ -1187,9 +1209,10 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:
@@ -1242,9 +1265,10 @@ workflows:
 
   production:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1323,9 +1347,10 @@ orbs:
 workflows:
   pr-checks:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1362,8 +1387,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1371,10 +1398,13 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -1385,8 +1415,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1395,8 +1427,10 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1411,9 +1445,10 @@ workflows:
 
   release-candidate:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -1447,18 +1482,23 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -1468,8 +1508,10 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1477,8 +1519,10 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -1487,9 +1531,10 @@ workflows:
                 - /release\/.*/
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
@@ -1527,9 +1572,10 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:
@@ -1582,9 +1628,10 @@ workflows:
 
   production:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -2108,6 +2155,322 @@ workflows:
               only: main
 MUNITOR_TPL_EOF
 
+cat > /tmp/munitor/templates/obsidian-plugin.yml.tpl << 'MUNITOR_TPL_EOF'
+version: 2.1
+
+orbs:
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
+
+workflows:
+  pr-checks:
+    jobs:
+      - munitor/node_build_and_test:
+          name: build-and-test
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          ##IF_NPM_AUTH##
+          npm_auth: true
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
+          ##ENDIF_NPM_AUTH##
+          ##IF_SERVICES##
+          services: '${MUNITOR_SERVICES_JSON}'
+          ##ENDIF_SERVICES##
+          ##IF_TEST_SETUP##
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
+          ##ENDIF_TEST_SETUP##
+          ##IF_CUSTOM_TEST##
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
+          ##ENDIF_CUSTOM_TEST##
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      - munitor/secrets_scan:
+          name: secrets-scan
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      ##IF_SAST##
+      - munitor/sast_scan:
+          name: sast-scan
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      ##ENDIF_SAST##
+      - munitor/node_code_quality:
+          name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      - munitor/node_coverage:
+          name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          min_coverage: "${MUNITOR_COVERAGE_MIN}"
+          coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
+          ##IF_COVERAGE_CMD##
+          coverage_command: ${MUNITOR_COVERAGE_COMMAND}
+          ##ENDIF_COVERAGE_CMD##
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      - munitor/node_security_scan:
+          name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      ##IF_E2E##
+      - munitor/node_e2e_test:
+          name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+      ##ENDIF_E2E##
+
+  develop:
+    jobs:
+      - munitor/node_build_and_test:
+          name: build-and-test
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          ##IF_NPM_AUTH##
+          npm_auth: true
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
+          ##ENDIF_NPM_AUTH##
+          ##IF_SERVICES##
+          services: '${MUNITOR_SERVICES_JSON}'
+          ##ENDIF_SERVICES##
+          ##IF_TEST_SETUP##
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
+          ##ENDIF_TEST_SETUP##
+          ##IF_CUSTOM_TEST##
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
+          ##ENDIF_CUSTOM_TEST##
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          filters:
+            branches:
+              only: develop
+
+  release-candidate:
+    jobs:
+      - munitor/node_build_and_test:
+          name: build-and-test
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          ##IF_NPM_AUTH##
+          npm_auth: true
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
+          ##ENDIF_NPM_AUTH##
+          ##IF_SERVICES##
+          services: '${MUNITOR_SERVICES_JSON}'
+          ##ENDIF_SERVICES##
+          ##IF_TEST_SETUP##
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
+          ##ENDIF_TEST_SETUP##
+          ##IF_CUSTOM_TEST##
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
+          ##ENDIF_CUSTOM_TEST##
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      - munitor/secrets_scan:
+          name: secrets-scan
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      ##IF_SAST##
+      - munitor/sast_scan:
+          name: sast-scan
+          fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      ##ENDIF_SAST##
+      - munitor/node_code_quality:
+          name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      - munitor/node_coverage:
+          name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          min_coverage: "${MUNITOR_COVERAGE_MIN}"
+          coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
+          ##IF_COVERAGE_CMD##
+          coverage_command: ${MUNITOR_COVERAGE_COMMAND}
+          ##ENDIF_COVERAGE_CMD##
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      - munitor/node_security_scan:
+          name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      ##IF_E2E##
+      - munitor/node_e2e_test:
+          name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      ##ENDIF_E2E##
+      ##IF_SONAR##
+      - munitor/node_sonar_scan:
+          name: sonar-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
+          requires:
+            - build-and-test
+            - coverage
+          context:
+            - ${MUNITOR_CONTEXT_SONAR}
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      ##ENDIF_SONAR##
+      ##IF_SBOM##
+      - munitor/node_sbom:
+          name: sbom
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          requires:
+            - code-quality
+            - coverage
+            - secrets-scan
+            ##IF_SAST##
+            - sast-scan
+            ##ENDIF_SAST##
+            - security-scan
+            ##IF_E2E##
+            - e2e-tests
+            ##ENDIF_E2E##
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+      ##ENDIF_SBOM##
+      - munitor/github_release:
+          name: github-release
+          release_artifacts: "main.js manifest.json styles.css"
+          requires:
+            - code-quality
+            - coverage
+            - secrets-scan
+            ##IF_SAST##
+            - sast-scan
+            ##ENDIF_SAST##
+            - security-scan
+            ##IF_E2E##
+            - e2e-tests
+            ##ENDIF_E2E##
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+
+  production:
+    jobs:
+      - munitor/node_build_and_test:
+          name: build-and-test
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
+          ##IF_NPM_AUTH##
+          npm_auth: true
+          npm_scopes: '${MUNITOR_NPM_SCOPES}'
+          npm_default_scope: '${MUNITOR_NPM_DEFAULT_SCOPE}'
+          ##ENDIF_NPM_AUTH##
+          ##IF_SERVICES##
+          services: '${MUNITOR_SERVICES_JSON}'
+          ##ENDIF_SERVICES##
+          ##IF_TEST_SETUP##
+          test_setup: ${MUNITOR_TEST_SETUP_SCRIPT}
+          ##ENDIF_TEST_SETUP##
+          ##IF_CUSTOM_TEST##
+          test_commands: '${MUNITOR_TEST_COMMANDS_JSON}'
+          ##ENDIF_CUSTOM_TEST##
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          filters:
+            branches:
+              only: main
+      - munitor/github_release:
+          name: github-release
+          release_artifacts: "main.js manifest.json styles.css"
+          requires:
+            - build-and-test
+          context:
+            - ${MUNITOR_CONTEXT_GITHUB}
+          filters:
+            branches:
+              only: main
+MUNITOR_TPL_EOF
+
 cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
@@ -2409,9 +2772,10 @@ MUNITOR_PARTIAL_EOF
 cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -2442,17 +2806,22 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -2461,16 +2830,20 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -2478,9 +2851,10 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
               only: __BRANCH_FILTER__
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
@@ -2516,9 +2890,10 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
             branches:
               only: __BRANCH_FILTER__
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:
@@ -2559,9 +2934,10 @@ MUNITOR_PARTIAL_EOF
 cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
   __WORKFLOW_NAME__:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -2592,17 +2968,22 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -2611,16 +2992,20 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -2628,9 +3013,10 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
               only: __BRANCH_FILTER__
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
@@ -2666,9 +3052,10 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
             branches:
               only: __BRANCH_FILTER__
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:
@@ -2792,6 +3179,9 @@ validate_required_fields() {
       ;;
     validate-cd-repo|argocd-apps)
       # No additional required fields beyond orb_version
+      ;;
+    obsidian-plugin)
+      [[ -z "$(yq '.contexts.github // ""' "${config}")" ]] && missing+=("contexts.github")
       ;;
   esac
 

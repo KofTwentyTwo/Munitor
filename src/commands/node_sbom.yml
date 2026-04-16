@@ -1,0 +1,6 @@
+description: >
+  Generate a CycloneDX SBOM from a Node.js project.
+steps:
+  - run:
+      name: Generate SBOM
+      command: << include(scripts/node_sbom.sh) >>

@@ -1,7 +1,0 @@
-description: >
-  Restore the npm cache based on package-lock.json checksum.
-steps:
-  - restore_cache:
-      keys:
-        - npm-v1-{{ checksum "package-lock.json" }}
-        - npm-v1-

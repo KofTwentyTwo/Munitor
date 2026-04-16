@@ -1,0 +1,10 @@
+pipeline: node-webapp
+orb_version: dev:snapshot
+package_manager: pnpm
+node_version: "22"
+image_name: ghcr.io/koftwentytwo/pnpm-app
+docker:
+  registry: ghcr.io/koftwentytwo
+health:
+  path: /api/health
+  port: "3000"
