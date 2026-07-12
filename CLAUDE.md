@@ -29,11 +29,19 @@ GitHub Issues (org: KofTwentyTwo). Commit format: `feat(#N): description` or `Cl
 
 - Namespace: `kof22`
 - Orb: `kof22/munitor`
-- Latest stable: `kof22/munitor@0.2.0`
+- Latest stable: `kof22/munitor@0.3.0`
 - Dev snapshot: `kof22/munitor@dev:snapshot`
+
+`0.3.0` includes first-class pnpm support, repository-owned Dockerfiles for
+`node-webapp`, and consolidated Kustomize GitOps write-back with optional
+production-only behavior and bounded push-race retries.
 
 ## Session Continuity
 
 - Session state: `docs/SESSION-STATE.md`
 - Active tasks: `docs/TODO.md`
 - Plans: `docs/PLAN-*.md`
+
+Read `AGENTS.md` and `CONTRIBUTING.md` before changing orb behavior. Feature
+branches target `develop`; release branches promote to `main`, and stable orb
+publication is driven by a `vX.Y.Z` tag.

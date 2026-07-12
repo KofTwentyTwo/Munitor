@@ -20,7 +20,7 @@ This file is identical across all repos:
 version: 2.1
 setup: true
 orbs:
-  munitor: kof22/munitor@1
+  munitor: kof22/munitor@0.3
 workflows:
   setup:
     jobs:
@@ -53,7 +53,7 @@ Munitor validates branch names and will fail on non-conforming names.
 
 | Context | Secrets | Used By |
 |---------|---------|---------|
-| `ghcr` | `GHCR_TOKEN`, `GHCR_USER` | Docker push to GitHub Container Registry |
+| `ghcr` | `GHCR_TOKEN`, `GHCR_USERNAME` | Docker push to GitHub Container Registry |
 | `github` | `GITHUB_TOKEN` | Git operations, CD repo updates, SBOM, GitHub Releases |
 | `sonarcloud` | `SONAR_TOKEN` | SonarCloud analysis |
 | `nvd` | `NVD_API_KEY` | OWASP dependency check (Java only, optional) |
@@ -68,7 +68,7 @@ For Node.js/Next.js applications with Docker deployment.
 
 ```yaml
 pipeline: node-api
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-app
 docker:
   registry: ghcr.io/KofTwentyTwo
@@ -81,7 +81,7 @@ contexts:
 
 ```yaml
 pipeline: node-api
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-app
 node_version: "22"                    # default: 20
 
@@ -145,7 +145,7 @@ For Node.js applications that provide their own Dockerfile (unlike `node-api` wh
 
 ```yaml
 pipeline: node-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-webapp
 docker:
   registry: ghcr.io/KofTwentyTwo
@@ -159,7 +159,7 @@ contexts:
 
 ```yaml
 pipeline: node-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-webapp
 node_version: "22"                    # default: 20
 
@@ -227,7 +227,7 @@ For Java/Maven applications with Docker deployment.
 
 ```yaml
 pipeline: java-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-service
 docker:
   registry: ghcr.io/KofTwentyTwo
@@ -241,7 +241,7 @@ contexts:
 
 ```yaml
 pipeline: java-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-service
 java_version: "21"                    # default: 21
 
@@ -287,7 +287,7 @@ For Terraform/Terragrunt infrastructure repos.
 
 ```yaml
 pipeline: terraform
-orb_version: dev:snapshot
+orb_version: "0.3"
 terraform:
   path: terraform/
 ```
@@ -296,7 +296,7 @@ terraform:
 
 ```yaml
 pipeline: terraform
-orb_version: dev:snapshot
+orb_version: "0.3"
 terraform:
   path: terraform/                     # default: terraform/
   live_path: terraform/live            # default: terraform/live
@@ -318,14 +318,14 @@ For CD/GitOps repositories containing Kubernetes manifests, Kustomize overlays, 
 
 ```yaml
 pipeline: validate-cd-repo
-orb_version: dev:snapshot
+orb_version: "0.3"
 ```
 
 **Full config:**
 
 ```yaml
 pipeline: validate-cd-repo
-orb_version: dev:snapshot
+orb_version: "0.3"
 
 kustomize:
   version: "5.5.0"                      # default: 5.5.0
@@ -350,14 +350,14 @@ For ArgoCD app-of-apps repositories that use environment directories (`envs/`) i
 
 ```yaml
 pipeline: argocd-apps
-orb_version: dev:snapshot
+orb_version: "0.3"
 ```
 
 **Full config:**
 
 ```yaml
 pipeline: argocd-apps
-orb_version: dev:snapshot
+orb_version: "0.3"
 
 kustomize:
   version: "5.5.0"                      # default: 5.5.0
@@ -382,7 +382,7 @@ For SDK packaging and GitHub Releases. Triggered by semver tags (`v1.2.3`).
 
 ```yaml
 pipeline: sdk-distribution
-orb_version: dev:snapshot
+orb_version: "0.3"
 contexts:
   github: github
 ```
@@ -516,7 +516,7 @@ Default endpoint: `GET /api/health` on port 3000 (node-api, node-webapp) or 8080
 
 ## Troubleshooting
 
-**"Missing required fields: orb_version"** -- Add `orb_version` to your `.munitor.yml`. Use `dev:snapshot` for pre-release testing or `1` once a stable release is published.
+**"Missing required fields: orb_version"** -- Add `orb_version` to your `.munitor.yml`. Use `dev:snapshot` for unreleased feature testing or `0.3` for the current stable line.
 
 **"munitor_header: command not found"** -- You're using an older orb version. Update to `dev:snapshot` or wait for the next stable release.
 
