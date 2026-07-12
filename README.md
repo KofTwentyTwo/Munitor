@@ -149,6 +149,7 @@ orb_version: dev:snapshot
 image_name: my-webapp
 docker:
   registry: ghcr.io/KofTwentyTwo
+  use_repo_dockerfile: true
 contexts:
   registry: ghcr
   github: github
@@ -167,6 +168,7 @@ sonar:
 
 docker:
   registry: ghcr.io/KofTwentyTwo
+  use_repo_dockerfile: true              # preserve the repository Dockerfile
 
 cd:
   repo: KofTwentyTwo/my-webapp-cd        # omit to skip GitOps CD updates
@@ -212,7 +214,7 @@ contexts:
   sonar: sonarcloud
 ```
 
-**Dockerfile:** You must provide your own `Dockerfile` in the repo root. Munitor builds it, runs a health check, scans with Trivy, and pushes to the registry. This is the key difference from `node-api`, which auto-generates a Dockerfile.
+**Dockerfile:** Set `docker.use_repo_dockerfile: true` and provide `Dockerfile` in the repo root when the application owns its runtime contract. Munitor preserves and builds it, runs a health check, scans with Trivy, and pushes to the registry. Without the option, Munitor retains the legacy generated Dockerfile behavior. Use `node-api` when an always-generated framework Dockerfile is preferred.
 
 ### `java-webapp`
 
@@ -465,6 +467,7 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 | `java_version` | string | `21` | java-webapp | Java major version |
 | `sonar.project_key` | string | -- | node-api, node-webapp, java-webapp | SonarCloud project key. Omit to skip |
 | `docker.registry` | string | *required** | node-api, node-webapp, java-webapp | Container registry URL |
+| `docker.use_repo_dockerfile` | bool | `false` | node-webapp | Preserve and build the repository-root Dockerfile instead of generating one |
 | `cd.repo` | string | -- | node-api, node-webapp, java-webapp | GitOps CD repo (`org/repo`). Omit to skip |
 | `cd.env.release` | string | `staging` | node-api, node-webapp, java-webapp | CD target environment for release branches |
 | `coverage.min_instruction` | int | `70` | node-api, node-webapp, java-webapp | Minimum coverage percentage |

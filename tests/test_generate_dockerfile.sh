@@ -496,6 +496,46 @@ fi
 teardown
 
 # =============================================================================
+# Test: node-webapp can preserve a repository Dockerfile
+# =============================================================================
+echo ""
+echo "=== node-webapp Repository Dockerfile ==="
+
+echo -n "  TEST: preserves an opted-in repository Dockerfile... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+docker:
+  use_repo_dockerfile: true
+EOF
+echo "CUSTOM RUNTIME" > "${WORK_DIR}/Dockerfile"
+OUTPUT=$(run_generate)
+if grep -q "CUSTOM RUNTIME" "${WORK_DIR}/Dockerfile" && echo "${OUTPUT}" | grep -q "Using repository Dockerfile"; then
+  pass
+else
+  fail "repository Dockerfile was not preserved"
+fi
+teardown
+
+echo -n "  TEST: rejects opt-in when Dockerfile is missing... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+docker:
+  use_repo_dockerfile: true
+EOF
+if OUTPUT=$(run_generate); then
+  fail "expected missing Dockerfile to fail"
+elif echo "${OUTPUT}" | grep -q "requires a Dockerfile"; then
+  pass
+else
+  fail "expected a clear missing Dockerfile error"
+fi
+teardown
+
+# =============================================================================
 # Test: node-webapp with pnpm generates correct Dockerfile
 # =============================================================================
 echo ""

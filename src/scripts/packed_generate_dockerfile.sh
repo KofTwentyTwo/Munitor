@@ -597,8 +597,15 @@ DOCKERFILE
     ;;
 
   node-webapp)
-    echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
-    case "${MUNITOR_PACKAGE_MANAGER}" in
+    if yq -e '.docker.use_repo_dockerfile == true' "${CONFIG_FILE}" &>/dev/null; then
+      echo "Using repository Dockerfile for node-webapp"
+      if [[ ! -f Dockerfile ]]; then
+        echo "ERROR: docker.use_repo_dockerfile requires a Dockerfile in the repository root." >&2
+        exit 1
+      fi
+    else
+      echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
+      case "${MUNITOR_PACKAGE_MANAGER}" in
       pnpm)
         cat > Dockerfile <<DOCKERFILE
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
@@ -642,7 +649,8 @@ EXPOSE ${MUNITOR_HEALTH_PORT}
 CMD ["server.js"]
 DOCKERFILE
         ;;
-    esac
+      esac
+    fi
     ;;
 
   *)
