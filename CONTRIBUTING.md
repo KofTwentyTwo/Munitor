@@ -66,7 +66,7 @@ tests/fixtures/
    g. Validates output YAML
 
 3. CircleCI continuation runs the generated pipeline, which references
-   munitor orb jobs/commands by name (e.g., munitor/npm_build_and_test)
+   munitor orb jobs/commands by name (e.g., munitor/node_build_and_test)
 ```
 
 ## Adding a New Module

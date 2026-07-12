@@ -6,9 +6,10 @@ orbs:
 workflows:
   pr-checks:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -45,8 +46,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -54,10 +57,13 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -68,8 +74,10 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -78,8 +86,10 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -94,9 +104,10 @@ workflows:
 
   release-candidate:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -130,18 +141,23 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -151,8 +167,10 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -160,8 +178,10 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -170,9 +190,10 @@ workflows:
                 - /release\/.*/
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
@@ -210,9 +231,10 @@ workflows:
               only:
                 - /release\/.*/
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:
@@ -229,13 +251,14 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -249,7 +272,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
       ##IF_GITHUB_RELEASE##
       - munitor/github_release:
           name: github-release
@@ -265,9 +288,10 @@ workflows:
 
   production:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -311,6 +335,7 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##

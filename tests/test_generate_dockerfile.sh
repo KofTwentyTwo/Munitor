@@ -496,6 +496,208 @@ fi
 teardown
 
 # =============================================================================
+# Test: node-webapp can preserve a repository Dockerfile
+# =============================================================================
+echo ""
+echo "=== node-webapp Repository Dockerfile ==="
+
+echo -n "  TEST: preserves an opted-in repository Dockerfile... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+docker:
+  use_repo_dockerfile: true
+EOF
+echo "CUSTOM RUNTIME" > "${WORK_DIR}/Dockerfile"
+OUTPUT=$(run_generate)
+if grep -q "CUSTOM RUNTIME" "${WORK_DIR}/Dockerfile" && echo "${OUTPUT}" | grep -q "Using repository Dockerfile"; then
+  pass
+else
+  fail "repository Dockerfile was not preserved"
+fi
+teardown
+
+echo -n "  TEST: rejects opt-in when Dockerfile is missing... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+docker:
+  use_repo_dockerfile: true
+EOF
+if OUTPUT=$(run_generate); then
+  fail "expected missing Dockerfile to fail"
+elif echo "${OUTPUT}" | grep -q "requires a Dockerfile"; then
+  pass
+else
+  fail "expected a clear missing Dockerfile error"
+fi
+teardown
+
+# =============================================================================
+# Test: node-webapp with pnpm generates correct Dockerfile
+# =============================================================================
+echo ""
+echo "=== node-webapp pnpm Dockerfile Generation ==="
+
+echo -n "  TEST: pnpm node-webapp includes corepack enable... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+node_version: "22"
+package_manager: pnpm
+EOF
+run_generate > /dev/null
+if grep -q 'corepack enable' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected corepack enable"
+fi
+teardown
+
+echo -n "  TEST: pnpm node-webapp uses pnpm install --frozen-lockfile... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+node_version: "22"
+package_manager: pnpm
+EOF
+run_generate > /dev/null
+if grep -q 'pnpm install --frozen-lockfile' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected pnpm install --frozen-lockfile"
+fi
+teardown
+
+echo -n "  TEST: pnpm node-webapp does not contain npm ci... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+node_version: "22"
+package_manager: pnpm
+EOF
+run_generate > /dev/null
+if ! grep -q 'npm ci' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected no npm ci"
+fi
+teardown
+
+# =============================================================================
+# Test: node-api (nextjs) with pnpm generates correct Dockerfile
+# =============================================================================
+echo ""
+echo "=== node-api pnpm (nextjs) Dockerfile Generation ==="
+
+echo -n "  TEST: pnpm node-api nextjs includes corepack enable... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-api
+image_name: my-app
+package_manager: pnpm
+EOF
+run_generate > /dev/null
+if grep -q 'corepack enable' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected corepack enable"
+fi
+teardown
+
+echo -n "  TEST: pnpm node-api nextjs uses pnpm install --frozen-lockfile... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-api
+image_name: my-app
+package_manager: pnpm
+EOF
+run_generate > /dev/null
+if grep -q 'pnpm install --frozen-lockfile' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected pnpm install --frozen-lockfile"
+fi
+teardown
+
+echo -n "  TEST: pnpm node-api nextjs does not contain npm ci... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-api
+image_name: my-app
+package_manager: pnpm
+EOF
+run_generate > /dev/null
+if ! grep -q 'npm ci' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected no npm ci"
+fi
+teardown
+
+# =============================================================================
+# Test: node-api (express) with pnpm generates correct Dockerfile
+# =============================================================================
+echo ""
+echo "=== node-api pnpm (express) Dockerfile Generation ==="
+
+echo -n "  TEST: pnpm node-api express includes corepack enable... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-api
+image_name: my-app
+package_manager: pnpm
+node:
+  framework: express
+EOF
+run_generate > /dev/null
+if grep -q 'corepack enable' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected corepack enable"
+fi
+teardown
+
+echo -n "  TEST: pnpm node-api express uses pnpm install --frozen-lockfile... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-api
+image_name: my-app
+package_manager: pnpm
+node:
+  framework: express
+EOF
+run_generate > /dev/null
+if grep -q 'pnpm install --frozen-lockfile' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected pnpm install --frozen-lockfile"
+fi
+teardown
+
+echo -n "  TEST: pnpm node-api express does not contain npm ci... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-api
+image_name: my-app
+package_manager: pnpm
+node:
+  framework: express
+EOF
+run_generate > /dev/null
+if ! grep -q 'npm ci' "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected no npm ci"
+fi
+teardown
+
+# =============================================================================
 # Test: unsupported pipeline type
 # =============================================================================
 echo ""

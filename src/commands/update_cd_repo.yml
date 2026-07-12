@@ -30,6 +30,12 @@ parameters:
     description: >
       Full image name for Kustomize repos (e.g., ghcr.io/KofTwentyTwo/my-app).
       Used to select the correct entry in the images[] array.
+  cd_path:
+    type: string
+    default: ""
+    description: >
+      Explicit repository-relative kustomization.yaml path. When omitted,
+      Kustomize mode uses overlays/<environment>/kustomization.yaml.
   ci_git_email:
     type: string
     default: ""
@@ -54,6 +60,7 @@ steps:
         IMAGE_KEY: << parameters.image_key >>
         CD_FORMAT: << parameters.cd_format >>
         CD_IMAGE_NAME: << parameters.cd_image_name >>
+        CD_PATH: << parameters.cd_path >>
         CI_GIT_EMAIL: << parameters.ci_git_email >>
         CI_GIT_NAME: << parameters.ci_git_name >>
         SUPPLEMENTAL_IMAGES_JSON: << parameters.supplemental_images >>

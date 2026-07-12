@@ -8,6 +8,8 @@ PASS=0
 FAIL=0
 
 GENERATE_SCRIPT="${PROJECT_DIR}/src/scripts/generate_config.sh"
+GENERATED_CONFIG=$(mktemp)
+trap 'rm -f "${GENERATED_CONFIG}"' EXIT
 
 # --------------------------------------------------------------------------
 # Helper: render a fixture by calling the real generate_config.sh script
@@ -17,8 +19,9 @@ render_fixture() {
   local fixture="$1"
 
   # Run the real script; capture stderr for diagnostics, return generated YAML
-  MUNITOR_CONFIG="${fixture}" bash "${GENERATE_SCRIPT}" >/dev/null 2>&1
-  cat /tmp/generated-config.yml
+  MUNITOR_CONFIG="${fixture}" MUNITOR_OUTPUT_FILE="${GENERATED_CONFIG}" \
+    bash "${GENERATE_SCRIPT}" >/dev/null 2>&1
+  cat "${GENERATED_CONFIG}"
 }
 
 run_test() {
@@ -36,7 +39,7 @@ run_test() {
     return
   }
 
-  if echo "${output}" | grep -q "${expected_pattern}"; then
+  if grep -q "${expected_pattern}" <<< "${output}"; then
     echo "PASS"
     PASS=$((PASS + 1))
   else
@@ -61,7 +64,7 @@ run_negative_test() {
     return
   }
 
-  if echo "${output}" | grep -q "${forbidden_pattern}"; then
+  if grep -q "${forbidden_pattern}" <<< "${output}"; then
     echo "FAIL (found forbidden pattern '${forbidden_pattern}')"
     FAIL=$((FAIL + 1))
   else
@@ -103,7 +106,7 @@ run_context_test() {
     return
   fi
 
-  if echo "${block}" | grep -q "${expected_pattern}"; then
+  if grep -q "${expected_pattern}" <<< "${block}"; then
     echo "PASS"
     PASS=$((PASS + 1))
   else
@@ -143,7 +146,7 @@ run_negative_context_test() {
     return
   fi
 
-  if echo "${block}" | grep -q "${forbidden_pattern}"; then
+  if grep -q "${forbidden_pattern}" <<< "${block}"; then
     echo "FAIL (found forbidden '${forbidden_pattern}' within block)"
     FAIL=$((FAIL + 1))
   else
@@ -175,13 +178,13 @@ run_test "java-webapp: includes sbom when enabled" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
   "sbom"
 
-run_test "java-webapp: uses mvn sbom (not npm_sbom)" \
+run_test "java-webapp: uses mvn sbom (not node_sbom)" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
   "munitor/sbom"
 
-run_negative_test "java-webapp: does not use npm_sbom" \
+run_negative_test "java-webapp: does not use node_sbom" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
 # Java-webapp sonar should still gate docker-build-push (regression guard)
 run_context_test "java-webapp: sonar-scan blocks docker-build-push" \
@@ -228,26 +231,26 @@ run_test "node-api: includes sonar when project_key set" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "sonar-scan"
 
-run_test "node-api: uses npm_sonar_scan (not mvn sonar_scan)" \
+run_test "node-api: uses node_sonar_scan (not mvn sonar_scan)" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "munitor/npm_sonar_scan"
+  "munitor/node_sonar_scan"
 
 run_test "node-api: includes sbom when enabled" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "sbom"
 
-run_test "node-api: uses npm_sbom (not mvn sbom)" \
+run_test "node-api: uses node_sbom (not mvn sbom)" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
 run_negative_test "node-api: does not use mvn sbom job" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "munitor/sbom:"
 
-# Verify the npm_sbom block includes the node_version parameter
-run_context_test "node-api: npm_sbom passes node_version" \
+# Verify the node_sbom block includes the node_version parameter
+run_context_test "node-api: node_sbom passes node_version" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "munitor/npm_sbom" \
+  "munitor/node_sbom" \
   "requires:" \
   "node_version:"
 
@@ -263,17 +266,17 @@ run_test "node-api: sonar-scan job still present in workflow" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "name: sonar-scan"
 
-run_test "node-api: uses npm jobs" \
+run_test "node-api: uses node jobs" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "npm_build_and_test"
+  "node_build_and_test"
 
-run_test "node-api: includes npm code quality" \
+run_test "node-api: includes node code quality" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "npm_code_quality"
+  "node_code_quality"
 
-run_test "node-api: includes npm security scan" \
+run_test "node-api: includes node security scan" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # Test node-api-minimal: e2e/sbom/sonar/extended features should be excluded
 run_test "node-api-minimal: renders node 22" \
@@ -349,9 +352,9 @@ run_test "node-api-services: coverage min from test.coverage.min_instruction" \
   "${FIXTURES_DIR}/node-api-services.munitor.yml" \
   'min_coverage: "70"'
 
-run_test "node-api-services: uses npm_sbom for sbom" \
+run_test "node-api-services: uses node_sbom for sbom" \
   "${FIXTURES_DIR}/node-api-services.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
 run_negative_test "node-api-services: does not use mvn sbom job" \
   "${FIXTURES_DIR}/node-api-services.munitor.yml" \
@@ -403,33 +406,33 @@ run_test "node-webapp: includes sonar when project_key set" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "sonar-scan"
 
-run_test "node-webapp: uses npm_sonar_scan (not mvn sonar_scan)" \
+run_test "node-webapp: uses node_sonar_scan (not mvn sonar_scan)" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "munitor/npm_sonar_scan"
+  "munitor/node_sonar_scan"
 
 run_test "node-webapp: includes sbom when enabled" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "sbom"
 
-run_test "node-webapp: uses npm_sbom (not mvn sbom)" \
+run_test "node-webapp: uses node_sbom (not mvn sbom)" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "munitor/npm_sbom"
+  "munitor/node_sbom"
 
-run_test "node-webapp: uses npm_build_and_test" \
+run_test "node-webapp: uses node_build_and_test" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_build_and_test"
+  "node_build_and_test"
 
-run_test "node-webapp: includes npm code quality" \
+run_test "node-webapp: includes node code quality" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_code_quality"
+  "node_code_quality"
 
-run_test "node-webapp: includes npm coverage" \
+run_test "node-webapp: includes node coverage" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_coverage"
+  "node_coverage"
 
-run_test "node-webapp: includes npm security scan" \
+run_test "node-webapp: includes node security scan" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # Sonar non-blocking: sonar-scan should NOT be in docker-build-push requires
 run_negative_context_test "node-webapp: sonar-scan not in docker-build-push requires" \
@@ -450,6 +453,24 @@ run_context_test "node-webapp: docker-build-push includes health_path" \
   "name: docker-build-push" \
   "context:" \
   "health_path: /api/health"
+
+run_context_test "node-webapp consolidated: production targets explicit GitOps path" \
+  "${FIXTURES_DIR}/node-webapp-consolidated.munitor.yml" \
+  "production:" \
+  "github-release:" \
+  "cd_path: tenants/investinginchester/website/kustomization.yaml"
+
+run_negative_context_test "node-webapp consolidated: develop does not update production" \
+  "${FIXTURES_DIR}/node-webapp-consolidated.munitor.yml" \
+  "develop:" \
+  "staging:" \
+  "update-cd-repo"
+
+run_negative_context_test "node-webapp consolidated: release does not update production" \
+  "${FIXTURES_DIR}/node-webapp-consolidated.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "update-cd-repo"
 
 # Test node-webapp-minimal: e2e/sbom/sonar should be excluded
 run_test "node-webapp-minimal: renders node 22" \
@@ -689,13 +710,13 @@ run_negative_context_test "node-api: production has no coverage" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_coverage"
+  "node_coverage"
 
 run_negative_context_test "node-api: production has no security-scan" \
   "${FIXTURES_DIR}/node-api.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # node-api: release-candidate has quality gates
 run_context_test "node-api: release-candidate has code-quality" \
@@ -728,13 +749,13 @@ run_negative_context_test "node-webapp: production has no coverage" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_coverage"
+  "node_coverage"
 
 run_negative_context_test "node-webapp: production has no security-scan" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "production:" \
   "release-candidate:" \
-  "npm_security_scan"
+  "node_security_scan"
 
 # node-webapp: release-candidate has quality gates
 run_context_test "node-webapp: release-candidate has code-quality" \
@@ -752,6 +773,24 @@ run_test "node-webapp: includes staging workflow" \
 run_test "node-webapp: includes update-cd-repo when cd.repo set" \
   "${FIXTURES_DIR}/node-webapp.munitor.yml" \
   "update-cd-repo"
+
+# ============================================================
+# pnpm node-webapp
+# ============================================================
+echo ""
+echo "=== pnpm node-webapp tests ==="
+
+run_test "pnpm-webapp: uses node_build_and_test" \
+  "${FIXTURES_DIR}/pnpm-webapp.munitor.yml" \
+  "node_build_and_test"
+
+run_test "pnpm-webapp: passes package_manager param" \
+  "${FIXTURES_DIR}/pnpm-webapp.munitor.yml" \
+  'package_manager: "pnpm"'
+
+run_negative_test "pnpm-webapp: does not reference npm_build_and_test" \
+  "${FIXTURES_DIR}/pnpm-webapp.munitor.yml" \
+  "npm_build_and_test"
 
 # terraform: has release-candidate and production workflows
 run_test "terraform: has release-candidate workflow" \
@@ -1212,6 +1251,150 @@ run_negative_test "gradle-webapp: no e2e block (e2e not enabled)" \
 run_negative_test "gradle-webapp: no sonar block (sonar not configured)" \
   "${FIXTURES_DIR}/gradle-webapp.munitor.yml" \
   "sonar-scan"
+
+# ============================================================
+# obsidian-plugin template rendering
+# ============================================================
+echo ""
+echo "=== obsidian-plugin Template Rendering Tests ==="
+
+# Basic rendering
+run_test "obsidian-plugin: renders node_version" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_version: \"20\""
+
+run_test "obsidian-plugin: uses node_build_and_test" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_build_and_test"
+
+run_test "obsidian-plugin: includes node code quality" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_code_quality"
+
+run_test "obsidian-plugin: includes node coverage" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_coverage"
+
+run_test "obsidian-plugin: includes node security scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "node_security_scan"
+
+run_test "obsidian-plugin: includes sast-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "sast-scan"
+
+run_test "obsidian-plugin: includes secrets-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "secrets-scan"
+
+run_test "obsidian-plugin: includes sbom when enabled" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "sbom"
+
+run_test "obsidian-plugin: includes test_commands" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "test_commands:"
+
+run_test "obsidian-plugin: includes coverage_command" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "coverage_command:"
+
+run_test "obsidian-plugin: includes coverage_tool vitest" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "coverage_tool: vitest"
+
+# Workflow presence
+run_test "obsidian-plugin: has pr-checks workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "pr-checks:"
+
+run_test "obsidian-plugin: has develop workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "develop:"
+
+run_test "obsidian-plugin: has release-candidate workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:"
+
+run_test "obsidian-plugin: has production workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:"
+
+# GitHub Release with artifacts
+run_test "obsidian-plugin: has github-release job" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "github-release"
+
+run_test "obsidian-plugin: github-release has release_artifacts" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release_artifacts:"
+
+run_test "obsidian-plugin: release_artifacts includes main.js" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "main.js manifest.json styles.css"
+
+# Release-candidate has quality gates
+run_context_test "obsidian-plugin: release-candidate has code-quality" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "code-quality"
+
+run_context_test "obsidian-plugin: release-candidate has coverage" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "node_coverage"
+
+run_context_test "obsidian-plugin: release-candidate has security-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "node_security_scan"
+
+# Production has NO quality gates (fast-path)
+run_negative_context_test "obsidian-plugin: production has no code-quality" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "code-quality"
+
+run_negative_context_test "obsidian-plugin: production has no coverage" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "node_coverage"
+
+run_negative_context_test "obsidian-plugin: production has no security-scan" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "production:" \
+  "release-candidate:" \
+  "node_security_scan"
+
+# Negative tests: no Docker/CD artifacts
+run_negative_test "obsidian-plugin: no docker-build-push" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "docker-build-push"
+
+run_negative_test "obsidian-plugin: no update-cd-repo" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "update-cd-repo"
+
+run_negative_test "obsidian-plugin: no image_name" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "image_name:"
+
+run_negative_test "obsidian-plugin: no registry" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "registry:"
+
+run_negative_test "obsidian-plugin: no INCLUDE_DEPLOY" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "INCLUDE_DEPLOY"
+
+run_negative_test "obsidian-plugin: no staging workflow" \
+  "${FIXTURES_DIR}/obsidian-plugin.munitor.yml" \
+  "staging:"
 
 echo ""
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="

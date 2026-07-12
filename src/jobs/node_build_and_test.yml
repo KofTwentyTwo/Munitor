@@ -1,12 +1,16 @@
 description: >
   Full Node.js build and test job. Installs Node.js, restores cache, runs
-  npm ci, calculates version, tests with coverage, saves cache, and persists
+  dependency install, calculates version, tests with coverage, saves cache, and persists
   the workspace for downstream jobs.
 parameters:
   node_version:
     type: string
     default: "20"
     description: Node.js major version to install.
+  package_manager:
+    type: string
+    default: "npm"
+    description: Package manager to use (npm, pnpm, yarn).
   npm_auth:
     type: boolean
     default: false
@@ -46,14 +50,17 @@ steps:
   - checkout
   - install_node:
       version: << parameters.node_version >>
+      package_manager: << parameters.package_manager >>
   - when:
       condition: << parameters.npm_auth >>
       steps:
         - npm_auth:
             npm_scopes: << parameters.npm_scopes >>
             npm_default_scope: << parameters.npm_default_scope >>
-  - restore_npm_cache
-  - npm_install
+  - restore_node_cache:
+      package_manager: << parameters.package_manager >>
+  - node_install_deps:
+      package_manager: << parameters.package_manager >>
   - when:
       condition: << parameters.services >>
       steps:
@@ -69,11 +76,13 @@ steps:
   - run:
       name: Persist version metadata
       command: <<include(scripts/persist_version_metadata.sh)>>
-  - npm_test:
+  - node_test:
       test_commands: << parameters.test_commands >>
+      package_manager: << parameters.package_manager >>
   - store_test_results:
       path: reports/junit
-  - save_npm_cache
+  - save_node_cache:
+      package_manager: << parameters.package_manager >>
   - persist_to_workspace:
       root: .
       paths:

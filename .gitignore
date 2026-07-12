@@ -15,8 +15,5 @@ node_modules/
 .idea/
 .vscode/
 
-# Claude Code
-.claude/
-docs/TODO.md
-docs/PLAN-*.md
-docs/SESSION-STATE.md
+# Claude Code (keep settings.local.json out -- machine-specific permissions)
+.claude/settings.local.json

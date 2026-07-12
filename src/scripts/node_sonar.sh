@@ -11,7 +11,7 @@ elif ! type munitor_header &>/dev/null; then
   munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-munitor_header "npm_sonar"
+munitor_header "node_sonar"
 
 PROJECT_KEY="${SONAR_PROJECT_KEY:?SONAR_PROJECT_KEY not set}"
 ORG="${SONAR_ORG:-KofTwentyTwo}"

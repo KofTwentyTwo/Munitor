@@ -1,6 +1,0 @@
-description: >
-  Run npm ci for a clean, reproducible dependency install.
-steps:
-  - run:
-      name: npm ci
-      command: << include(scripts/npm_install.sh) >>

@@ -1,8 +1,9 @@
   __WORKFLOW_NAME__:
     jobs:
-      - munitor/npm_build_and_test:
+      - munitor/node_build_and_test:
           name: build-and-test
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           ##IF_NPM_AUTH##
           npm_auth: true
           npm_scopes: '${MUNITOR_NPM_SCOPES}'
@@ -33,17 +34,22 @@
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_code_quality:
+      - munitor/node_code_quality:
           name: code-quality
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_coverage:
+      - munitor/node_coverage:
           name: coverage
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           min_coverage: "${MUNITOR_COVERAGE_MIN}"
           coverage_tool: ${MUNITOR_COVERAGE_TOOL}
+          coverage_summary_path: "${MUNITOR_COVERAGE_SUMMARY_PATH}"
           ##IF_COVERAGE_CMD##
           coverage_command: ${MUNITOR_COVERAGE_COMMAND}
           ##ENDIF_COVERAGE_CMD##
@@ -52,16 +58,20 @@
           filters:
             branches:
               only: __BRANCH_FILTER__
-      - munitor/npm_security_scan:
+      - munitor/node_security_scan:
           name: security-scan
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
             branches:
               only: __BRANCH_FILTER__
       ##IF_E2E##
-      - munitor/npm_e2e_test:
+      - munitor/node_e2e_test:
           name: e2e-tests
+          node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           requires:
             - build-and-test
           filters:
@@ -69,9 +79,10 @@
               only: __BRANCH_FILTER__
       ##ENDIF_E2E##
       ##IF_SONAR##
-      - munitor/npm_sonar_scan:
+      - munitor/node_sonar_scan:
           name: sonar-scan
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
@@ -107,9 +118,10 @@
             branches:
               only: __BRANCH_FILTER__
       ##IF_SBOM##
-      - munitor/npm_sbom:
+      - munitor/node_sbom:
           name: sbom
           node_version: "${MUNITOR_NODE_VERSION}"
+          package_manager: "${MUNITOR_PACKAGE_MANAGER}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:
@@ -125,13 +137,14 @@
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -144,4 +157,4 @@
           filters:
             branches:
               only: __BRANCH_FILTER__
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##

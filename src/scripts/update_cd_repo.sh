@@ -18,6 +18,7 @@ VERSION="${PROJECT_VERSION:?PROJECT_VERSION not set}"
 ENVIRONMENT="${CD_ENVIRONMENT:-}"
 FORMAT="${CD_FORMAT:-helm}"
 IMAGE_NAME="${CD_IMAGE_NAME:-}"
+CONFIGURED_PATH="${CD_PATH:-}"
 VALUES="${VALUES_FILE:-values.yaml}"
 KEY="${IMAGE_KEY:-image.tag}"
 
@@ -49,8 +50,15 @@ if [[ "${FORMAT}" == "kustomize" ]]; then
     exit 1
   fi
 
-  # Find kustomization.yaml in overlays/<env>/
-  if [[ -n "${ENVIRONMENT}" ]]; then
+  # Explicit paths support consolidated GitOps repositories. Existing dedicated
+  # repositories retain the overlays/<environment> convention by default.
+  if [[ -n "${CONFIGURED_PATH}" ]]; then
+    if [[ "${CONFIGURED_PATH}" == /* || "${CONFIGURED_PATH}" == *".."* || "${CONFIGURED_PATH}" != *kustomization.yaml ]]; then
+      echo "ERROR: cd.path must be a relative path to a kustomization.yaml file without '..'."
+      exit 1
+    fi
+    KUST_FILE="${CONFIGURED_PATH}"
+  elif [[ -n "${ENVIRONMENT}" ]]; then
     KUST_FILE="overlays/${ENVIRONMENT}/kustomization.yaml"
   else
     KUST_FILE="kustomization.yaml"
@@ -58,12 +66,18 @@ if [[ "${FORMAT}" == "kustomize" ]]; then
 
   if [[ ! -f "${KUST_FILE}" ]]; then
     echo "ERROR: Kustomize file '${KUST_FILE}' not found in CD repo."
-    echo "Available overlays:"
-    ls overlays/ 2>/dev/null || echo "  (no overlays directory)"
+    if [[ -z "${CONFIGURED_PATH}" ]]; then
+      echo "Available overlays:"
+      ls overlays/ 2>/dev/null || echo "  (no overlays directory)"
+    fi
     exit 1
   fi
 
   echo "Updating ${KUST_FILE}: ${IMAGE_NAME} -> ${VERSION}"
+  if ! yq -e ".images[] | select(.name == \"${IMAGE_NAME}\")" "${KUST_FILE}" >/dev/null; then
+    echo "ERROR: Image '${IMAGE_NAME}' is not declared in ${KUST_FILE}."
+    exit 1
+  fi
   yq -i "(.images[] | select(.name == \"${IMAGE_NAME}\")).newTag = \"${VERSION}\"" "${KUST_FILE}"
   yq -i "del((.images[] | select(.name == \"${IMAGE_NAME}\")).digest)" "${KUST_FILE}"
   git add "${KUST_FILE}"
@@ -137,7 +151,20 @@ if git diff --cached --quiet; then
   exit 0
 fi
 
-git commit -m "chore: update image tag to ${VERSION}"
-git push origin HEAD
+git commit -m "chore: update ${IMAGE_NAME:-image} to ${VERSION}"
 
-echo "CD repo updated successfully."
+# Independent pipelines may update a shared GitOps repository concurrently.
+for attempt in 1 2 3; do
+  if git push origin HEAD; then
+    echo "CD repo updated successfully."
+    exit 0
+  fi
+
+  if [[ "${attempt}" == "3" ]]; then
+    echo "ERROR: Could not push the GitOps update after ${attempt} attempts."
+    exit 1
+  fi
+
+  echo "Push raced with another GitOps update; rebasing before retry ${attempt}/3."
+  git pull --rebase origin "$(git branch --show-current)"
+done

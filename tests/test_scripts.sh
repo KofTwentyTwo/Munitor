@@ -20,27 +20,27 @@ fail() {
 }
 
 # =============================================================================
-# Test: npm_test.sh - Custom test commands
+# Test: node_test.sh - Custom test commands
 # =============================================================================
-echo "=== npm_test.sh Tests ==="
+echo "=== node_test.sh Tests ==="
 
 echo -n "  TEST: runs custom test commands via bash -c (not eval)... "
 # Verify the script uses bash -c, not eval
-if grep -q 'bash -c "\${CMD}"' "${SRC_SCRIPTS}/npm_test.sh"; then
+if grep -q 'bash -c "\${CMD}"' "${SRC_SCRIPTS}/node_test.sh"; then
   pass
 else
   fail "script should use 'bash -c' not 'eval'"
 fi
 
 echo -n "  TEST: creates reports/junit directory... "
-if grep -q 'mkdir -p reports/junit' "${SRC_SCRIPTS}/npm_test.sh"; then
+if grep -q 'mkdir -p reports/junit' "${SRC_SCRIPTS}/node_test.sh"; then
   pass
 else
   fail "should create reports/junit"
 fi
 
 echo -n "  TEST: handles empty TEST_COMMANDS_JSON... "
-if grep -q '\[\]' "${SRC_SCRIPTS}/npm_test.sh" && grep -q 'null' "${SRC_SCRIPTS}/npm_test.sh"; then
+if grep -q '\[\]' "${SRC_SCRIPTS}/node_test.sh" && grep -q 'null' "${SRC_SCRIPTS}/node_test.sh"; then
   pass
 else
   fail "should handle empty/null JSON"
@@ -288,13 +288,13 @@ else
 fi
 
 # =============================================================================
-# Test: npm_coverage_check.sh - Security
+# Test: node_coverage_check.sh - Security
 # =============================================================================
 echo ""
-echo "=== npm_coverage_check.sh Tests ==="
+echo "=== node_coverage_check.sh Tests ==="
 
 echo -n "  TEST: uses bash -c for coverage command (not eval)... "
-if grep -q 'bash -c "\${COVERAGE_COMMAND}"' "${SRC_SCRIPTS}/npm_coverage_check.sh"; then
+if grep -q 'bash -c "\${COVERAGE_COMMAND}"' "${SRC_SCRIPTS}/node_coverage_check.sh"; then
   pass
 else
   fail "should use 'bash -c' not 'eval'"
@@ -318,6 +318,22 @@ if grep -q 'environments/' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
   pass
 else
   fail "should resolve environments/<env>/values.yaml"
+fi
+
+echo -n "  TEST: supports a validated explicit Kustomize path... "
+if grep -q 'CONFIGURED_PATH="${CD_PATH:-}"' "${SRC_SCRIPTS}/update_cd_repo.sh" &&
+   grep -q 'cd.path must be a relative path' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+  pass
+else
+  fail "should support and validate an explicit Kustomize path"
+fi
+
+echo -n "  TEST: retries concurrent shared-repository pushes... "
+if grep -q 'for attempt in 1 2 3' "${SRC_SCRIPTS}/update_cd_repo.sh" &&
+   grep -q 'git pull --rebase' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+  pass
+else
+  fail "should rebase and retry shared-repository push races"
 fi
 
 echo -n "  TEST: deletes digest field when setting newTag (kustomize)... "
@@ -492,6 +508,44 @@ if grep -q 'eclipse-temurin.*jre-alpine' "${SRC_SCRIPTS}/generate_dockerfile.sh"
   pass
 else
   fail "should use Alpine JRE with non-root user"
+fi
+
+echo ""
+echo "=== node_install_deps.sh pnpm support ==="
+
+echo -n "  TEST: node_install_deps.sh handles pnpm case... "
+if grep -q 'pnpm install --frozen-lockfile' "${SRC_SCRIPTS}/node_install_deps.sh"; then
+  pass
+else
+  fail "missing pnpm install --frozen-lockfile"
+fi
+
+echo -n "  TEST: node_install_deps.sh has Prisma auto-detection... "
+if grep -q 'prisma/schema.prisma' "${SRC_SCRIPTS}/node_install_deps.sh"; then
+  pass
+else
+  fail "missing Prisma auto-detection"
+fi
+
+echo -n "  TEST: node_test.sh handles pnpm fallback... "
+if grep -q 'pnpm test' "${SRC_SCRIPTS}/node_test.sh"; then
+  pass
+else
+  fail "missing pnpm test fallback"
+fi
+
+echo -n "  TEST: run_test_setup.sh supports inline commands... "
+if grep -q 'bash -c' "${SRC_SCRIPTS}/run_test_setup.sh"; then
+  pass
+else
+  fail "missing bash -c inline command support"
+fi
+
+echo -n "  TEST: generate_dockerfile.sh has pnpm Dockerfile variant... "
+if grep -q 'pnpm install --frozen-lockfile' "${SRC_SCRIPTS}/generate_dockerfile.sh"; then
+  pass
+else
+  fail "missing pnpm Dockerfile variant"
 fi
 
 # =============================================================================
@@ -888,7 +942,7 @@ YQ_VER=$(extract_version YQ_VERSION "${SRC_SCRIPTS}/install_yq.sh")
 KUSTOMIZE_VER=$(extract_version KUSTOMIZE_VERSION "${SRC_SCRIPTS}/install_kustomize.sh")
 KUBESEC_VER=$(extract_version KUBESEC_VERSION "${SRC_SCRIPTS}/install_kubesec.sh")
 TFSEC_TRIVY_VER=$(extract_version TRIVY_VERSION "${SRC_SCRIPTS}/install_tfsec.sh")
-SONAR_VER=$(extract_version SONAR_SCANNER_VERSION "${SRC_SCRIPTS}/npm_sonar.sh")
+SONAR_VER=$(extract_version SONAR_SCANNER_VERSION "${SRC_SCRIPTS}/node_sonar.sh")
 
 # All URLs target linux/amd64 -- matches the CI executor
 URLS=(
@@ -1017,6 +1071,47 @@ if grep -q 'tasks --all' "${SRC_SCRIPTS}/gradle_pmd.sh" && grep -q 'pmdMain' "${
   pass
 else
   fail "should detect pmdMain task"
+fi
+
+# =============================================================================
+# Test: github_release.sh - Release artifact upload support
+# =============================================================================
+echo ""
+echo "=== github_release.sh Artifact Upload Tests ==="
+
+echo -n "  TEST: supports MUNITOR_RELEASE_ARTIFACTS env var... "
+if grep -q 'MUNITOR_RELEASE_ARTIFACTS' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should support MUNITOR_RELEASE_ARTIFACTS"
+fi
+
+echo -n "  TEST: uses gh release upload for artifacts... "
+if grep -q 'gh release upload' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should use gh release upload"
+fi
+
+echo -n "  TEST: validates artifact files exist before upload... "
+if grep -q 'not found' "${SRC_SCRIPTS}/github_release.sh" && grep -q '! -f' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should validate artifact files exist"
+fi
+
+echo -n "  TEST: uses --clobber for idempotent uploads... "
+if grep -q '\-\-clobber' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should use --clobber flag"
+fi
+
+echo -n "  TEST: skips upload when MUNITOR_RELEASE_ARTIFACTS is empty... "
+if grep -q 'if \[\[ -n "\${MUNITOR_RELEASE_ARTIFACTS:-}"' "${SRC_SCRIPTS}/github_release.sh"; then
+  pass
+else
+  fail "should skip upload when artifacts is empty"
 fi
 
 # =============================================================================

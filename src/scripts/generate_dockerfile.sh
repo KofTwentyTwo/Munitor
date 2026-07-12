@@ -42,7 +42,42 @@ case "${MUNITOR_PIPELINE}" in
       nextjs)
         # Multi-stage Next.js standalone Dockerfile.
         # Assumes `output: 'standalone'` in next.config.js.
-        cat > Dockerfile <<DOCKERFILE
+        case "${MUNITOR_PACKAGE_MANAGER}" in
+          pnpm)
+            cat > Dockerfile <<DOCKERFILE
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
+WORKDIR /app
+RUN corepack enable
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV STANDALONE=true
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
+RUN pnpm run build
+
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS runner
+WORKDIR /app
+RUN apk update && apk upgrade --no-cache && rm -rf /var/cache/apk/*
+RUN npm cache clean --force && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx
+RUN addgroup --system --gid 1001 nodejs \\
+ && adduser --system --uid 1001 nextjs
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
+EXPOSE 3000
+ENV PORT=3000
+CMD ["node", "server.js"]
+DOCKERFILE
+            ;;
+          *)
+            cat > Dockerfile <<DOCKERFILE
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
@@ -73,11 +108,38 @@ EXPOSE 3000
 ENV PORT=3000
 CMD ["node", "server.js"]
 DOCKERFILE
+            ;;
+        esac
         ;;
 
       express)
         # Two-stage Express Dockerfile. Uses package.json "main" field via `node .`.
-        cat > Dockerfile <<DOCKERFILE
+        case "${MUNITOR_PACKAGE_MANAGER}" in
+          pnpm)
+            cat > Dockerfile <<DOCKERFILE
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS runner
+WORKDIR /app
+RUN apk update && apk upgrade --no-cache && rm -rf /var/cache/apk/*
+RUN npm cache clean --force && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx
+RUN addgroup --system --gid 1001 nodejs \\
+ && adduser --system --uid 1001 appuser -G nodejs
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+USER appuser
+EXPOSE ${MUNITOR_HEALTH_PORT}
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${MUNITOR_HEALTH_PORT}${MUNITOR_HEALTH_PATH} || exit 1
+CMD ["node", "."]
+DOCKERFILE
+            ;;
+          *)
+            cat > Dockerfile <<DOCKERFILE
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
@@ -97,6 +159,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\
     CMD wget --no-verbose --tries=1 --spider http://localhost:${MUNITOR_HEALTH_PORT}${MUNITOR_HEALTH_PATH} || exit 1
 CMD ["node", "."]
 DOCKERFILE
+            ;;
+        esac
         ;;
 
       *)
@@ -197,8 +261,39 @@ DOCKERFILE
     ;;
 
   node-webapp)
-    echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
-    cat > Dockerfile <<DOCKERFILE
+    if yq -e '.docker.use_repo_dockerfile == true' "${CONFIG_FILE}" &>/dev/null; then
+      echo "Using repository Dockerfile for node-webapp"
+      if [[ ! -f Dockerfile ]]; then
+        echo "ERROR: docker.use_repo_dockerfile requires a Dockerfile in the repository root." >&2
+        exit 1
+      fi
+    else
+      echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
+      case "${MUNITOR_PACKAGE_MANAGER}" in
+      pnpm)
+        cat > Dockerfile <<DOCKERFILE
+FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
+RUN pnpm run build
+
+FROM gcr.io/distroless/nodejs${MUNITOR_NODE_VERSION}-debian12 AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+EXPOSE ${MUNITOR_HEALTH_PORT}
+CMD ["server.js"]
+DOCKERFILE
+        ;;
+      *)
+        cat > Dockerfile <<DOCKERFILE
 FROM node:${MUNITOR_NODE_VERSION}-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
@@ -217,6 +312,9 @@ COPY --from=builder /app/public ./public
 EXPOSE ${MUNITOR_HEALTH_PORT}
 CMD ["server.js"]
 DOCKERFILE
+        ;;
+      esac
+    fi
     ;;
 
   *)

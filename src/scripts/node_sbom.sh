@@ -11,16 +11,16 @@ elif ! type munitor_header &>/dev/null; then
   munitor_download_with_retry() { curl -fsSL --retry 3 "$1" -o "$2"; }
 fi
 
-munitor_header "npm_lint"
+munitor_header "node_sbom"
+munitor_check_tool node --version
+munitor_check_tool npx --version
 
-echo "Running ESLint..."
+CYCLONEDX_NPM_VERSION="${CYCLONEDX_NPM_VERSION:-1.19.3}"
 
-# Generate JSON report for artifacts
-npx eslint . --format json --output-file /tmp/eslint-report.json || {
-  EXIT_CODE=$?
-  # Also output human-readable format
-  npx eslint . || true
-  exit "${EXIT_CODE}"
-}
+echo "Generating CycloneDX SBOM via @cyclonedx/cyclonedx-npm..."
 
-echo "ESLint passed."
+npx --yes "@cyclonedx/cyclonedx-npm@${CYCLONEDX_NPM_VERSION}" \
+  --output-file bom.json \
+  --output-format json
+
+echo "SBOM generated at bom.json"

@@ -20,7 +20,7 @@ This file is identical across all repos:
 version: 2.1
 setup: true
 orbs:
-  munitor: kof22/munitor@1
+  munitor: kof22/munitor@0.3
 workflows:
   setup:
     jobs:
@@ -53,7 +53,7 @@ Munitor validates branch names and will fail on non-conforming names.
 
 | Context | Secrets | Used By |
 |---------|---------|---------|
-| `ghcr` | `GHCR_TOKEN`, `GHCR_USER` | Docker push to GitHub Container Registry |
+| `ghcr` | `GHCR_TOKEN`, `GHCR_USERNAME` | Docker push to GitHub Container Registry |
 | `github` | `GITHUB_TOKEN` | Git operations, CD repo updates, SBOM, GitHub Releases |
 | `sonarcloud` | `SONAR_TOKEN` | SonarCloud analysis |
 | `nvd` | `NVD_API_KEY` | OWASP dependency check (Java only, optional) |
@@ -68,7 +68,7 @@ For Node.js/Next.js applications with Docker deployment.
 
 ```yaml
 pipeline: node-api
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-app
 docker:
   registry: ghcr.io/KofTwentyTwo
@@ -81,7 +81,7 @@ contexts:
 
 ```yaml
 pipeline: node-api
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-app
 node_version: "22"                    # default: 20
 
@@ -145,10 +145,11 @@ For Node.js applications that provide their own Dockerfile (unlike `node-api` wh
 
 ```yaml
 pipeline: node-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-webapp
 docker:
   registry: ghcr.io/KofTwentyTwo
+  use_repo_dockerfile: true
 contexts:
   registry: ghcr
   github: github
@@ -158,7 +159,7 @@ contexts:
 
 ```yaml
 pipeline: node-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-webapp
 node_version: "22"                    # default: 20
 
@@ -167,9 +168,13 @@ sonar:
 
 docker:
   registry: ghcr.io/KofTwentyTwo
+  use_repo_dockerfile: true              # preserve the repository Dockerfile
 
 cd:
-  repo: KofTwentyTwo/my-webapp-cd        # omit to skip GitOps CD updates
+  repo: KofTwentyTwo/cluster-gitops      # omit to skip GitOps CD updates
+  format: kustomize
+  production_only: true                  # only main writes this production target
+  path: tenants/my-app/website/kustomization.yaml
   env:
     release: staging                   # default: staging (CD target for release/* branches)
 
@@ -212,7 +217,7 @@ contexts:
   sonar: sonarcloud
 ```
 
-**Dockerfile:** You must provide your own `Dockerfile` in the repo root. Munitor builds it, runs a health check, scans with Trivy, and pushes to the registry. This is the key difference from `node-api`, which auto-generates a Dockerfile.
+**Dockerfile:** Set `docker.use_repo_dockerfile: true` and provide `Dockerfile` in the repo root when the application owns its runtime contract. Munitor preserves and builds it, runs a health check, scans with Trivy, and pushes to the registry. Without the option, Munitor retains the legacy generated Dockerfile behavior. Use `node-api` when an always-generated framework Dockerfile is preferred.
 
 ### `java-webapp`
 
@@ -222,7 +227,7 @@ For Java/Maven applications with Docker deployment.
 
 ```yaml
 pipeline: java-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-service
 docker:
   registry: ghcr.io/KofTwentyTwo
@@ -236,7 +241,7 @@ contexts:
 
 ```yaml
 pipeline: java-webapp
-orb_version: dev:snapshot
+orb_version: "0.3"
 image_name: my-service
 java_version: "21"                    # default: 21
 
@@ -282,7 +287,7 @@ For Terraform/Terragrunt infrastructure repos.
 
 ```yaml
 pipeline: terraform
-orb_version: dev:snapshot
+orb_version: "0.3"
 terraform:
   path: terraform/
 ```
@@ -291,7 +296,7 @@ terraform:
 
 ```yaml
 pipeline: terraform
-orb_version: dev:snapshot
+orb_version: "0.3"
 terraform:
   path: terraform/                     # default: terraform/
   live_path: terraform/live            # default: terraform/live
@@ -313,14 +318,14 @@ For CD/GitOps repositories containing Kubernetes manifests, Kustomize overlays, 
 
 ```yaml
 pipeline: validate-cd-repo
-orb_version: dev:snapshot
+orb_version: "0.3"
 ```
 
 **Full config:**
 
 ```yaml
 pipeline: validate-cd-repo
-orb_version: dev:snapshot
+orb_version: "0.3"
 
 kustomize:
   version: "5.5.0"                      # default: 5.5.0
@@ -345,14 +350,14 @@ For ArgoCD app-of-apps repositories that use environment directories (`envs/`) i
 
 ```yaml
 pipeline: argocd-apps
-orb_version: dev:snapshot
+orb_version: "0.3"
 ```
 
 **Full config:**
 
 ```yaml
 pipeline: argocd-apps
-orb_version: dev:snapshot
+orb_version: "0.3"
 
 kustomize:
   version: "5.5.0"                      # default: 5.5.0
@@ -377,7 +382,7 @@ For SDK packaging and GitHub Releases. Triggered by semver tags (`v1.2.3`).
 
 ```yaml
 pipeline: sdk-distribution
-orb_version: dev:snapshot
+orb_version: "0.3"
 contexts:
   github: github
 ```
@@ -465,7 +470,10 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 | `java_version` | string | `21` | java-webapp | Java major version |
 | `sonar.project_key` | string | -- | node-api, node-webapp, java-webapp | SonarCloud project key. Omit to skip |
 | `docker.registry` | string | *required** | node-api, node-webapp, java-webapp | Container registry URL |
+| `docker.use_repo_dockerfile` | bool | `false` | node-webapp | Preserve and build the repository-root Dockerfile instead of generating one |
 | `cd.repo` | string | -- | node-api, node-webapp, java-webapp | GitOps CD repo (`org/repo`). Omit to skip |
+| `cd.path` | string | -- | node-api, node-webapp, java-webapp | Explicit repository-relative `kustomization.yaml` path for consolidated GitOps repositories |
+| `cd.production_only` | bool | `false` | node-api, node-webapp, java-webapp | Disable CD write-back from develop, staging, and release workflows |
 | `cd.env.release` | string | `staging` | node-api, node-webapp, java-webapp | CD target environment for release branches |
 | `coverage.min_instruction` | int | `70` | node-api, node-webapp, java-webapp | Minimum coverage percentage |
 | `e2e` | bool | `false` | node-api, node-webapp, java-webapp | Enable Playwright E2E tests |
@@ -508,7 +516,7 @@ Default endpoint: `GET /api/health` on port 3000 (node-api, node-webapp) or 8080
 
 ## Troubleshooting
 
-**"Missing required fields: orb_version"** -- Add `orb_version` to your `.munitor.yml`. Use `dev:snapshot` for pre-release testing or `1` once a stable release is published.
+**"Missing required fields: orb_version"** -- Add `orb_version` to your `.munitor.yml`. Use `dev:snapshot` for unreleased feature testing or `0.3` for the current stable line.
 
 **"munitor_header: command not found"** -- You're using an older orb version. Update to `dev:snapshot` or wait for the next stable release.
 

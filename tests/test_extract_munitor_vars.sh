@@ -138,6 +138,19 @@ assert_eq "sast object form" "true" "${MUNITOR_SAST}"
 assert_eq "sast fail_on_findings (object false)" "false" "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
 
 # --------------------------------------------------------------------------
+# node-webapp consolidated GitOps fixture
+# --------------------------------------------------------------------------
+echo ""
+echo "=== extract_munitor_vars: consolidated GitOps fixture ==="
+extract_munitor_vars "${FIXTURES_DIR}/node-webapp-consolidated.munitor.yml"
+
+assert_eq "consolidated cd repo" "KofTwentyTwo/cluster-gitops" "${MUNITOR_CD_REPO}"
+assert_eq "consolidated cd format" "kustomize" "${MUNITOR_CD_FORMAT}"
+assert_eq "consolidated cd path" "tenants/investinginchester/website/kustomization.yaml" "${MUNITOR_CD_PATH}"
+assert_eq "production-only cd" "true" "${MUNITOR_CD_PRODUCTION_ONLY}"
+assert_eq "non-production cd disabled" "false" "${MUNITOR_CD_NON_PROD}"
+
+# --------------------------------------------------------------------------
 # node.framework defaults
 # --------------------------------------------------------------------------
 echo ""
@@ -262,6 +275,9 @@ assert_eq "sbom" "false" "${MUNITOR_SBOM}"
 assert_eq "health_port default 3000" "3000" "${MUNITOR_HEALTH_PORT}"
 assert_eq "coverage min default" "70" "${MUNITOR_COVERAGE_MIN}"
 assert_eq "package_manager default" "npm" "${MUNITOR_PACKAGE_MANAGER}"
+
+extract_munitor_vars "${FIXTURES_DIR}/pnpm-webapp.munitor.yml"
+assert_eq "pnpm package_manager is extracted" "pnpm" "${MUNITOR_PACKAGE_MANAGER}"
 
 # --------------------------------------------------------------------------
 # supplemental_images (enabled)

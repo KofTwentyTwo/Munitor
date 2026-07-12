@@ -19,4 +19,4 @@ steps:
         SONAR_PROJECT_KEY: << parameters.sonar_project_key >>
         SONAR_ORG: << parameters.sonar_org >>
         SONAR_TOKEN_VAR: << parameters.sonar_token_env >>
-      command: << include(scripts/npm_sonar.sh) >>
+      command: << include(scripts/node_sonar.sh) >>
