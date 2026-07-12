@@ -320,6 +320,22 @@ else
   fail "should resolve environments/<env>/values.yaml"
 fi
 
+echo -n "  TEST: supports a validated explicit Kustomize path... "
+if grep -q 'CONFIGURED_PATH="${CD_PATH:-}"' "${SRC_SCRIPTS}/update_cd_repo.sh" &&
+   grep -q 'cd.path must be a relative path' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+  pass
+else
+  fail "should support and validate an explicit Kustomize path"
+fi
+
+echo -n "  TEST: retries concurrent shared-repository pushes... "
+if grep -q 'for attempt in 1 2 3' "${SRC_SCRIPTS}/update_cd_repo.sh" &&
+   grep -q 'git pull --rebase' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+  pass
+else
+  fail "should rebase and retry shared-repository push races"
+fi
+
 echo -n "  TEST: deletes digest field when setting newTag (kustomize)... "
 if grep -q 'del((.images\[\] | select(.name == \\"${IMAGE_NAME}\\")).digest)' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
   pass

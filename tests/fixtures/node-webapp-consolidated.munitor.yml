@@ -1,0 +1,18 @@
+pipeline: node-webapp
+orb_version: dev:snapshot
+image_name: investinginchester
+node_version: "22"
+
+docker:
+  registry: ghcr.io/koftwentytwo
+  use_repo_dockerfile: true
+
+cd:
+  repo: KofTwentyTwo/cluster-gitops
+  format: kustomize
+  production_only: true
+  path: tenants/investinginchester/website/kustomization.yaml
+
+contexts:
+  registry: ghcr
+  github: github

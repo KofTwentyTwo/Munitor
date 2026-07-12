@@ -24,6 +24,10 @@ parameters:
     type: string
     default: ""
     description: Full image name for Kustomize repos.
+  cd_path:
+    type: string
+    default: ""
+    description: Explicit repository-relative kustomization.yaml path.
   ci_git_email:
     type: string
     default: ""
@@ -52,6 +56,7 @@ steps:
       image_key: << parameters.image_key >>
       cd_format: << parameters.cd_format >>
       cd_image_name: << parameters.cd_image_name >>
+      cd_path: << parameters.cd_path >>
       ci_git_email: << parameters.ci_git_email >>
       ci_git_name: << parameters.ci_git_name >>
       supplemental_images: << parameters.supplemental_images >>

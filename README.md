@@ -171,7 +171,10 @@ docker:
   use_repo_dockerfile: true              # preserve the repository Dockerfile
 
 cd:
-  repo: KofTwentyTwo/my-webapp-cd        # omit to skip GitOps CD updates
+  repo: KofTwentyTwo/cluster-gitops      # omit to skip GitOps CD updates
+  format: kustomize
+  production_only: true                  # only main writes this production target
+  path: tenants/my-app/website/kustomization.yaml
   env:
     release: staging                   # default: staging (CD target for release/* branches)
 
@@ -469,6 +472,8 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 | `docker.registry` | string | *required** | node-api, node-webapp, java-webapp | Container registry URL |
 | `docker.use_repo_dockerfile` | bool | `false` | node-webapp | Preserve and build the repository-root Dockerfile instead of generating one |
 | `cd.repo` | string | -- | node-api, node-webapp, java-webapp | GitOps CD repo (`org/repo`). Omit to skip |
+| `cd.path` | string | -- | node-api, node-webapp, java-webapp | Explicit repository-relative `kustomization.yaml` path for consolidated GitOps repositories |
+| `cd.production_only` | bool | `false` | node-api, node-webapp, java-webapp | Disable CD write-back from develop, staging, and release workflows |
 | `cd.env.release` | string | `staging` | node-api, node-webapp, java-webapp | CD target environment for release branches |
 | `coverage.min_instruction` | int | `70` | node-api, node-webapp, java-webapp | Minimum coverage percentage |
 | `e2e` | bool | `false` | node-api, node-webapp, java-webapp | Enable Playwright E2E tests |

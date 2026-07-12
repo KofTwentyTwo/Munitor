@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CONFIG_FILE="${MUNITOR_CONFIG:-.munitor.yml}"
-OUTPUT_FILE="/tmp/generated-config.yml"
+OUTPUT_FILE="${MUNITOR_OUTPUT_FILE:-/tmp/generated-config.yml}"
 
 # When run via CircleCI << include() >>, BASH_SOURCE is empty.
 # Fall back to MUNITOR_SCRIPT_DIR set by the command YAML.
@@ -201,7 +201,7 @@ process_conditionals() {
   cp "${input}" "${tmpfile}"
 
   # Process each conditional flag
-  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD OWASP NVD SUPPLEMENTAL; do
+  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD CD_NON_PROD OWASP NVD SUPPLEMENTAL; do
     local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file
