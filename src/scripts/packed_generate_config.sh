@@ -135,6 +135,8 @@ extract_munitor_vars() {
   fi
   MUNITOR_CD_REPO=$(yq '.cd.repo // ""' "${config_file}")
   MUNITOR_CD_FORMAT=$(yq '.cd.format // "helm"' "${config_file}")
+  MUNITOR_CD_PATH=$(yq '.cd.path // ""' "${config_file}")
+  MUNITOR_CD_PRODUCTION_ONLY=$(yq '.cd.production_only // false' "${config_file}")
   MUNITOR_CD_ENV_DEVELOP=$(yq '.cd.env.develop // "develop"' "${config_file}")
   MUNITOR_CD_ENV_STAGING=$(yq '.cd.env.staging // "staging"' "${config_file}")
   MUNITOR_CD_ENV_PROD=$(yq '.cd.env.prod // "prod"' "${config_file}")
@@ -291,8 +293,14 @@ extract_munitor_vars() {
 
   if [[ -n "${MUNITOR_CD_REPO}" ]]; then
     MUNITOR_CD="true"
+    if [[ "${MUNITOR_CD_PRODUCTION_ONLY}" == "true" ]]; then
+      MUNITOR_CD_NON_PROD="false"
+    else
+      MUNITOR_CD_NON_PROD="true"
+    fi
   else
     MUNITOR_CD="false"
+    MUNITOR_CD_NON_PROD="false"
   fi
 
   if [[ -n "${MUNITOR_CONTEXT_NVD}" ]]; then
@@ -303,7 +311,7 @@ extract_munitor_vars() {
 
   # Export all variables
   export MUNITOR_PIPELINE MUNITOR_ORB_VERSION MUNITOR_IMAGE_NAME MUNITOR_JAVA_VERSION MUNITOR_NODE_VERSION MUNITOR_SERVER_MODULE
-  export MUNITOR_SONAR_PROJECT_KEY MUNITOR_DOCKER_REGISTRY MUNITOR_CD_REPO MUNITOR_CD_FORMAT
+  export MUNITOR_SONAR_PROJECT_KEY MUNITOR_DOCKER_REGISTRY MUNITOR_CD_REPO MUNITOR_CD_FORMAT MUNITOR_CD_PATH MUNITOR_CD_PRODUCTION_ONLY
   export MUNITOR_CD_ENV_DEVELOP MUNITOR_CD_ENV_STAGING MUNITOR_CD_ENV_PROD MUNITOR_CD_ENV_RELEASE
   export MUNITOR_COVERAGE_MIN MUNITOR_E2E MUNITOR_SBOM MUNITOR_OWASP
   export MUNITOR_CONTEXT_REGISTRY MUNITOR_CONTEXT_GITHUB MUNITOR_CONTEXT_SONAR MUNITOR_CONTEXT_NVD
@@ -321,13 +329,13 @@ extract_munitor_vars() {
   export MUNITOR_CI_EMAIL MUNITOR_CI_NAME MUNITOR_NPM_DEFAULT_SCOPE MUNITOR_ORB_SLUG
   export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB MUNITOR_HEALTH_MIGRATIONS MUNITOR_HEALTH_SMOKE_PATHS
   export MUNITOR_SUPPLEMENTAL MUNITOR_SUPPLEMENTAL_IMAGES_JSON
-  export MUNITOR_SONAR MUNITOR_CD MUNITOR_NVD
+  export MUNITOR_SONAR MUNITOR_CD MUNITOR_CD_NON_PROD MUNITOR_NVD
 }
 
 # Build the envsubst variable list
 get_envsubst_vars() {
   # shellcheck disable=SC2016
-  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_HEALTH_MIGRATIONS} ${MUNITOR_HEALTH_SMOKE_PATHS} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON} ${MUNITOR_SERVER_MODULE} ${MUNITOR_COVERAGE_SUMMARY_PATH}'
+  echo '${MUNITOR_PIPELINE} ${MUNITOR_ORB_VERSION} ${MUNITOR_IMAGE_NAME} ${MUNITOR_JAVA_VERSION} ${MUNITOR_NODE_VERSION} ${MUNITOR_SONAR_PROJECT_KEY} ${MUNITOR_DOCKER_REGISTRY} ${MUNITOR_CD_REPO} ${MUNITOR_CD_FORMAT} ${MUNITOR_CD_PATH} ${MUNITOR_CD_ENV_DEVELOP} ${MUNITOR_CD_ENV_STAGING} ${MUNITOR_CD_ENV_PROD} ${MUNITOR_CD_ENV_RELEASE} ${MUNITOR_COVERAGE_MIN} ${MUNITOR_E2E} ${MUNITOR_SBOM} ${MUNITOR_OWASP} ${MUNITOR_CONTEXT_REGISTRY} ${MUNITOR_CONTEXT_GITHUB} ${MUNITOR_CONTEXT_SONAR} ${MUNITOR_CONTEXT_NVD} ${MUNITOR_NPM_AUTH} ${MUNITOR_NPM_SCOPES} ${MUNITOR_SERVICES_JSON} ${MUNITOR_TEST_SETUP_SCRIPT} ${MUNITOR_TEST_COMMANDS_JSON} ${MUNITOR_COVERAGE_TOOL} ${MUNITOR_COVERAGE_COMMAND} ${MUNITOR_GITHUB_RELEASE} ${MUNITOR_SAST} ${MUNITOR_SAST_FAIL_ON_FINDINGS} ${MUNITOR_HEALTH_PATH} ${MUNITOR_HEALTH_PORT} ${MUNITOR_HEALTH_DB} ${MUNITOR_HEALTH_MIGRATIONS} ${MUNITOR_HEALTH_SMOKE_PATHS} ${MUNITOR_TF_PATH} ${MUNITOR_TF_LIVE_PATH} ${MUNITOR_TF_ENVIRONMENTS} ${MUNITOR_CHECKOV_SKIP} ${MUNITOR_KUSTOMIZE_VERSION} ${MUNITOR_KUSTOMIZE_BASE_PATH} ${MUNITOR_KUSTOMIZE_LOAD_RESTRICTOR} ${MUNITOR_KUSTOMIZE_SCAN_OVERLAY} ${MUNITOR_KUSTOMIZE_OVERLAYS} ${MUNITOR_KUSTOMIZE_OVERLAY_DIR} ${MUNITOR_KUBE_LINTER_CONFIG} ${MUNITOR_YAMLLINT_PATHS} ${MUNITOR_CI_EMAIL} ${MUNITOR_CI_NAME} ${MUNITOR_NPM_DEFAULT_SCOPE} ${MUNITOR_ORB_SLUG} ${MUNITOR_PACKAGE_MANAGER} ${MUNITOR_SUPPLEMENTAL_IMAGES_JSON} ${MUNITOR_SERVER_MODULE} ${MUNITOR_COVERAGE_SUMMARY_PATH}'
 }
 MUNITOR_EXTRACT_EOF
 
@@ -557,13 +565,14 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -577,7 +586,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
       ##IF_GITHUB_RELEASE##
       - munitor/github_release:
           name: github-release
@@ -627,6 +636,7 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -879,13 +889,14 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -899,7 +910,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
       ##IF_GITHUB_RELEASE##
       - munitor/github_release:
           name: github-release
@@ -949,6 +960,7 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1229,13 +1241,14 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1249,7 +1262,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
       ##IF_GITHUB_RELEASE##
       - munitor/github_release:
           name: github-release
@@ -1312,6 +1325,7 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1592,13 +1606,14 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1612,7 +1627,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
       ##IF_GITHUB_RELEASE##
       - munitor/github_release:
           name: github-release
@@ -1675,6 +1690,7 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2598,13 +2614,14 @@ cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PAR
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2617,7 +2634,7 @@ cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           filters:
             branches:
               only: __BRANCH_FILTER__
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
 MUNITOR_PARTIAL_EOF
 
 cat > /tmp/munitor/templates/partials/gradle-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
@@ -2747,13 +2764,14 @@ cat > /tmp/munitor/templates/partials/gradle-webapp-deploy.yml.tpl << 'MUNITOR_P
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2766,7 +2784,7 @@ cat > /tmp/munitor/templates/partials/gradle-webapp-deploy.yml.tpl << 'MUNITOR_P
           filters:
             branches:
               only: __BRANCH_FILTER__
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
 MUNITOR_PARTIAL_EOF
 
 cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
@@ -2909,13 +2927,14 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2928,7 +2947,7 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           filters:
             branches:
               only: __BRANCH_FILTER__
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
 MUNITOR_PARTIAL_EOF
 
 cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
@@ -3071,13 +3090,14 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -3090,7 +3110,7 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           filters:
             branches:
               only: __BRANCH_FILTER__
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
 MUNITOR_PARTIAL_EOF
 
 echo "Munitor helpers staged to /tmp/munitor/"
@@ -3102,7 +3122,7 @@ echo "Munitor helpers staged to /tmp/munitor/"
 set -euo pipefail
 
 CONFIG_FILE="${MUNITOR_CONFIG:-.munitor.yml}"
-OUTPUT_FILE="/tmp/generated-config.yml"
+OUTPUT_FILE="${MUNITOR_OUTPUT_FILE:-/tmp/generated-config.yml}"
 
 # When run via CircleCI << include() >>, BASH_SOURCE is empty.
 # Fall back to MUNITOR_SCRIPT_DIR set by the command YAML.
@@ -3301,7 +3321,7 @@ process_conditionals() {
   cp "${input}" "${tmpfile}"
 
   # Process each conditional flag
-  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD OWASP NVD SUPPLEMENTAL; do
+  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD CD_NON_PROD OWASP NVD SUPPLEMENTAL; do
     local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file

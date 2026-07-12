@@ -124,13 +124,14 @@
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -143,4 +144,4 @@
           filters:
             branches:
               only: __BRANCH_FILTER__
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##

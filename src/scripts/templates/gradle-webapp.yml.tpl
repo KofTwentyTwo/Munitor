@@ -223,13 +223,14 @@ workflows:
               only:
                 - /release\/.*/
       ##ENDIF_SBOM##
-      ##IF_CD##
+      ##IF_CD_NON_PROD##
       - munitor/update_cd_repo:
           name: update-cd-repo
           cd_repo: ${MUNITOR_CD_REPO}
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -243,7 +244,7 @@ workflows:
             branches:
               only:
                 - /release\/.*/
-      ##ENDIF_CD##
+      ##ENDIF_CD_NON_PROD##
       ##IF_GITHUB_RELEASE##
       - munitor/github_release:
           name: github-release
@@ -293,6 +294,7 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          cd_path: ${MUNITOR_CD_PATH}
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##

@@ -8,6 +8,8 @@ PASS=0
 FAIL=0
 
 GENERATE_SCRIPT="${PROJECT_DIR}/src/scripts/generate_config.sh"
+GENERATED_CONFIG=$(mktemp)
+trap 'rm -f "${GENERATED_CONFIG}"' EXIT
 
 # --------------------------------------------------------------------------
 # Helper: render a fixture by calling the real generate_config.sh script
@@ -17,8 +19,9 @@ render_fixture() {
   local fixture="$1"
 
   # Run the real script; capture stderr for diagnostics, return generated YAML
-  MUNITOR_CONFIG="${fixture}" bash "${GENERATE_SCRIPT}" >/dev/null 2>&1
-  cat /tmp/generated-config.yml
+  MUNITOR_CONFIG="${fixture}" MUNITOR_OUTPUT_FILE="${GENERATED_CONFIG}" \
+    bash "${GENERATE_SCRIPT}" >/dev/null 2>&1
+  cat "${GENERATED_CONFIG}"
 }
 
 run_test() {
@@ -36,7 +39,7 @@ run_test() {
     return
   }
 
-  if echo "${output}" | grep -q "${expected_pattern}"; then
+  if grep -q "${expected_pattern}" <<< "${output}"; then
     echo "PASS"
     PASS=$((PASS + 1))
   else
@@ -61,7 +64,7 @@ run_negative_test() {
     return
   }
 
-  if echo "${output}" | grep -q "${forbidden_pattern}"; then
+  if grep -q "${forbidden_pattern}" <<< "${output}"; then
     echo "FAIL (found forbidden pattern '${forbidden_pattern}')"
     FAIL=$((FAIL + 1))
   else
@@ -103,7 +106,7 @@ run_context_test() {
     return
   fi
 
-  if echo "${block}" | grep -q "${expected_pattern}"; then
+  if grep -q "${expected_pattern}" <<< "${block}"; then
     echo "PASS"
     PASS=$((PASS + 1))
   else
@@ -143,7 +146,7 @@ run_negative_context_test() {
     return
   fi
 
-  if echo "${block}" | grep -q "${forbidden_pattern}"; then
+  if grep -q "${forbidden_pattern}" <<< "${block}"; then
     echo "FAIL (found forbidden '${forbidden_pattern}' within block)"
     FAIL=$((FAIL + 1))
   else
@@ -450,6 +453,24 @@ run_context_test "node-webapp: docker-build-push includes health_path" \
   "name: docker-build-push" \
   "context:" \
   "health_path: /api/health"
+
+run_context_test "node-webapp consolidated: production targets explicit GitOps path" \
+  "${FIXTURES_DIR}/node-webapp-consolidated.munitor.yml" \
+  "production:" \
+  "github-release:" \
+  "cd_path: tenants/investinginchester/website/kustomization.yaml"
+
+run_negative_context_test "node-webapp consolidated: develop does not update production" \
+  "${FIXTURES_DIR}/node-webapp-consolidated.munitor.yml" \
+  "develop:" \
+  "staging:" \
+  "update-cd-repo"
+
+run_negative_context_test "node-webapp consolidated: release does not update production" \
+  "${FIXTURES_DIR}/node-webapp-consolidated.munitor.yml" \
+  "release-candidate:" \
+  "production:" \
+  "update-cd-repo"
 
 # Test node-webapp-minimal: e2e/sbom/sonar should be excluded
 run_test "node-webapp-minimal: renders node 22" \
