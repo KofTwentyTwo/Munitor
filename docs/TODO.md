@@ -2,17 +2,15 @@
 
 ## Pending
 
-- [ ] Validate dev:snapshot on Website-Frontend (confirm pnpm coverage job fix)
-- [ ] Create PR #3 for pnpm support (feature/GH-5-pnpm-support -> develop)
-- [ ] Release v0.3.0 after PR merge
-- [ ] Bump consumer repos to @0.3
-- [ ] Follow makers4 and terraform-proxmox-talos on CircleCI (manual step)
-- [ ] Fix Website-Frontend ESLint error (DebugPanel.tsx:73 setState in effect)
-- [ ] Adopt supplemental images on a consumer repo (e.g., me-health-portal with Liquibase)
-- [ ] Bump k8s-app-of-apps and Website-CD to @0.2+ (optional, @0.1 still compatible)
+- [ ] Follow makers4 and terraform-proxmox-talos on CircleCI when those repos are next active.
+- [ ] Adopt supplemental images on an appropriate consumer.
 
 ## Completed
 
+- [x] Prove consolidated production write-back with Investing in Chester and QRun marketing.
+- [x] Release v0.3.0 and move the verified consumers to the stable 0.3 line.
+- [x] Merge repository Dockerfile preservation and consolidated GitOps write-back.
+- [x] Validate first-class pnpm support and merge PR #6.
 - [x] Add opt-in repository Dockerfile preservation for node-webapp (GH-7)
 - [x] Implement first-class pnpm support (GH-5, 17 commits, 219 tests)
 - [x] Rename all npm_* orb components to node_* (backward-incompatible, pre-1.0)
