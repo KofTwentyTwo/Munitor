@@ -472,10 +472,25 @@ image_name: my-webapp
 node_version: "22"
 EOF
 run_generate > /dev/null
-if grep -q "gcr.io/distroless/nodejs22-debian12" "${WORK_DIR}/Dockerfile"; then
+if grep -q "FROM gcr.io/distroless/nodejs22-debian13 AS runner" "${WORK_DIR}/Dockerfile"; then
   pass
 else
-  fail "expected distroless runner image in Dockerfile"
+  fail "expected distroless debian13 runner image in Dockerfile"
+fi
+teardown
+
+echo -n "  TEST: does not use the debian12 runner (open OpenSSL CVEs)... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+node_version: "22"
+EOF
+run_generate > /dev/null
+if ! grep -q "debian12" "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected no debian12 base image"
 fi
 teardown
 
@@ -586,6 +601,22 @@ if ! grep -q 'npm ci' "${WORK_DIR}/Dockerfile"; then
   pass
 else
   fail "expected no npm ci"
+fi
+teardown
+
+echo -n "  TEST: pnpm node-webapp uses distroless debian13 runner... "
+setup
+cat > "${WORK_DIR}/.munitor.yml" <<'EOF'
+pipeline: node-webapp
+image_name: my-webapp
+node_version: "22"
+package_manager: pnpm
+EOF
+run_generate > /dev/null
+if grep -q "FROM gcr.io/distroless/nodejs22-debian13 AS runner" "${WORK_DIR}/Dockerfile"; then
+  pass
+else
+  fail "expected distroless debian13 runner image in pnpm Dockerfile"
 fi
 teardown
 
