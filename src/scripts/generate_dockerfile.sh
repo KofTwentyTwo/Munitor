@@ -269,6 +269,9 @@ DOCKERFILE
       fi
     else
       echo "Generating Dockerfile for node-webapp (node ${MUNITOR_NODE_VERSION})"
+      # Single source for the runtime base. debian12 ships libssl3 3.0.18 with
+      # open HIGH/CRITICAL CVEs that fail the Trivy gate; debian13 scans clean.
+      NODE_WEBAPP_RUNTIME_IMAGE="gcr.io/distroless/nodejs${MUNITOR_NODE_VERSION}-debian13"
       case "${MUNITOR_PACKAGE_MANAGER}" in
       pnpm)
         cat > Dockerfile <<DOCKERFILE
@@ -282,7 +285,7 @@ ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
 RUN pnpm run build
 
-FROM gcr.io/distroless/nodejs${MUNITOR_NODE_VERSION}-debian12 AS runner
+FROM ${NODE_WEBAPP_RUNTIME_IMAGE} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/.next/standalone ./
@@ -303,7 +306,7 @@ ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=\${GIT_COMMIT_SHA}
 RUN npm run build
 
-FROM gcr.io/distroless/nodejs${MUNITOR_NODE_VERSION}-debian12 AS runner
+FROM ${NODE_WEBAPP_RUNTIME_IMAGE} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/.next/standalone ./
