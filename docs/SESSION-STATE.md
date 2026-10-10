@@ -1,5 +1,17 @@
 # Munitor session state
 
+## Release candidate 0.3.2 (2026-10-10)
+
+Munitor PR19 merged to develop at c8bbf2e. Release branch `release/0.3.2`
+promotes the bounded publishing CI fixes to main. Full make all and the feature
+CircleCI lint/pack/review/snapshot publication passed. Stable publication still
+requires the v0.3.2 tag on main and successful production orb publication.
+
+EX-0008 is registered by standards PR27 (5c21fc7); Website-Frontend may select the
+new stable orb after publication. Default audit policy, Trivy and GitOps contracts
+are preserved. Website-Backend's Java installation now avoids interactive Ubuntu
+service-restart dialogs. Website consumers and production remain pending.
+
 ## Current status
 
 The `develop` branch contains the complete `0.3.0` feature set. PR #6 added

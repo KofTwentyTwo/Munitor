@@ -30,6 +30,7 @@ GitHub Issues (org: KofTwentyTwo). Commit format: `feat(#N): description` or `Cl
 - Namespace: `kof22`
 - Orb: `kof22/munitor`
 - Latest stable: `kof22/munitor@0.3.1`
+- Release candidate: `kof22/munitor@0.3.2` (stable tag publication pending)
 - Dev snapshot: `kof22/munitor@dev:snapshot`
 
 `0.3.0` includes first-class pnpm support, repository-owned Dockerfiles for
