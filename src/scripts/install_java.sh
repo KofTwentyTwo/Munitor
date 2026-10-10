@@ -26,8 +26,9 @@ echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] \
   $(. /etc/os-release && echo "${VERSION_CODENAME}") main" \
   | sudo tee /etc/apt/sources.list.d/adoptium.list > /dev/null
 
-sudo apt-get update -qq
-sudo apt-get install -y -qq "temurin-${VERSION}-jdk"
+# CI cannot answer debconf or needrestart's service-restart dialog.
+sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get update -qq
+sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get install -y -qq "temurin-${VERSION}-jdk"
 
 # Set JAVA_HOME for subsequent steps
 JAVA_HOME_DIR="/usr/lib/jvm/temurin-${VERSION}-jdk-$(dpkg --print-architecture)"

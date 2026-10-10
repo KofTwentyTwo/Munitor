@@ -2,6 +2,8 @@
 
 ## Pending
 
+- [ ] Review and release publishing CI fixes; update website consumer orb pins.
+
 - [ ] Follow makers4 and terraform-proxmox-talos on CircleCI when those repos are next active.
 - [ ] Adopt supplemental images on an appropriate consumer.
 
