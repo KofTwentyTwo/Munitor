@@ -2,6 +2,9 @@
 
 ## Pending
 
+- [x] Review publishing CI fixes and merge PR19 to develop.
+- [ ] Publish v0.3.2 from main; update website consumer orb pins.
+
 - [ ] Follow makers4 and terraform-proxmox-talos on CircleCI when those repos are next active.
 - [ ] Adopt supplemental images on an appropriate consumer.
 
@@ -13,7 +16,7 @@
 - [x] Validate first-class pnpm support and merge PR #6.
 - [x] Add opt-in repository Dockerfile preservation for node-webapp (GH-7)
 - [x] Implement first-class pnpm support (GH-5, 17 commits, 219 tests)
-- [x] Rename all npm_* orb components to node_* (backward-incompatible, pre-1.0)
+- [x] Rename all `npm_*` orb components to `node_*` (backward-incompatible, pre-1.0)
 - [x] Thread package_manager through full job/command/script chain
 - [x] Add corepack activation for pnpm/yarn in install_node
 - [x] Add pnpm Dockerfile variants for node-api and node-webapp

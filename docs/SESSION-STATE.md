@@ -1,5 +1,17 @@
 # Munitor session state
 
+## Release candidate 0.3.2 (2026-10-10)
+
+Munitor PR19 merged to develop at c8bbf2e. Release branch `release/0.3.2`
+promotes the bounded publishing CI fixes to main. Full make all and the feature
+CircleCI lint/pack/review/snapshot publication passed. Stable publication still
+requires the v0.3.2 tag on main and successful production orb publication.
+
+EX-0008 is registered by standards PR27 (5c21fc7); Website-Frontend may select the
+new stable orb after publication. Default audit policy, Trivy and GitOps contracts
+are preserved. Website-Backend's Java installation now avoids interactive Ubuntu
+service-restart dialogs. Website consumers and production remain pending.
+
 ## Current status
 
 The `develop` branch contains the complete `0.3.0` feature set. PR #6 added
@@ -23,3 +35,17 @@ ArgoCD.
 Run `make all` before release. The stable tag must publish successfully through
 CircleCI before consumer repositories move from immutable development pins to
 `0.3`.
+
+## Publishing release CI fixes (2026-10-10)
+
+Feature branch `feature/scoped-audit-exceptions` prepares development-only npm
+exceptions with expiry, exact advisory/package/version checks, an independent
+production audit and reassessment on a new upstream release. Website-Frontend's
+proposed EX-0008 covers braces 3.0.3 through 2026-11-10. Regression tests exercise
+acceptance and rejection paths. The default audit and Trivy remain unchanged.
+
+Website-Backend CI job 1135 timed out in Ubuntu's interactive needrestart prompt
+after Java installation. APT now receives noninteractive debconf and automatic
+needrestart settings; a stubbed integration test verifies both APT invocations.
+These fixes require normal feature-to-develop review and stable tag publication
+from main before website consumers can select the new version. Nothing deployed.

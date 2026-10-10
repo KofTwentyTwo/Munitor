@@ -569,3 +569,19 @@ Pipeline generation flow:
 5. Runs `envsubst` for variable substitution
 6. Processes `##IF_*##` / `##ENDIF_*##` conditional blocks
 7. Validates output YAML and passes to CircleCI continuation
+
+## Temporary npm audit exceptions
+
+The default npm audit gate remains unchanged. For a reviewed development-only HIGH
+advisory with no patched package release, a repository may commit
+`.npm-audit-exceptions.json` with schemaVersion 1 and an exceptions array. Each entry
+requires a register ID, exact GHSA advisory ID, package, version, development scope
+and UTC expiry date. See Website-Frontend's EX-0008 for the first consumer.
+
+The full npm audit runs alongside a production audit. All production HIGH/CRITICAL
+and all CRITICAL findings fail. Only the named advisory and its propagated HIGH
+findings can pass, and every affected lockfile path must have dev true and the exact
+excepted version. Audit errors, unknown chains and expired exceptions fail. A new
+upstream package release also fails and requires review. Trivy remains unchanged.
+This mechanism requires npm audit report version 2 and a package-path lockfile;
+unsupported reports fail. BATS and Node are required for the audit regression tests.
