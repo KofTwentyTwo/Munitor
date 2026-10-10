@@ -2,7 +2,8 @@
 
 ## Pending
 
-- [ ] Review and release publishing CI fixes; update website consumer orb pins.
+- [x] Review publishing CI fixes and merge PR19 to develop.
+- [ ] Publish v0.3.2 from main; update website consumer orb pins.
 
 - [ ] Follow makers4 and terraform-proxmox-talos on CircleCI when those repos are next active.
 - [ ] Adopt supplemental images on an appropriate consumer.
