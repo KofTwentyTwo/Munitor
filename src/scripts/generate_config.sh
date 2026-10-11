@@ -201,7 +201,7 @@ process_conditionals() {
   cp "${input}" "${tmpfile}"
 
   # Process each conditional flag
-  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD CD_NON_PROD OWASP NVD SUPPLEMENTAL; do
+  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD CD_NON_PROD CD_EXPLICIT_PATH OWASP NVD SUPPLEMENTAL; do
     local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file

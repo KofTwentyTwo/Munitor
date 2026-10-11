@@ -27,6 +27,11 @@ BUILD_CMD=(docker build -f "${DOCKERFILE}" -t "${FULL_IMAGE}:${VERSION}")
 if [[ -n "${ENV_TAG}" ]]; then
   BUILD_CMD+=(-t "${FULL_IMAGE}:${ENV_TAG}")
 fi
+if [[ -n "${CIRCLE_SHA1:-}" ]]; then
+  # Provenance label: guard_image_tags and update_cd_repo use it to prove which
+  # commit a version tag was built from.
+  BUILD_CMD+=(--label "org.opencontainers.image.revision=${CIRCLE_SHA1}")
+fi
 BUILD_CMD+=(--build-arg "VERSION=${VERSION}" --build-arg "GIT_COMMIT_SHA=${CIRCLE_SHA1:-}" .)
 
 "${BUILD_CMD[@]}"

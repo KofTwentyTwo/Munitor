@@ -230,7 +230,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -294,7 +296,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##

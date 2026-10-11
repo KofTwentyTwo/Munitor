@@ -35,7 +35,9 @@ if [[ "${VERSION}" =~ -(RC|alpha|beta|SNAPSHOT) ]]; then
   TARGET="${CIRCLE_BRANCH:-main}"
 else
   PRERELEASE_FLAG=""
-  TARGET="main"
+  # Target the commit this pipeline built, never the moving branch head: a
+  # later merge must not receive this version's tag.
+  TARGET="${CIRCLE_SHA1:-main}"
 fi
 
 echo "Target: ${TARGET}"
@@ -44,6 +46,16 @@ echo "Pre-release: ${PRERELEASE_FLAG:-no}"
 # Create tag + GitHub Release via API (skip if already exists)
 # Uses gh release create which handles both tag and release in one call,
 # bypassing CircleCI's read-only SSH deploy key entirely.
+# The release tag is normally reserved by allocate_version. If it exists it
+# must point at this commit; an existing tag is never moved.
+if [[ -n "${CIRCLE_SHA1:-}" ]] && TAG_SHA=$(gh api "repos/{owner}/{repo}/commits/${TAG}" --jq '.sha' 2>/dev/null); then
+  if [[ "${TAG_SHA}" != "${CIRCLE_SHA1}" ]]; then
+    echo "ERROR: Tag ${TAG} already points at ${TAG_SHA}, not ${CIRCLE_SHA1}. Refusing to release."
+    exit 1
+  fi
+  echo "Tag ${TAG} points at ${CIRCLE_SHA1}."
+fi
+
 if gh release view "${TAG}" >/dev/null 2>&1; then
   echo "Release ${TAG} already exists, skipping."
 else

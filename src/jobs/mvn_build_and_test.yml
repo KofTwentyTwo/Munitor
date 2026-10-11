@@ -25,6 +25,7 @@ steps:
   - restore_maven_cache
   - calculate_version
   - export_version_vars
+  - allocate_version
   - mvn_set_version
   - mvn_build
   - mvn_test

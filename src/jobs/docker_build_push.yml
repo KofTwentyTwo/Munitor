@@ -53,6 +53,10 @@ steps:
   - run:
       name: Restore version metadata
       command: <<include(scripts/restore_version_metadata.sh)>>
+  - guard_image_tags:
+      image_name: << parameters.image_name >>
+      registry: << parameters.registry >>
+      supplemental_images: << parameters.supplemental_images >>
   - generate_dockerfile
   - docker_build:
       image_name: << parameters.image_name >>
