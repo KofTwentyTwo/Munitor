@@ -25,6 +25,7 @@ steps:
   - restore_gradle_cache
   - calculate_version
   - export_version_vars
+  - allocate_version
   - gradle_build
   - gradle_test
   - run:

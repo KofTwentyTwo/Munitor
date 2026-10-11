@@ -35,6 +35,31 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   exit 1
 fi
 
+# Release versions are owned by exactly one commit (allocate_version reserves the
+# v<version> tag atomically). Refuse to point the GitOps repo at a version that
+# belongs to a different commit: the image tag would not contain this build.
+if [[ "${CIRCLE_BRANCH:-}" == "main" && "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && -z "${MUNITOR_SKIP_TAG_OWNERSHIP_CHECK:-}" ]]; then
+  SOURCE_REPO="${MUNITOR_SOURCE_REPO:-${CIRCLE_PROJECT_USERNAME:-}/${CIRCLE_PROJECT_REPONAME:-}}"
+  SOURCE_SHA="${CIRCLE_SHA1:?CIRCLE_SHA1 not set}"
+  github_get() {
+    curl -fsS -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json"       "https://api.github.com/repos/${SOURCE_REPO}/$1"
+  }
+  if ! TAG_REF=$(github_get "git/ref/tags/v${VERSION}"); then
+    echo "ERROR: Release tag v${VERSION} does not exist in ${SOURCE_REPO}; the version was never reserved."
+    exit 1
+  fi
+  TAG_SHA=$(echo "${TAG_REF}" | jq -r '.object.sha')
+  if [[ "$(echo "${TAG_REF}" | jq -r '.object.type')" == "tag" ]]; then
+    TAG_SHA=$(github_get "git/tags/${TAG_SHA}" | jq -r '.object.sha')
+  fi
+  if [[ "${TAG_SHA}" != "${SOURCE_SHA}" ]]; then
+    echo "ERROR: Version ${VERSION} belongs to commit ${TAG_SHA}, not ${SOURCE_SHA}."
+    echo "Refusing to bump the GitOps repo: the image tag ${VERSION} was not built from this commit."
+    exit 1
+  fi
+  echo "Verified v${VERSION} -> ${SOURCE_SHA}."
+fi
+
 echo "Updating CD repo: ${REPO} (format=${FORMAT}, version=${VERSION})"
 
 # Clone the CD repo using explicit token auth
@@ -151,7 +176,7 @@ if git diff --cached --quiet; then
   exit 0
 fi
 
-git commit -m "chore: update ${IMAGE_NAME:-image} to ${VERSION}"
+git commit -m "chore: update ${IMAGE_NAME:-image} to ${VERSION}" -m "Source: ${CIRCLE_PROJECT_REPONAME:-unknown}@${CIRCLE_SHA1:-unknown}"
 
 # Independent pipelines may update a shared GitOps repository concurrently.
 for attempt in 1 2 3; do

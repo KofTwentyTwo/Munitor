@@ -1,0 +1,9 @@
+description: >
+  Atomically reserve the release version on main by creating the v<version>
+  git tag through the GitHub API. If another commit already owns the tag
+  (concurrent merges), the next patch version is reserved instead. Existing
+  tags are never moved. No-op on non-main branches and pre-release versions.
+steps:
+  - run:
+      name: Reserve release version (atomic git tag)
+      command: << include(scripts/allocate_version.sh) >>
