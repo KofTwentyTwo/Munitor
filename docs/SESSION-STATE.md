@@ -1,5 +1,22 @@
 # Munitor session state
 
+## Release 0.3.3 (2026-10-11)
+
+PR22 (00f349c) fixes release version collisions. Website-Backend #65/#66 (0.1.24)
+and #80/#79 (0.1.32) built concurrently, computed the same GitVersion version,
+overwrote the GHCR tag, and github-release tagged the moving main head, so prod
+ran an image missing the later merge. Build jobs now reserve vX.Y.Z atomically
+(POST git/refs; next patch on conflict; tags never move), docker_build_push guards
+immutable version tags via the org.opencontainers.image.revision label,
+update_cd_repo verifies tag ownership, and github_release targets CIRCLE_SHA1.
+The generator renders cd_path only when cd.path is set (older-orb manifests on
+website develop branches, Concilium, and makers4 failed with "Unexpected
+argument(s): cd_path"). Consumer pin bumps are coordinated per repo because a
+main merge deploys.
+
+Local Windows runs: 4 test_generate_config health_path assertions fail on clean
+develop too (Git-for-Windows rewrites /api/health); CI on Linux is authoritative.
+
 ## Release candidate 0.3.2 (2026-10-10)
 
 Munitor PR19 merged to develop at c8bbf2e. Release branch `release/0.3.2`

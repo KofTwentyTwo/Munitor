@@ -3,7 +3,9 @@
 ## Pending
 
 - [x] Review publishing CI fixes and merge PR19 to develop.
-- [ ] Publish v0.3.2 from main; update website consumer orb pins.
+- [x] Publish v0.3.2 from main.
+- [ ] Publish v0.3.3 (atomic release versions); bump Website-Backend/Frontend pins to 0.3.3.
+- [ ] Bump Concilium (0.2) and makers4 (0.1) to 0.3.3 when next active.
 
 - [ ] Follow makers4 and terraform-proxmox-talos on CircleCI when those repos are next active.
 - [ ] Adopt supplemental images on an appropriate consumer.
