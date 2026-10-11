@@ -416,7 +416,18 @@ checkout
   --> sast-scan (parallel)
 ```
 
-For `release-candidate` workflows, `docker-build-push` runs after all quality checks pass, followed by `sbom`, `update-cd-repo` (targeting staging), and `github-release` (marked as pre-release). For `production` workflows, `docker-build-push` runs directly after `build-and-test` (no quality gates -- those were enforced on the release branch), followed by `update-cd-repo` (targeting prod) and `github-release` (full release). The `github-release` job auto-creates an annotated git tag and GitHub Release using the version calculated by GitVersion.
+For `release-candidate` workflows, `docker-build-push` runs after all quality checks pass, followed by `sbom`, `update-cd-repo` (targeting staging), and `github-release` (marked as pre-release). For `production` workflows, `docker-build-push` runs directly after `build-and-test` (no quality gates -- those were enforced on the release branch), followed by `update-cd-repo` (targeting prod) and `github-release` (full release). The `github-release` job creates the GitHub Release for the version tag reserved during `build-and-test` (see Release version integrity).
+
+### Release version integrity
+
+Production versions on `main` are unique per commit, even when merges land minutes apart:
+
+- **Atomic reservation** -- `build-and-test` on `main` reserves `vX.Y.Z` by creating the git tag through the GitHub API before the version is baked into artifacts. Tag creation is create-if-absent, so concurrent pipelines serialize on it: if another commit already owns the tag, the build takes the next patch version. A rerun of the same commit reuses its tag. Existing tags are never moved. Requires the GitHub context on `build-and-test` (present in the generated `production` workflows).
+- **Immutable image tags** -- images carry an `org.opencontainers.image.revision` label. `docker-build-push` refuses to push a version tag (main or supplemental) that already exists for a different commit, and fails closed if the registry cannot be inspected. Environment tags such as `develop` stay mutable.
+- **Ownership-checked GitOps bump** -- `update-cd-repo` verifies that `vX.Y.Z` points at the pipeline's commit before writing the version to the CD repository.
+- **Release targets the built commit** -- `github-release` targets `CIRCLE_SHA1`, not the moving `main` head, and refuses if the tag points elsewhere.
+
+`cd_path` is rendered into generated pipelines only when `cd.path` is set, so manifests that pin an older `orb_version` keep validating.
 
 ## Release Workflow
 

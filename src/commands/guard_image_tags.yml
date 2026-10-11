@@ -1,0 +1,34 @@
+description: >
+  Refuse to overwrite immutable version tags. Fails when the main image or any
+  supplemental image already exists at this version for a different commit
+  (org.opencontainers.image.revision label). Reruns from the same commit pass.
+parameters:
+  image_name:
+    type: string
+    description: Docker image name (without registry prefix).
+  registry:
+    type: string
+    default: ghcr.io/KofTwentyTwo
+    description: Container registry URL.
+  supplemental_images:
+    type: string
+    default: "[]"
+    description: JSON array of supplemental image definitions.
+  ghcr_token_env:
+    type: env_var_name
+    default: GHCR_TOKEN
+    description: Environment variable containing the GHCR token.
+  ghcr_user_env:
+    type: env_var_name
+    default: GHCR_USERNAME
+    description: Environment variable containing the GHCR username.
+steps:
+  - run:
+      name: Guard immutable version tags
+      environment:
+        IMAGE_NAME: << parameters.image_name >>
+        REGISTRY: << parameters.registry >>
+        SUPPLEMENTAL_IMAGES_JSON: << parameters.supplemental_images >>
+        GHCR_TOKEN_VAR: << parameters.ghcr_token_env >>
+        GHCR_USER_VAR: << parameters.ghcr_user_env >>
+      command: << include(scripts/guard_image_tags.sh) >>

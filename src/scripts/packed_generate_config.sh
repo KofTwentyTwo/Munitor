@@ -303,6 +303,14 @@ extract_munitor_vars() {
     MUNITOR_CD_NON_PROD="false"
   fi
 
+  # cd_path is only emitted when set, so manifests without cd.path still render
+  # pipelines that validate against orb versions predating the parameter.
+  if [[ -n "${MUNITOR_CD_PATH}" ]]; then
+    MUNITOR_CD_EXPLICIT_PATH="true"
+  else
+    MUNITOR_CD_EXPLICIT_PATH="false"
+  fi
+
   if [[ -n "${MUNITOR_CONTEXT_NVD}" ]]; then
     MUNITOR_NVD="true"
   else
@@ -329,7 +337,7 @@ extract_munitor_vars() {
   export MUNITOR_CI_EMAIL MUNITOR_CI_NAME MUNITOR_NPM_DEFAULT_SCOPE MUNITOR_ORB_SLUG
   export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB MUNITOR_HEALTH_MIGRATIONS MUNITOR_HEALTH_SMOKE_PATHS
   export MUNITOR_SUPPLEMENTAL MUNITOR_SUPPLEMENTAL_IMAGES_JSON
-  export MUNITOR_SONAR MUNITOR_CD MUNITOR_CD_NON_PROD MUNITOR_NVD
+  export MUNITOR_SONAR MUNITOR_CD MUNITOR_CD_NON_PROD MUNITOR_NVD MUNITOR_CD_EXPLICIT_PATH
 }
 
 # Build the envsubst variable list
@@ -572,7 +580,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -636,7 +646,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -896,7 +908,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -960,7 +974,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1248,7 +1264,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1325,7 +1343,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1613,7 +1633,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_RELEASE}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -1690,7 +1712,9 @@ workflows:
           environment: ${MUNITOR_CD_ENV_PROD}
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2621,7 +2645,9 @@ cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2771,7 +2797,9 @@ cat > /tmp/munitor/templates/partials/gradle-webapp-deploy.yml.tpl << 'MUNITOR_P
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -2934,7 +2962,9 @@ cat > /tmp/munitor/templates/partials/node-api-deploy.yml.tpl << 'MUNITOR_PARTIA
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -3097,7 +3127,9 @@ cat > /tmp/munitor/templates/partials/node-webapp-deploy.yml.tpl << 'MUNITOR_PAR
           environment: __CD_ENVIRONMENT__
           cd_format: ${MUNITOR_CD_FORMAT}
           cd_image_name: ${MUNITOR_DOCKER_REGISTRY}/${MUNITOR_IMAGE_NAME}
+          ##IF_CD_EXPLICIT_PATH##
           cd_path: ${MUNITOR_CD_PATH}
+          ##ENDIF_CD_EXPLICIT_PATH##
           ##IF_SUPPLEMENTAL##
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
@@ -3321,7 +3353,7 @@ process_conditionals() {
   cp "${input}" "${tmpfile}"
 
   # Process each conditional flag
-  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD CD_NON_PROD OWASP NVD SUPPLEMENTAL; do
+  for flag in E2E SBOM SONAR NPM_AUTH SERVICES TEST_SETUP CUSTOM_TEST COVERAGE_CMD GITHUB_RELEASE SAST CD CD_NON_PROD CD_EXPLICIT_PATH OWASP NVD SUPPLEMENTAL; do
     local var_name="MUNITOR_${flag}"
     local value="${!var_name:-false}"
     local flag_file

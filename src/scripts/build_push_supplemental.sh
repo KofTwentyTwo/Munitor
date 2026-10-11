@@ -70,7 +70,11 @@ for i in $(seq 0 $((COUNT - 1))); do
 
   # Build
   echo "Building ${FULL_TAG} ..."
-  docker build -f "${DOCKERFILE}" -t "${FULL_TAG}" .
+  BUILD_ARGS=(-f "${DOCKERFILE}" -t "${FULL_TAG}")
+  if [[ -n "${CIRCLE_SHA1:-}" ]]; then
+    BUILD_ARGS+=(--label "org.opencontainers.image.revision=${CIRCLE_SHA1}")
+  fi
+  docker build "${BUILD_ARGS[@]}" .
 
   if [[ -n "${ENV_TAG}" ]]; then
     ENV_FULL_TAG="${REGISTRY}/${DERIVED_NAME}:${ENV_TAG}"

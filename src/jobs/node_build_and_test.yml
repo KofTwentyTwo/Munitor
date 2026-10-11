@@ -73,6 +73,7 @@ steps:
             test_setup: << parameters.test_setup >>
   - calculate_version
   - export_version_vars
+  - allocate_version
   - run:
       name: Persist version metadata
       command: <<include(scripts/persist_version_metadata.sh)>>

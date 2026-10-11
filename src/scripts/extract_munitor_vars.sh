@@ -206,6 +206,14 @@ extract_munitor_vars() {
     MUNITOR_CD_NON_PROD="false"
   fi
 
+  # cd_path is only emitted when set, so manifests without cd.path still render
+  # pipelines that validate against orb versions predating the parameter.
+  if [[ -n "${MUNITOR_CD_PATH}" ]]; then
+    MUNITOR_CD_EXPLICIT_PATH="true"
+  else
+    MUNITOR_CD_EXPLICIT_PATH="false"
+  fi
+
   if [[ -n "${MUNITOR_CONTEXT_NVD}" ]]; then
     MUNITOR_NVD="true"
   else
@@ -232,7 +240,7 @@ extract_munitor_vars() {
   export MUNITOR_CI_EMAIL MUNITOR_CI_NAME MUNITOR_NPM_DEFAULT_SCOPE MUNITOR_ORB_SLUG
   export MUNITOR_HEALTH_PATH MUNITOR_HEALTH_PORT MUNITOR_HEALTH_DB MUNITOR_HEALTH_MIGRATIONS MUNITOR_HEALTH_SMOKE_PATHS
   export MUNITOR_SUPPLEMENTAL MUNITOR_SUPPLEMENTAL_IMAGES_JSON
-  export MUNITOR_SONAR MUNITOR_CD MUNITOR_CD_NON_PROD MUNITOR_NVD
+  export MUNITOR_SONAR MUNITOR_CD MUNITOR_CD_NON_PROD MUNITOR_NVD MUNITOR_CD_EXPLICIT_PATH
 }
 
 # Build the envsubst variable list
