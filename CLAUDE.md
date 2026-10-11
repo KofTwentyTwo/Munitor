@@ -29,15 +29,17 @@ GitHub Issues (org: KofTwentyTwo). Commit format: `feat(#N): description` or `Cl
 
 - Namespace: `kof22`
 - Orb: `kof22/munitor`
-- Latest stable: `kof22/munitor@0.3.1`
-- Release candidate: `kof22/munitor@0.3.2` (stable tag publication pending)
+- Latest stable: `kof22/munitor@0.3.3`
 - Dev snapshot: `kof22/munitor@dev:snapshot`
 
 `0.3.0` includes first-class pnpm support, repository-owned Dockerfiles for
 `node-webapp`, and consolidated Kustomize GitOps write-back with optional
 production-only behavior and bounded push-race retries. `0.3.1` moves the
 generated `node-webapp` runtime to `distroless/nodejs<N>-debian13` (debian12
-failed the Trivy gate on OpenSSL CVEs).
+failed the Trivy gate on OpenSSL CVEs). `0.3.3` makes release versions on
+`main` atomic (git-tag reservation via the GitHub refs API), refuses to
+overwrite version image tags built from another commit, checks tag ownership
+before the GitOps bump, and renders `cd_path` only when `cd.path` is set.
 
 ## Session Continuity
 
