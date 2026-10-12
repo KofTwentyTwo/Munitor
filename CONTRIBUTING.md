@@ -1,5 +1,13 @@
 # Contributing to Munitor
 
+## Workflow
+
+- **Branches.** Branch `feature/<name>` or `hotfix/<name>` from `develop` and open a pull request back to `develop`. Releases go through `release/X.Y.Z` into `main`; pushing the `vX.Y.Z` tag publishes `kof22/munitor@X.Y.Z`, and every push to `develop` or `feature/*` publishes `dev:snapshot`. Back-merge `main` into `develop` after a release.
+- **Commits.** Conventional Commits (`feat(#N): ...`, `fix: ...`, `docs: ...`), signed (`git commit -S`), with a Developer Certificate of Origin sign-off line (`git commit -s`, which adds `Signed-off-by: Name <email>`). Reference the GitHub issue (`Closes #N`) where there is one.
+- **Checks.** Run `make all` (yamllint, shellcheck, pack plus `circleci orb validate`, script and template tests) and `bats tests` (the `.bats` suites) before pushing. CircleCI runs only the orb-tools lint, pack and review jobs; the script, template and BATS tests run locally, so a green CI run does not replace them.
+- **Security.** Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md), never in a public issue.
+- **AI assistance.** Disclose AI-assisted changes in the pull request description.
+
 ## Module Inventory
 
 Munitor organizes CI/CD pipelines into **modules** (called "pipeline types" in `.munitor.yml`). Each module is a self-contained set of templates, jobs, commands, and scripts that handle a specific application stack.
