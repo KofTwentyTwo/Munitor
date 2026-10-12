@@ -30,7 +30,8 @@ jobs:
             sudo curl -fsSL -o /usr/local/bin/yq \
               "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
             sudo chmod +x /usr/local/bin/yq
-            npm install --global --silent bats@1.11.1
+            git clone -q --depth 1 --branch v1.11.1 https://github.com/bats-core/bats-core.git /tmp/bats-core
+            sudo /tmp/bats-core/install.sh /usr/local
       - run:
           name: Script and template tests
           command: make test-scripts test-templates
