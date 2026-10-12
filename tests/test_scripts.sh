@@ -328,12 +328,21 @@ else
   fail "should support and validate an explicit Kustomize path"
 fi
 
-echo -n "  TEST: retries concurrent shared-repository pushes... "
+echo -n "  TEST: retries concurrent shared-repository commits against the new head... "
 if grep -q 'for attempt in 1 2 3' "${SRC_SCRIPTS}/update_cd_repo.sh" &&
-   grep -q 'git pull --rebase' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+   grep -q 'expectedHeadOid' "${SRC_SCRIPTS}/update_cd_repo.sh" &&
+   grep -q 'git reset -q --hard "origin/${BRANCH}"' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
   pass
 else
-  fail "should rebase and retry shared-repository push races"
+  fail "should retry commit races against the refreshed branch head"
+fi
+
+echo -n "  TEST: commits through the signed GraphQL API, never git push... "
+if grep -q 'createCommitOnBranch' "${SRC_SCRIPTS}/update_cd_repo.sh" &&
+   ! grep -q 'git push' "${SRC_SCRIPTS}/update_cd_repo.sh"; then
+  pass
+else
+  fail "should create GitOps commits with createCommitOnBranch so GitHub signs them"
 fi
 
 echo -n "  TEST: deletes digest field when setting newTag (kustomize)... "

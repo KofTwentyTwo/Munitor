@@ -169,7 +169,7 @@ apply_updates() {
   fi
 }
 
-# Commit through the GitHub GraphQL API (createCommitOnBranch) instead of git push.
+# Commit through the GitHub GraphQL API (createCommitOnBranch) rather than pushing local commits.
 # GitHub signs API-created commits, so they show as Verified and satisfy a
 # "require signed commits" ruleset on the GitOps branch without a bypass actor.
 # The commit author is the GITHUB_TOKEN identity; the source build is recorded
