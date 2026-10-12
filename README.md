@@ -2,6 +2,14 @@
 
 Latin: *munitor* (fortifier, protector) -- KofTwentyTwo's unified CircleCI orb for building, testing, and deploying all repositories. Pipeline changes happen in one place instead of 80+ repos.
 
+| | |
+| --- | --- |
+| **Tier** | Internal until classified -- listed under *Awaiting classification* in the KofTwentyTwo standards [MAINTAINERS.md](https://github.com/KofTwentyTwo/standards/blob/main/MAINTAINERS.md); Product-tier requirements are being adopted |
+| **Standards** | Targets [KofTwentyTwo standards](https://github.com/KofTwentyTwo/standards) 1.0.0 |
+| **Orb** | [`kof22/munitor`](https://circleci.com/developer/orbs/orb/kof22/munitor), latest stable `0.3.3` |
+| **Security** | [SECURITY.md](SECURITY.md) |
+| **Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) |
+
 ## How It Works
 
 Munitor uses CircleCI's [dynamic configuration](https://circleci.com/docs/dynamic-config/) to generate your full CI/CD pipeline at runtime. Each repo has a minimal `.circleci/config.yml` that triggers Munitor, and a `.munitor.yml` that declares what your project needs. Munitor reads your config, selects the right template, and generates a complete CircleCI workflow.
@@ -57,6 +65,93 @@ Munitor validates branch names and will fail on non-conforming names.
 | `github` | `GITHUB_TOKEN` | Git operations, CD repo updates, SBOM, GitHub Releases |
 | `sonarcloud` | `SONAR_TOKEN` | SonarCloud analysis |
 | `nvd` | `NVD_API_KEY` | OWASP dependency check (Java only, optional) |
+
+## Adopting in another app
+
+Munitor is a public CircleCI orb: any CircleCI organization can use it without forking. This checklist covers what a new consumer needs, for example a Java/Maven web service. A QQQ application should also read the [QQQ adoption checklist](https://github.com/QRun-IO/qqq/blob/develop/docs/migration/adoption-checklist.adoc) (section 7 covers release tooling).
+
+**Version.** Use `kof22/munitor@0.3.3` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
+
+### 1. Repository files
+
+- `.circleci/config.yml`: the setup config from [Quick Start](#quick-start), pinned to `kof22/munitor@0.3.3`.
+- `.munitor.yml`: pick a [pipeline type](#pipeline-types). A Java service is `java-webapp`. KofTwentyTwo's Website-Backend is a working example; a generalized version:
+
+```yaml
+pipeline: java-webapp
+orb_version: "0.3.3"
+image_name: my-service
+java_version: "21"
+docker:
+  registry: ghcr.io/my-org        # the org default is ghcr.io/KofTwentyTwo -- always set this
+cd:
+  repo: my-org/my-gitops-repo     # omit to skip GitOps write-back
+  format: kustomize               # default is helm (image.tag in values.yaml)
+  path: apps/my-service/kustomization.yaml   # optional explicit file in a consolidated repo
+  production_only: true           # only main updates the GitOps repo
+supplemental_images:              # optional extra images built from the same commit and version
+  - name: migrations
+    dockerfile: docker/Dockerfile.migrations
+    cd:
+      image_name: ghcr.io/my-org/my-service-migrations
+health:
+  path: /health
+  port: "8000"
+  db: "true"                      # start a PostgreSQL sidecar for the health gate
+  migrations: migrations          # run the <image>-migrations image against it first
+  smoke_paths: [/health]
+sonar:
+  project_key: my-org_my-service  # omit to skip SonarCloud
+contexts:
+  registry: ghcr
+  github: github
+  sonar: sonarcloud               # required only with sonar.project_key
+  nvd: nvd                        # optional
+org:                              # organization defaults (see Known limitations)
+  ci_email: ci@example.com
+  ci_name: My CI
+```
+
+- A health endpoint that returns HTTP 200 within 30 seconds of container start (see [Health Check Requirement](#health-check-requirement)).
+- A Dockerfile only for `node-webapp` (`docker.use_repo_dockerfile: true`) or for `supplemental_images`; `java-webapp` and `node-api` generate theirs.
+
+### 2. CircleCI project settings
+
+See [Prerequisites](#prerequisites): enable dynamic config (setup workflows) and allow uncertified orbs in the consuming organization.
+
+### 3. Contexts and secrets
+
+CircleCI organization contexts; the context names are set through `contexts.*`.
+
+| Context | Variables | Needed for |
+| --- | --- | --- |
+| registry (e.g. `ghcr`) | `GHCR_USERNAME`, `GHCR_TOKEN` (`write:packages`) | Pushing images and inspecting existing tags; the immutable-tag guard fails closed without registry access |
+| github | `GITHUB_TOKEN` with contents write on the app repository and on the GitOps repository | Reserving `vX.Y.Z` tags on `main` (required by `production`), GitHub Releases, GitOps write-back |
+| sonar (optional) | `SONAR_TOKEN`; SonarCloud organization from `SONAR_ORG` (default `KofTwentyTwo`) | SonarCloud analysis |
+| nvd (optional) | `NVD_API_KEY` | OWASP dependency check; `owasp: false` disables the check |
+
+### 4. Branch model
+
+Branch names are enforced: `main`, `develop`, `staging`, `feature/*`, `release/*`, `hotfix/*`. A merge to `main` is a production release: it reserves the next `vX.Y.Z` tag, pushes the image, updates the GitOps repository and creates the GitHub Release. Protect `main` accordingly.
+
+### 5. Deployment infrastructure (outside Munitor)
+
+Munitor stops at the GitOps commit. The consumer provides:
+
+- a GitOps repository whose `kustomization.yaml` (an `images[]` entry named `<registry>/<image_name>`) or Helm `values.yaml` (`image.tag`) Munitor edits;
+- Argo CD (or another controller) syncing that repository, with pull access to the registry;
+- the runtime database and its backups. KofTwentyTwo's website uses a CloudNativePG cluster with an object-store backup and a `ScheduledBackup`, declared in `KofTwentyTwo/cluster-gitops` (`tenants/kof22/website`). Munitor only starts a throwaway PostgreSQL sidecar for the CI health gate and never touches a real database;
+- schema migrations. Either the application migrates at start-up, or the deployment runs the `migrations` supplemental image (the KofTwentyTwo website runs a pre-migration backup image and then the migrations image as init containers). `health.migrations` only exercises that image in CI.
+
+### 6. Known limitations
+
+- Organization defaults point at KofTwentyTwo: registry `ghcr.io/KofTwentyTwo`, npm scope `@koftwentytwo`, CI email `munitor-ci@koftwentytwo.com`, SonarCloud organization `KofTwentyTwo`. Set `docker.registry`, the `org.*` keys and `SONAR_ORG` explicitly. The `org` block is read, but the unknown-key check prints a harmless `Unknown key 'org'` warning.
+- `production` builds on `main` skip the quality gates, which run on `release/*` and `hotfix/*` pull requests. Do not merge unreviewed branches straight to `main`.
+- CircleCI only; there is no GitHub Actions equivalent. Docker jobs use machine executors.
+
+### 7. Upgrade notes
+
+`0.3.3` reserves release tags atomically on `main` (needs the github context on `build-and-test`, which generated `production` workflows include), refuses to overwrite a version image tag built from another commit, and checks tag ownership before the GitOps bump. A consumer moving from a Munitor-derived orb with a tag-driven production trigger should compare that model with Munitor's merge-to-`main` model before switching.
 
 ## Pipeline Types
 
@@ -425,6 +520,7 @@ Production versions on `main` are unique per commit, even when merges land minut
 - **Atomic reservation** -- `build-and-test` on `main` reserves `vX.Y.Z` by creating the git tag through the GitHub API before the version is baked into artifacts. Tag creation is create-if-absent, so concurrent pipelines serialize on it: if another commit already owns the tag, the build takes the next patch version. A rerun of the same commit reuses its tag. Existing tags are never moved. Requires the GitHub context on `build-and-test` (present in the generated `production` workflows).
 - **Immutable image tags** -- images carry an `org.opencontainers.image.revision` label. `docker-build-push` refuses to push a version tag (main or supplemental) that already exists for a different commit, and fails closed if the registry cannot be inspected. Environment tags such as `develop` stay mutable.
 - **Ownership-checked GitOps bump** -- `update-cd-repo` verifies that `vX.Y.Z` points at the pipeline's commit before writing the version to the CD repository.
+- **Signed GitOps commits** -- `update-cd-repo` creates the CD repository commit through the GitHub GraphQL API (`createCommitOnBranch`) instead of `git push`. GitHub signs API-created commits, so they show as Verified and pass a CD repository ruleset that requires signed commits, with no bypass actor. The commit is authored by the identity behind `GITHUB_TOKEN`; the source repository and commit are recorded in the commit body. Concurrent bumps retry against the new branch head (`expectedHeadOid`). The `ci_git_email`/`ci_git_name` parameters and `org.ci_email`/`org.ci_name` no longer affect these commits.
 - **Release targets the built commit** -- `github-release` targets `CIRCLE_SHA1`, not the moving `main` head, and refuses if the tag points elsewhere.
 
 `cd_path` is rendered into generated pipelines only when `cd.path` is set, so manifests that pin an older `orb_version` keep validating.
@@ -475,7 +571,7 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 | Field | Type | Default | Pipelines | Description |
 |-------|------|---------|-----------|-------------|
 | `pipeline` | string | *required* | all | Pipeline type: `node-api`, `node-webapp`, `java-webapp`, `terraform`, `sdk-distribution`, `validate-cd-repo`, `argocd-apps` |
-| `orb_version` | string | *required* | all | Orb version for the generated pipeline (e.g., `1`, `dev:snapshot`) |
+| `orb_version` | string | *required* | all | Orb version for the generated pipeline (e.g., `"0.3.3"`, `"0.3"`, `dev:snapshot`) |
 | `image_name` | string | *required** | node-api, node-webapp, java-webapp | Docker image name (without registry prefix) |
 | `node_version` | string | `20` | node-api, node-webapp | Node.js major version |
 | `java_version` | string | `21` | java-webapp | Java major version |
@@ -486,6 +582,17 @@ Tags follow the format `vX.Y.Z` (git tag) and `X.Y.Z` (Docker tag). Tags are imm
 | `cd.path` | string | -- | node-api, node-webapp, java-webapp | Explicit repository-relative `kustomization.yaml` path for consolidated GitOps repositories |
 | `cd.production_only` | bool | `false` | node-api, node-webapp, java-webapp | Disable CD write-back from develop, staging, and release workflows |
 | `cd.env.release` | string | `staging` | node-api, node-webapp, java-webapp | CD target environment for release branches |
+| `cd.env.develop` / `cd.env.staging` / `cd.env.prod` | string | `develop` / `staging` / `prod` | node-api, node-webapp, java-webapp | CD target environment names for the develop, staging and main workflows |
+| `cd.format` | string | `helm` | node-api, node-webapp, java-webapp | `helm` (sets `image.tag` in `values.yaml`, per environment under `environments/<env>/` when present) or `kustomize` (sets `images[].newTag`) |
+| `server_module` | string | -- | gradle-webapp | Gradle module whose `build/libs` JAR goes into the generated image (multi-module builds) |
+| `owasp` | bool | `true` | java-webapp | Run the OWASP dependency check |
+| `package_manager` | string | `npm` | node-api, node-webapp | `npm` or `pnpm` |
+| `supplemental_images` | list | `[]` | node-api, node-webapp, java-webapp | Extra images (`name`, `dockerfile`, `cd.image_name`) built and tagged with the same version |
+| `health.db` | bool | `false` | node-api, node-webapp, java-webapp | Start a PostgreSQL sidecar for the health check |
+| `health.migrations` | string | -- | node-api, node-webapp, java-webapp | Supplemental image suffix run against the sidecar before the health check |
+| `health.smoke_paths` | list | `[]` | node-api, node-webapp, java-webapp | Extra paths that must return HTTP 200 during the health check |
+| `test.coverage.summary_path` | string | `coverage/coverage-summary.json` | node-api, node-webapp | Coverage summary file read by the coverage gate |
+| `org.docker_registry` / `org.npm_scope` / `org.ci_email` / `org.ci_name` / `org.orb_slug` | string | KofTwentyTwo values | all | Organization defaults; see [Adopting in another app](#adopting-in-another-app) |
 | `coverage.min_instruction` | int | `70` | node-api, node-webapp, java-webapp | Minimum coverage percentage |
 | `e2e` | bool | `false` | node-api, node-webapp, java-webapp | Enable Playwright E2E tests |
 | `sbom` | bool | `false` | node-api, node-webapp, java-webapp | Enable SBOM generation |
@@ -596,3 +703,15 @@ excepted version. Audit errors, unknown chains and expired exceptions fail. A ne
 upstream package release also fails and requires review. Trivy remains unchanged.
 This mechanism requires npm audit report version 2 and a package-path lockfile;
 unsupported reports fail. BATS and Node are required for the audit regression tests.
+
+## Security
+
+Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[GPL-3.0](LICENSE)

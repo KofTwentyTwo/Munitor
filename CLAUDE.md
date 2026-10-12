@@ -5,7 +5,7 @@ CircleCI orb that generates CI/CD pipeline configurations from a `.munitor.yml` 
 ## Key Commands
 
 ```bash
-make test          # Run all tests (BATS)
+make test-scripts  # Script unit tests (bats tests for the .bats suites)
 make pack          # Pack orb YAML from src/
 make all           # lint + pack + test
 make validate      # Validate packed orb with CircleCI CLI
