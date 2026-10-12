@@ -68,7 +68,7 @@ Munitor validates branch names and will fail on non-conforming names.
 
 ## Adopting in another app
 
-Munitor is a public CircleCI orb: any CircleCI organization can use it without forking. This checklist covers what a new consumer needs, for example a Java/Maven service such as me-health-portal.
+Munitor is a public CircleCI orb: any CircleCI organization can use it without forking. This checklist covers what a new consumer needs, for example a Java/Maven web service. A QQQ application should also read the [QQQ adoption checklist](https://github.com/QRun-IO/qqq/blob/develop/docs/migration/adoption-checklist.adoc) (section 7 covers release tooling).
 
 **Version.** Use `kof22/munitor@0.3.3` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
 
