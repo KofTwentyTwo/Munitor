@@ -1,7 +1,7 @@
 # KofTwentyTwo .editorconfig (standards K22-REPO-03, configs/editorconfig).
 # Exception: the existing Bash scripts and CircleCI templates use 2-space
-# indentation; K22-CODE-SH-02 specifies 3. The deviation is recorded in the
-# standards exception register (see CONTRIBUTING.md). Do not mix widths in a file.
+# indentation; K22-CODE-SH-02 specifies 3. K22 exception EX-0011.
+# Do not mix widths in a file.
 root = true
 
 [*]
