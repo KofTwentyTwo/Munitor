@@ -1,0 +1,26 @@
+# KofTwentyTwo .editorconfig (standards K22-REPO-03, configs/editorconfig).
+# Exception: the existing Bash scripts and CircleCI templates use 2-space
+# indentation; K22-CODE-SH-02 specifies 3. The deviation is recorded in the
+# standards exception register (see CONTRIBUTING.md). Do not mix widths in a file.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[{Makefile,makefile,*.mk}]
+indent_style = tab
+
+# Shell: shfmt reads these keys (K22-CODE-SH-02), apart from the indent width above.
+[*.{sh,bash,bats}]
+binary_next_line = true
+switch_case_indent = true
+space_redirects = true
+function_next_line = true

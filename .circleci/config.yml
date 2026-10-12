@@ -1,7 +1,8 @@
 version: 2.1
 
 orbs:
-  orb-tools: circleci/orb-tools@12.1
+  # Pinned to an exact version (K22-CI-11); bump deliberately.
+  orb-tools: circleci/orb-tools@12.5.0
 
 filters: &filters
   tags:
@@ -13,6 +14,30 @@ tag-only: &tag-only
   tags:
     only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
+jobs:
+  test:
+    docker:
+      - image: cimg/node:22.12
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install test tools
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq gettext-base shellcheck >/dev/null
+            YQ_VERSION=v4.44.6
+            sudo curl -fsSL -o /usr/local/bin/yq \
+              "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+            sudo chmod +x /usr/local/bin/yq
+            npm install --global --silent bats@1.11.1
+      - run:
+          name: Script and template tests
+          command: make test-scripts test-templates
+      - run:
+          name: BATS tests
+          command: bats tests
+
 workflows:
   lint-pack:
     jobs:
@@ -23,6 +48,8 @@ workflows:
       - orb-tools/review:
           filters: *filters
           exclude: RC006,RC007,RC010  # RC006/RC007: private repo URL unreachable; RC010: machine executors
+      - test:
+          filters: *filters
 
   test-deploy:
     jobs:
@@ -38,11 +65,15 @@ workflows:
             - orb-publishing
           filters: *tag-only
 
+  # develop owns the shared dev:snapshot tag. Feature branches publish only an
+  # immutable dev:<sha> tag so open branches cannot overwrite each other's
+  # snapshot (issue #26).
   snapshot:
     jobs:
       - orb-tools/pack:
           filters: *filters
       - orb-tools/publish:
+          name: publish-develop-snapshot
           orb_name: kof22/munitor
           vcs_type: << pipeline.project.type >>
           pub_type: dev
@@ -55,4 +86,17 @@ workflows:
             branches:
               only:
                 - develop
+      - orb-tools/publish:
+          name: publish-feature-sha
+          orb_name: kof22/munitor
+          vcs_type: << pipeline.project.type >>
+          pub_type: dev
+          dev_tags: "dev:${CIRCLE_SHA1}"
+          requires:
+            - orb-tools/pack
+          context:
+            - orb-publishing
+          filters:
+            branches:
+              only:
                 - /feature\/.*/

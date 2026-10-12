@@ -39,11 +39,14 @@ parameters:
   ci_git_email:
     type: string
     default: ""
-    description: Git author email for CD repo commits.
+    description: >
+      Deprecated and ignored. GitOps commits are created through the GitHub API,
+      signed by GitHub and authored by the GITHUB_TOKEN identity.
   ci_git_name:
     type: string
     default: ""
-    description: Git author name for CD repo commits.
+    description: >
+      Deprecated and ignored. See ci_git_email.
   supplemental_images:
     type: string
     default: "[]"
