@@ -80,6 +80,43 @@ else
   fail
 fi
 
+# Regression (0.3.5): CircleCI renders the boolean "push" parameter as "1"/"0" in
+# the step environment, and release builds silently skipped the push.
+for push in 1 true TRUE; do
+  echo -n "  TEST: push=${push} (release builds) publishes every supplemental image... "
+  : > "${CALL_LOG}"
+  if PUSH_IMAGES="${push}" bash "${SRC_SCRIPTS}/build_push_supplemental.sh" > "${WORK}/supplemental.log" &&
+    [[ $(grep -c '^docker push ' "${CALL_LOG}") == 4 ]] &&
+    grep -q '^docker push ghcr.io/example/app-migrations:' "${CALL_LOG}" &&
+    grep -q '^docker push ghcr.io/example/app-worker:' "${CALL_LOG}" &&
+    grep -q 'push=true' "${WORK}/supplemental.log"; then
+    pass
+  else
+    fail
+  fi
+done
+
+for push in 0 false ""; do
+  echo -n "  TEST: push='${push}' (PR scans) publishes nothing... "
+  : > "${CALL_LOG}"
+  if PUSH_IMAGES="${push}" bash "${SRC_SCRIPTS}/build_push_supplemental.sh" > "${WORK}/supplemental.log" &&
+    ! grep -Eq '^docker (push|tag) ' "${CALL_LOG}"; then
+    pass
+  else
+    fail
+  fi
+done
+
+echo -n "  TEST: an unrecognised push value fails instead of guessing... "
+: > "${CALL_LOG}"
+if PUSH_IMAGES=maybe bash "${SRC_SCRIPTS}/build_push_supplemental.sh" > "${WORK}/supplemental.log" 2>&1; then
+  fail
+elif ! grep -Eq '^docker (build|tag|push) ' "${CALL_LOG}" && grep -q "must be true/false" "${WORK}/supplemental.log"; then
+  pass
+else
+  fail
+fi
+
 for push in false true; do
   echo -n "  TEST: push=${push} fails on HIGH/CRITICAL findings before any push... "
   : > "${CALL_LOG}"
