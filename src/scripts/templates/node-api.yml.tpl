@@ -31,6 +31,20 @@ workflows:
               only:
                 - /feature\/.*/
                 - /hotfix\/.*/
+      - munitor/docker_scan:
+          name: image-scan
+          image_name: ${MUNITOR_IMAGE_NAME}
+          registry: ${MUNITOR_DOCKER_REGISTRY}
+          ##IF_SUPPLEMENTAL##
+          supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
+          ##ENDIF_SUPPLEMENTAL##
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
       - munitor/secrets_scan:
           name: secrets-scan
           filters:

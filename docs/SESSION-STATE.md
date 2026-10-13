@@ -1,5 +1,23 @@
 # Munitor session state
 
+## PR container scanning (2026-10-13)
+
+Uncommitted work on `feature/pr-image-scan` adds `docker_scan` after
+`build-and-test` in the four application PR templates. It restores the existing
+feature/hotfix version metadata, builds locally, and applies the release Trivy
+HIGH/CRITICAL policy from the repository root. Supplemental images use
+`push: false`; the command defaults to publishing for existing callers. Main
+and supplemental JSON reports are artifacts. Release candidates already scan
+through `docker_build_push`, so no duplicate job was added.
+
+Verified: native CircleCI orb pack/validate, ShellCheck on all source scripts
+and the changed tests, template structure/filters/parameter wiring, packed
+template synchronization, and `git diff --check`. Requested make and BATS runs
+were attempted but Git Bash cannot start in this sandbox (CreateFileMapping,
+Win32 error 5); yamllint is not installed. New behavioral tests therefore need
+a Linux/CI run, including real Docker/Trivy integration. No commit or publish.
+The Second Brain vault is outside writable roots; continuity is recorded here.
+
 ## Release 0.3.3 (2026-10-11)
 
 PR22 (00f349c) fixes release version collisions. Website-Backend #65/#66 (0.1.24)
