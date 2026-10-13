@@ -6,7 +6,7 @@ Latin: *munitor* (fortifier, protector) -- KofTwentyTwo's unified CircleCI orb f
 | --- | --- |
 | **Tier** | Internal until classified -- listed under *Awaiting classification* in the KofTwentyTwo standards [MAINTAINERS.md](https://github.com/KofTwentyTwo/standards/blob/main/MAINTAINERS.md); Product-tier requirements are being adopted |
 | **Standards** | Targets [KofTwentyTwo standards](https://github.com/KofTwentyTwo/standards) 1.0.0 |
-| **Orb** | [`kof22/munitor`](https://circleci.com/developer/orbs/orb/kof22/munitor), latest stable `0.3.3` |
+| **Orb** | [`kof22/munitor`](https://circleci.com/developer/orbs/orb/kof22/munitor), latest stable `0.3.5` |
 | **Security** | [SECURITY.md](SECURITY.md) |
 | **Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
@@ -70,16 +70,16 @@ Munitor validates branch names and will fail on non-conforming names.
 
 Munitor is a public CircleCI orb: any CircleCI organization can use it without forking. This checklist covers what a new consumer needs, for example a Java/Maven web service. A QQQ application should also read the [QQQ adoption checklist](https://github.com/QRun-IO/qqq/blob/develop/docs/migration/adoption-checklist.adoc) (section 7 covers release tooling).
 
-**Version.** Use `kof22/munitor@0.3.3` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
+**Version.** Use `kof22/munitor@0.3.5` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
 
 ### 1. Repository files
 
-- `.circleci/config.yml`: the setup config from [Quick Start](#quick-start), pinned to `kof22/munitor@0.3.3`.
+- `.circleci/config.yml`: the setup config from [Quick Start](#quick-start), pinned to `kof22/munitor@0.3.5`.
 - `.munitor.yml`: pick a [pipeline type](#pipeline-types). A Java service is `java-webapp`. KofTwentyTwo's Website-Backend is a working example; a generalized version:
 
 ```yaml
 pipeline: java-webapp
-orb_version: "0.3.3"
+orb_version: "0.3.5"
 image_name: my-service
 java_version: "21"
 docker:
@@ -490,7 +490,7 @@ Each workflow runs on specific branches and includes jobs based on your config:
 
 | Workflow | Branches | Jobs |
 |----------|----------|------|
-| `pr-checks` | `feature/*`, `hotfix/*` | Build, test, lint, coverage, security scans |
+| `pr-checks` | `feature/*`, `hotfix/*` | Build, test, lint, coverage, security scans, container image scan (Docker modules) |
 | `develop` | `develop` | All pr-checks + Docker build/push + CD update (dev env) |
 | `staging` | `staging` | All pr-checks + Docker build/push + CD update (staging env) |
 | `release-candidate` | `release/*` | All pr-checks + Docker, CD (staging), SonarCloud, SBOM, GitHub Release (pre-release) |
@@ -498,11 +498,20 @@ Each workflow runs on specific branches and includes jobs based on your config:
 
 For `validate-cd-repo` and `argocd-apps`, all three workflows (`pr-checks`, `develop`, `release`) run the same 5-job set: yaml-lint, kustomize-validate, kubesec-scan, kube-linter, secrets-scan.
 
+For `java-webapp`, `gradle-webapp`, `node-api`, and `node-webapp`, PRs run
+`image-scan` after `build-and-test`: build the application and any supplemental
+images locally, then fail on HIGH/CRITICAL CVEs with the same Trivy policy and
+repository-root `.trivyignore` as release builds. JSON reports are saved as
+artifacts. This job does not log in, publish images, reserve tags, or update CD.
+Release candidates already scan through `docker-build-push` and do not run a
+second image scan job.
+
 ### Job Dependency Graph (node-api pr-checks)
 
 ```
 checkout
   --> build-and-test
+        --> image-scan (local build + Trivy, including supplemental images)
         --> code-quality
         --> coverage
         --> security-scan

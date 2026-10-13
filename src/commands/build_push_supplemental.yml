@@ -1,8 +1,12 @@
 description: >
   Build, scan, and push supplemental Docker images alongside the main application image.
-  Each supplemental image shares the same version tag. Requires docker_push_ghcr to have
-  run first (for registry auth and Trivy installation).
+  Each supplemental image shares the same version tag. Requires run_trivy_image first
+  for Trivy installation, and docker_push_ghcr for registry auth only when push is true.
 parameters:
+  push:
+    type: boolean
+    default: true
+    description: Publish scanned images to the registry. Disable for PR scans.
   supplemental_images:
     type: string
     default: "[]"
@@ -16,9 +20,13 @@ parameters:
     description: Container registry URL.
 steps:
   - run:
-      name: Build and push supplemental images
+      name: Build and scan supplemental images (optionally push)
       environment:
+        PUSH_IMAGES: << parameters.push >>
         SUPPLEMENTAL_IMAGES_JSON: << parameters.supplemental_images >>
         IMAGE_NAME: << parameters.image_name >>
         REGISTRY: << parameters.registry >>
       command: << include(scripts/build_push_supplemental.sh) >>
+  - store_artifacts:
+      path: /tmp/trivy-supplemental-results
+      destination: trivy-supplemental-scans

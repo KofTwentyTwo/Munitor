@@ -157,6 +157,36 @@ run_negative_context_test() {
 
 echo "=== Template Rendering Tests ==="
 
+# Container scans belong only to PR jobs; RC already builds and scans before release.
+for module in java-webapp gradle-webapp node-api node-webapp; do
+  fixture="${FIXTURES_DIR}/${module}.munitor.yml"
+  run_context_test "${module}: PR builds and scans the image" \
+    "${fixture}" "pr-checks:" "  develop:" 'munitor/docker_scan:'
+  run_context_test "${module}: image scan is named image-scan" \
+    "${fixture}" "munitor/docker_scan:" "munitor/secrets_scan:" 'name: image-scan'
+  run_context_test "${module}: image scan waits for build-and-test" \
+    "${fixture}" "munitor/docker_scan:" "munitor/secrets_scan:" '\- build-and-test'
+  run_negative_context_test "${module}: no duplicate scan outside PR workflow" \
+    "${fixture}" "  develop:" "END_OF_CONFIG" 'munitor/docker_scan:'
+  run_context_test "${module}: RC already builds and scans" \
+    "${fixture}" "release-candidate:" "production:" 'munitor/docker_build_push:'
+
+  echo -n "  TEST: ${module}: every image scan has exactly the PR branch filters... "
+  output=$(render_fixture "${fixture}")
+  filters=$(yq -o=json -I=0 '[.workflows[].jobs[] | select(has("munitor/docker_scan")) | ."munitor/docker_scan".filters.branches.only]' <<< "${output}")
+  if [[ "${filters}" == '[["/feature\\/.*/","/hotfix\\/.*/"]]' ]]; then
+    echo "PASS"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL (unexpected scan filters: ${filters})"
+    FAIL=$((FAIL + 1))
+  fi
+done
+
+run_context_test "supplemental images are wired into the PR image scan" \
+  "${FIXTURES_DIR}/java-webapp-supplemental.munitor.yml" \
+  "munitor/docker_scan:" "munitor/secrets_scan:" 'supplemental_images:.*migrations'
+
 # Test java-webapp renders with correct values
 run_test "java-webapp: renders image_name" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
