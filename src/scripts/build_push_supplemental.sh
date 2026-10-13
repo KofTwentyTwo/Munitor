@@ -27,7 +27,16 @@ IMAGE="${IMAGE_NAME:?IMAGE_NAME not set}"
 REGISTRY="${REGISTRY:-ghcr.io/KofTwentyTwo}"
 VERSION="${PROJECT_VERSION:?PROJECT_VERSION not set -- run export_version_vars first}"
 ENV_TAG="${DOCKER_ENV_TAG:-}"
-PUSH_IMAGES="${PUSH_IMAGES:-true}"
+# CircleCI renders a boolean orb parameter as "1"/"0" in a step environment, not
+# "true"/"false", so accept both spellings. Unset means push (release builds).
+case "$(echo "${PUSH_IMAGES-true}" | tr '[:upper:]' '[:lower:]')" in
+  true | 1 | yes | on) PUSH_IMAGES=true ;;
+  false | 0 | no | off | "") PUSH_IMAGES=false ;;
+  *)
+    echo "ERROR: PUSH_IMAGES must be true/false (or 1/0), got '${PUSH_IMAGES}'" >&2
+    exit 1
+    ;;
+esac
 # run_trivy_image installs here in a previous CircleCI step.
 export PATH="${HOME}/bin:${PATH}"
 mkdir -p /tmp/trivy-supplemental-results
