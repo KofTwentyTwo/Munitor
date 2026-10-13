@@ -27,6 +27,10 @@ IMAGE="${IMAGE_NAME:?IMAGE_NAME not set}"
 REGISTRY="${REGISTRY:-ghcr.io/KofTwentyTwo}"
 VERSION="${PROJECT_VERSION:?PROJECT_VERSION not set -- run export_version_vars first}"
 ENV_TAG="${DOCKER_ENV_TAG:-}"
+PUSH_IMAGES="${PUSH_IMAGES:-true}"
+# run_trivy_image installs here in a previous CircleCI step.
+export PATH="${HOME}/bin:${PATH}"
+mkdir -p /tmp/trivy-supplemental-results
 
 COUNT=$(echo "${IMAGES_JSON}" | jq 'length')
 echo "Found ${COUNT} supplemental image(s) to build."
@@ -76,26 +80,33 @@ for i in $(seq 0 $((COUNT - 1))); do
   fi
   docker build "${BUILD_ARGS[@]}" .
 
-  if [[ -n "${ENV_TAG}" ]]; then
+  if [[ "${PUSH_IMAGES}" == "true" && -n "${ENV_TAG}" ]]; then
     ENV_FULL_TAG="${REGISTRY}/${DERIVED_NAME}:${ENV_TAG}"
     docker tag "${FULL_TAG}" "${ENV_FULL_TAG}"
   fi
 
   # Trivy scan
   echo "Scanning ${FULL_TAG} with Trivy ..."
-  trivy image --severity HIGH,CRITICAL --exit-code 1 "${FULL_TAG}"
+  trivy image --format json --output "/tmp/trivy-supplemental-results/${NAME}.json" \
+    --severity HIGH,CRITICAL --exit-code 1 "${FULL_TAG}" || {
+    EXIT_CODE=$?
+    trivy image --severity HIGH,CRITICAL "${FULL_TAG}"
+    exit "${EXIT_CODE}"
+  }
 
   # Push
-  echo "Pushing ${FULL_TAG} ..."
-  docker push "${FULL_TAG}"
+  if [[ "${PUSH_IMAGES}" == "true" ]]; then
+    echo "Pushing ${FULL_TAG} ..."
+    docker push "${FULL_TAG}"
 
-  if [[ -n "${ENV_TAG}" ]]; then
-    echo "Pushing ${ENV_FULL_TAG} ..."
-    docker push "${ENV_FULL_TAG}"
+    if [[ -n "${ENV_TAG}" ]]; then
+      echo "Pushing ${ENV_FULL_TAG} ..."
+      docker push "${ENV_FULL_TAG}"
+    fi
   fi
 
   echo "--- Done: ${DERIVED_NAME} ---"
 done
 
 echo ""
-echo "All supplemental images built, scanned, and pushed."
+echo "All supplemental images built and scanned (push=${PUSH_IMAGES})."

@@ -2,6 +2,9 @@
 
 ## Pending
 
+- [ ] Run PR image-scan script/template/BATS tests on Linux and verify a consumer PR with Docker/Trivy before publishing.
+- [x] Add PR-only image scans for the four application templates, supplemental scan-only mode, JSON artifacts, and regression tests (uncommitted).
+
 - [x] Review publishing CI fixes and merge PR19 to develop.
 - [x] Publish v0.3.2 from main.
 - [ ] Publish v0.3.3 (atomic release versions); bump Website-Backend/Frontend pins to 0.3.3.

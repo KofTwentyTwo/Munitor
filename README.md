@@ -490,7 +490,7 @@ Each workflow runs on specific branches and includes jobs based on your config:
 
 | Workflow | Branches | Jobs |
 |----------|----------|------|
-| `pr-checks` | `feature/*`, `hotfix/*` | Build, test, lint, coverage, security scans |
+| `pr-checks` | `feature/*`, `hotfix/*` | Build, test, lint, coverage, security scans, container image scan (Docker modules) |
 | `develop` | `develop` | All pr-checks + Docker build/push + CD update (dev env) |
 | `staging` | `staging` | All pr-checks + Docker build/push + CD update (staging env) |
 | `release-candidate` | `release/*` | All pr-checks + Docker, CD (staging), SonarCloud, SBOM, GitHub Release (pre-release) |
@@ -498,11 +498,20 @@ Each workflow runs on specific branches and includes jobs based on your config:
 
 For `validate-cd-repo` and `argocd-apps`, all three workflows (`pr-checks`, `develop`, `release`) run the same 5-job set: yaml-lint, kustomize-validate, kubesec-scan, kube-linter, secrets-scan.
 
+For `java-webapp`, `gradle-webapp`, `node-api`, and `node-webapp`, PRs run
+`image-scan` after `build-and-test`: build the application and any supplemental
+images locally, then fail on HIGH/CRITICAL CVEs with the same Trivy policy and
+repository-root `.trivyignore` as release builds. JSON reports are saved as
+artifacts. This job does not log in, publish images, reserve tags, or update CD.
+Release candidates already scan through `docker-build-push` and do not run a
+second image scan job.
+
 ### Job Dependency Graph (node-api pr-checks)
 
 ```
 checkout
   --> build-and-test
+        --> image-scan (local build + Trivy, including supplemental images)
         --> code-quality
         --> coverage
         --> security-scan

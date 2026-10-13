@@ -332,6 +332,7 @@ These components are shared across all modules -- you don't need to recreate the
 | `secrets_scan` job | Gitleaks (all modules) |
 | `sast_scan` job | Semgrep (all modules, opt-in) |
 | `docker_build_push` job | Build + health check + Trivy scan + GHCR push |
+| `docker_scan` job | PR image build + Trivy scan (including supplemental images), JSON artifacts, no publishing |
 | `health_check` command | Container health check smoke test (all Docker modules) |
 | `update_cd_repo` job | GitOps CD repo update |
 | `github_release` job | Annotated git tags + GitHub Releases (auto-enabled with `contexts.github`) |
