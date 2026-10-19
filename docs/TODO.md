@@ -2,6 +2,8 @@
 
 ## Pending
 
+- [ ] Validate and release supplemental-image freshness fix, then adopt it in backend PR311 and verify all supplemental Trivy scans.
+
 - [ ] Release JVM runtime cache fix and adopt the stable orb in Website-Backend; verify fresh image Trivy before release.
 
 - [ ] Run PR image-scan script/template/BATS tests on Linux and verify a consumer PR with Docker/Trivy before publishing.

@@ -1,3 +1,7 @@
+## Supplemental runtime freshness (2026-10-19)
+
+Backend PR311 image scan6307 failed because db-backup reused a cached apk-upgrade layer (libexpat2.8.5-r0, fixed2.9.0-r0). Supplemental builds now use --pull --no-cache in both PR scan-only and release publishing paths. Trivy and immutable-tag guards remain unchanged. Targeted tests cover both Dockerfile forms, fresh-build flags, scan-before-push ordering and scan failure propagation. Validation pending; no release or consumer adoption yet.
+
 # Munitor session state
 
 ## JVM runtime package freshness (2026-10-19)
@@ -101,3 +105,5 @@ Runtime freshness validation: coordinating agent completed make all (lint, pack,
 
 ## Release 0.3.7 preparation (2026-10-19)
 Includes merged PR38 (filesystem Trivy findings fail CI; current Semgrep image and zero-scan/configuration failures) and PR39 (pull fresh runtime bases and bypass cached JVM package-upgrade layers). Both feature PRs passed all CircleCI gates; PR39 also passed full local make all and seven BATS tests. Publish the stable orb only from a signed v0.3.7 tag on the reviewed main merge. Website-Backend must update both orb pins and pass real image/SAST scans before rollout. No vulnerability waiver or immutable-tag overwrite is part of this release.
+
+Validation completed: focused scan tests12/12, full make all (lint, packed orb validation, script/template tests), and7BATS passed under WSL/Nix on2026-10-19. Real backend supplemental image scans remain required after stable release adoption.

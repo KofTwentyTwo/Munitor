@@ -83,7 +83,8 @@ for i in $(seq 0 $((COUNT - 1))); do
 
   # Build
   echo "Building ${FULL_TAG} ..."
-  BUILD_ARGS=(-f "${DOCKERFILE}" -t "${FULL_TAG}")
+  # Refresh base images and rerun package upgrades in supplemental Dockerfiles.
+  BUILD_ARGS=(--pull --no-cache -f "${DOCKERFILE}" -t "${FULL_TAG}")
   if [[ -n "${CIRCLE_SHA1:-}" ]]; then
     BUILD_ARGS+=(--label "org.opencontainers.image.revision=${CIRCLE_SHA1}")
   fi
