@@ -107,3 +107,7 @@ Runtime freshness validation: coordinating agent completed make all (lint, pack,
 Includes merged PR38 (filesystem Trivy findings fail CI; current Semgrep image and zero-scan/configuration failures) and PR39 (pull fresh runtime bases and bypass cached JVM package-upgrade layers). Both feature PRs passed all CircleCI gates; PR39 also passed full local make all and seven BATS tests. Publish the stable orb only from a signed v0.3.7 tag on the reviewed main merge. Website-Backend must update both orb pins and pass real image/SAST scans before rollout. No vulnerability waiver or immutable-tag overwrite is part of this release.
 
 Validation completed: focused scan tests12/12, full make all (lint, packed orb validation, script/template tests), and7BATS passed under WSL/Nix on2026-10-19. Real backend supplemental image scans remain required after stable release adoption.
+
+## Release candidate 0.3.8 (2026-10-19)
+
+Promotes PR42 supplemental build freshness fix (develop11d5704) to main. Full local make all and seven BATS passed; all PR42 CI checks passed. Release metadata changes only; source/tests match the verified feature. Stable publication still requires the approved main merge and signed v0.3.8 tag. Backend adoption and real supplemental scans remain pending.
