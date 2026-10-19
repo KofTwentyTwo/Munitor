@@ -6,7 +6,7 @@ Latin: *munitor* (fortifier, protector) -- KofTwentyTwo's unified CircleCI orb f
 | --- | --- |
 | **Tier** | Internal until classified -- listed under *Awaiting classification* in the KofTwentyTwo standards [MAINTAINERS.md](https://github.com/KofTwentyTwo/standards/blob/main/MAINTAINERS.md); Product-tier requirements are being adopted |
 | **Standards** | Targets [KofTwentyTwo standards](https://github.com/KofTwentyTwo/standards) 1.0.0 |
-| **Orb** | [`kof22/munitor`](https://circleci.com/developer/orbs/orb/kof22/munitor), latest stable `0.3.10` |
+| **Orb** | [`kof22/munitor`](https://circleci.com/developer/orbs/orb/kof22/munitor), latest stable `0.3.11` |
 | **Security** | [SECURITY.md](SECURITY.md) |
 | **Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
@@ -77,9 +77,9 @@ replace that repository's required-check list with the verified aggregate gate,
 preserving all other branch rules. A single adoption PR may update both orb pins
 and enable `ci.docs_only`: those config changes force full CI. Verify the gate
 and migrate required checks before merging it or opening a docs-only PR. Munitor's
-own native no-op gate is expected to report `ci/circleci: lint-pack/ci-ready`;
-verify its actual context before changing its rules. Release and real-context
-verification are still pending; see [the adoption plan](docs/PLAN-agile-ci.md).
+own native no-op gate reports `ci/circleci: lint-pack/ci-ready`. Both features
+ship in 0.3.11. Verify each consumer's actual successful context before changing
+its rules; see [the adoption record](docs/PLAN-agile-ci.md).
 
 Use native [Website-Backend Insights](https://app.circleci.com/insights/github/KofTwentyTwo/Website-Backend/workflows),
 [PR timings](https://app.circleci.com/insights/github/KofTwentyTwo/Website-Backend/workflows/pr-checks),
@@ -111,16 +111,16 @@ would not receive that exemption.
 
 Munitor is a public CircleCI orb: any CircleCI organization can use it without forking. This checklist covers what a new consumer needs, for example a Java/Maven web service. A QQQ application should also read the [QQQ adoption checklist](https://github.com/QRun-IO/qqq/blob/develop/docs/migration/adoption-checklist.adoc) (section 7 covers release tooling).
 
-**Version.** Use `kof22/munitor@0.3.10` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
+**Version.** Use `kof22/munitor@0.3.11` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
 
 ### 1. Repository files
 
-- `.circleci/config.yml`: the setup config from [Quick Start](#quick-start), pinned to `kof22/munitor@0.3.10`.
+- `.circleci/config.yml`: the setup config from [Quick Start](#quick-start), pinned to `kof22/munitor@0.3.11`.
 - `.munitor.yml`: pick a [pipeline type](#pipeline-types). A Java service is `java-webapp`. KofTwentyTwo's Website-Backend is a working example; a generalized version:
 
 ```yaml
 pipeline: java-webapp
-orb_version: "0.3.10"
+orb_version: "0.3.11"
 image_name: my-service
 java_version: "21"
 docker:

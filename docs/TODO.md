@@ -2,7 +2,9 @@
 
 ## Pending
 
-- [ ] Publish and adopt aggregate CI result and docs-only opt-in; verify real check names before changing required checks (docs/PLAN-agile-ci.md).
+- [ ] Validate and release Java develop/staging health_migrations and health_smoke_paths propagation; verify both generators and a corrected consumer build before claiming rollout success.
+
+- [x] Publish 0.3.10, adopt in backend PR333, verify aggregate check names and migrate required lists; docs PR335 passed in 5m23 and native cancellation was observed (docs/PLAN-agile-ci.md).
 
 - [x] Publish fast Java CI as 0.3.9; backend PR330 adopted it and measured the warm workflow at 20m45 (from 37m04).
 
