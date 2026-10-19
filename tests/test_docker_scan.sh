@@ -57,11 +57,11 @@ else
   fail
 fi
 
-echo -n "  TEST: push=false builds and scans every supplemental without publishing... "
+echo -n "  TEST: push=false refreshes both Dockerfile forms and scans without publishing... "
 : > "${CALL_LOG}"
 echo 'export DOCKER_ENV_TAG=develop' >> "${BASH_ENV}"
 if PUSH_IMAGES=false bash "${SRC_SCRIPTS}/build_push_supplemental.sh" > "${WORK}/supplemental.log" &&
-  [[ $(grep -c '^docker build ' "${CALL_LOG}") == 2 ]] &&
+  [[ $(grep -c '^docker build --pull --no-cache -f ' "${CALL_LOG}") == 2 ]] &&
   [[ $(grep -c '^trivy image .*--severity HIGH,CRITICAL --exit-code 1 ' "${CALL_LOG}") == 2 ]] &&
   ! grep -Eq '^docker (push|login|tag|buildx) ' "${CALL_LOG}" &&
   [[ -s "${WORK}/migrations.json" && -s "${WORK}/worker.json" ]]; then
@@ -70,11 +70,16 @@ else
   fail
 fi
 
-echo -n "  TEST: default push still publishes version and environment tags... "
+echo -n "  TEST: default push refreshes both Dockerfile forms and scans before publishing tags... "
 : > "${CALL_LOG}"
 unset PUSH_IMAGES
 if bash "${SRC_SCRIPTS}/build_push_supplemental.sh" > "${WORK}/supplemental.log" &&
-  [[ $(grep -c '^docker push ' "${CALL_LOG}") == 4 ]]; then
+  [[ $(grep -c '^docker build --pull --no-cache -f ' "${CALL_LOG}") == 2 ]] &&
+  [[ $(grep -c '^docker push ' "${CALL_LOG}") == 4 ]] &&
+  awk '
+    /^trivy image / { image=$NF; sub(/:[^:]+$/, "", image); scanned[image]=1 }
+    /^docker push / { image=$NF; sub(/:[^:]+$/, "", image); if (!scanned[image]) exit 1 }
+  ' "${CALL_LOG}"; then
   pass
 else
   fail
