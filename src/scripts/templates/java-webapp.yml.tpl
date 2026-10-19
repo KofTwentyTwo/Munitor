@@ -238,7 +238,7 @@ workflows:
   production:
     jobs:
       - munitor/mvn_build_and_test:
-          name: build-and-test
+          name: production-build-and-test
           java_version: "${MUNITOR_JAVA_VERSION}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
@@ -258,7 +258,7 @@ workflows:
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
           requires:
-            - build-and-test
+            - production-build-and-test
           context:
             - ${MUNITOR_CONTEXT_REGISTRY}
           filters:

@@ -18,8 +18,11 @@ check_workflows() {
       });
       const names = jobs.map(job => job.name);
       assert.equal(new Set(names).size, names.length, workflow);
-      const build = jobs.find(job => job.name === "build-and-test");
+      const buildName = workflow === "production" ? "production-build-and-test" : "build-and-test";
+      const build = jobs.find(job => job.name === buildName);
       assert.ok(build, workflow);
+      assert.equal(jobs.filter(job => job.type === "munitor/mvn_build_and_test").length, 1);
+      assert.ok(!names.includes(workflow === "production" ? "build-and-test" : "production-build-and-test"));
       const expectedFilter = {
         "pr-checks": ["/feature\\/.*/", "/hotfix\\/.*/"],
         develop: "develop", staging: "staging",
@@ -39,9 +42,9 @@ check_workflows() {
         const dependencies = job.requires || [];
         assert.equal(new Set(dependencies).size, dependencies.length, job.name);
         for (const name of dependencies) assert.ok(names.includes(name), `${workflow}/${job.name}: ${name}`);
-        if (["image-scan", "security-scan", "e2e-tests", "sonar-scan"].includes(job.name)) assert.ok(dependencies.includes("build-and-test"));
+        if (["image-scan", "security-scan", "e2e-tests", "sonar-scan"].includes(job.name)) assert.ok(dependencies.includes(buildName));
         if (["docker-build-push", "sbom"].includes(job.name)) {
-          assert.ok(dependencies.includes("build-and-test"));
+          assert.ok(dependencies.includes(buildName));
           if (workflow !== "production") for (const gate of ["secrets-scan", "sast-scan", "security-scan", "e2e-tests", "sonar-scan"].filter(name => names.includes(name))) assert.ok(dependencies.includes(gate), `${workflow}/${job.name}/${gate}`);
         }
         if (["update-cd-repo", "github-release"].includes(job.name)) assert.ok(dependencies.includes("docker-build-push"));
