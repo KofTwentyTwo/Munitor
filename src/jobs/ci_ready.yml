@@ -1,0 +1,7 @@
+description: >
+  Single merge result. Workflow dependencies enforce the applicable checks.
+executor: base
+steps:
+  - run:
+      name: Required checks passed
+      command: echo "All applicable CI checks passed."

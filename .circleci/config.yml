@@ -15,6 +15,8 @@ tag-only: &tag-only
     only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
 jobs:
+  ci-ready:
+    type: no-op
   test:
     docker:
       - image: cimg/node:22.12
@@ -50,6 +52,14 @@ workflows:
           filters: *filters
           exclude: RC006,RC007,RC010  # RC006/RC007: private repo URL unreachable; RC010: machine executors
       - test:
+          filters: *filters
+
+      - ci-ready:
+          requires:
+            - orb-tools/lint
+            - orb-tools/pack
+            - orb-tools/review
+            - test
           filters: *filters
 
       - orb-tools/publish:

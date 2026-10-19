@@ -77,6 +77,23 @@ workflows:
                 - /hotfix\/.*/
       ##ENDIF_E2E##
 
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - build-and-test
+            - image-scan
+            - secrets-scan
+            - sast-scan
+            - security-scan
+            ##IF_E2E##
+            - e2e-tests
+            ##ENDIF_E2E##
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
+
   ##INCLUDE_DEPLOY java-webapp-deploy develop develop ${MUNITOR_CD_ENV_DEVELOP}##
   ##INCLUDE_DEPLOY java-webapp-deploy staging staging ${MUNITOR_CD_ENV_STAGING}##
 
@@ -235,6 +252,24 @@ workflows:
                 - /release\/.*/
       ##ENDIF_GITHUB_RELEASE##
 
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - docker-build-push
+            ##IF_SBOM##
+            - sbom
+            ##ENDIF_SBOM##
+            ##IF_CD_NON_PROD##
+            - update-cd-repo
+            ##ENDIF_CD_NON_PROD##
+            ##IF_GITHUB_RELEASE##
+            - github-release
+            ##ENDIF_GITHUB_RELEASE##
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+
   production:
     jobs:
       - munitor/mvn_build_and_test:
@@ -298,3 +333,17 @@ workflows:
             branches:
               only: main
       ##ENDIF_GITHUB_RELEASE##
+
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - docker-build-push
+            ##IF_CD##
+            - update-cd-repo
+            ##ENDIF_CD##
+            ##IF_GITHUB_RELEASE##
+            - github-release
+            ##ENDIF_GITHUB_RELEASE##
+          filters:
+            branches:
+              only: main

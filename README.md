@@ -52,6 +52,47 @@ Munitor validates branch names and will fail on non-conforming names.
 | `release/<version>` | Release prep |
 | `hotfix/<name>` | Production fixes |
 
+## Optional docs-only Java checks
+
+The new `java-webapp` docs-only path is opt-in and must be adopted **after** the
+aggregate required check is published and verified. Do not enable it against an
+older orb or while individual build jobs remain required:
+
+```yaml
+ci:
+  docs_only: true
+```
+
+Only changes confined to root `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, or
+Markdown files under `docs/` (including nested directories) qualify. Feature and
+hotfix branches use their complete diff from the merge base with `main`; `main`
+uses its first-parent diff. Tags, release and other branches, shallow history,
+failed comparisons, empty diffs, and any uncertain classification keep the full
+pipeline. The docs path retains secret scanning and emits the aggregate gate;
+it does not build or deploy an image.
+
+Migration order: publish the gate-capable orb, adopt it with docs-only disabled,
+and verify the real GitHub context `ci/circleci: ci-ready` on a consumer run. Then
+replace that repository's required-check list with the verified aggregate gate,
+preserving all other branch rules. A single adoption PR may update both orb pins
+and enable `ci.docs_only`: those config changes force full CI. Verify the gate
+and migrate required checks before merging it or opening a docs-only PR. Munitor's
+own native no-op gate is expected to report `ci/circleci: lint-pack/ci-ready`;
+verify its actual context before changing its rules. Release and real-context
+verification are still pending; see [the adoption plan](docs/PLAN-agile-ci.md).
+
+Use native [Website-Backend Insights](https://app.circleci.com/insights/github/KofTwentyTwo/Website-Backend/workflows),
+[PR timings](https://app.circleci.com/insights/github/KofTwentyTwo/Website-Backend/workflows/pr-checks),
+and [Test Insights](https://app.circleci.com/insights/github/KofTwentyTwo/Website-Backend/workflows/pr-checks/tests)
+to measure results. Compare matching branches/windows and track the `docs-checks`
+median separately from full builds. The historical local report
+`C:/Users/james/.cache/ci-insights-report.md` ends October 17 and does not establish
+the speed of this change. No additional reporting job is needed.
+
+Native auto-cancel is enabled for Website-Backend, whose default `main` is exempt.
+It remains disabled for Munitor: its default is `develop`, so `main` release work
+would not receive that exemption.
+
 ## Prerequisites
 
 1. **CircleCI project**: Add your repo at https://app.circleci.com

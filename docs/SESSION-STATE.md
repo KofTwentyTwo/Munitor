@@ -1,3 +1,18 @@
+## Agile CI (2026-10-19)
+
+Fast Java CI shipped as Munitor 0.3.9 and Website-Backend PR330. The warm
+consumer PR workflow fell from 37m04 to 20m45; cache restore fell from 5m32 to
+4.76s (48GiB to 565MiB). Backend PR332 then preserved all 777 test identities
+while reducing its verified PR workflow to 14m49 and tests to 8m10. Timing-sensitive
+performance tests run serially after the parallel suite; thresholds are unchanged.
+
+Current feature/agile-ci adds conservative opt-in documentation-only validation
+and one aggregate merge result. Backend native auto-cancel is enabled; Munitor
+remains off because its default branch is develop. Native Insights provides
+runtime/flaky-test reporting without another service. Local classifier and
+workflow-graph regressions pass; publication and consumer adoption are pending.
+See docs/PLAN-agile-ci.md for migration order and measurement limits.
+
 ## Fast Java CI (2026-10-19)
 
 Active user priority: fast, agile, lightweight CI/CD; backend ticket goal paused.

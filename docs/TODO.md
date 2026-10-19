@@ -2,7 +2,9 @@
 
 ## Pending
 
-- [ ] Validate and publish fast Java CI patch, canary actual cache size/timings, then adopt stable orb (docs/PLAN-lean-java-ci.md).
+- [ ] Publish and adopt aggregate CI result and docs-only opt-in; verify real check names before changing required checks (docs/PLAN-agile-ci.md).
+
+- [x] Publish fast Java CI as 0.3.9; backend PR330 adopted it and measured the warm workflow at 20m45 (from 37m04).
 
 - [ ] Validate and release supplemental-image freshness fix, then adopt it in backend PR311 and verify all supplemental Trivy scans.
 
