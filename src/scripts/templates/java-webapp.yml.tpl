@@ -8,6 +8,8 @@ workflows:
     jobs:
       - munitor/mvn_build_and_test:
           name: build-and-test
+          quality_checks: true
+          min_instruction: "${MUNITOR_COVERAGE_MIN}"
           java_version: "${MUNITOR_JAVA_VERSION}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
@@ -40,27 +42,6 @@ workflows:
       - munitor/sast_scan:
           name: sast-scan
           fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
-          filters:
-            branches:
-              only:
-                - /feature\/.*/
-                - /hotfix\/.*/
-      - munitor/mvn_code_quality:
-          name: code-quality
-          java_version: "${MUNITOR_JAVA_VERSION}"
-          requires:
-            - build-and-test
-          filters:
-            branches:
-              only:
-                - /feature\/.*/
-                - /hotfix\/.*/
-      - munitor/mvn_coverage:
-          name: coverage
-          java_version: "${MUNITOR_JAVA_VERSION}"
-          min_instruction: "${MUNITOR_COVERAGE_MIN}"
-          requires:
-            - build-and-test
           filters:
             branches:
               only:
@@ -103,6 +84,8 @@ workflows:
     jobs:
       - munitor/mvn_build_and_test:
           name: build-and-test
+          quality_checks: true
+          min_instruction: "${MUNITOR_COVERAGE_MIN}"
           java_version: "${MUNITOR_JAVA_VERSION}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
@@ -119,25 +102,6 @@ workflows:
       - munitor/sast_scan:
           name: sast-scan
           fail_on_findings: "${MUNITOR_SAST_FAIL_ON_FINDINGS}"
-          filters:
-            branches:
-              only:
-                - /release\/.*/
-      - munitor/mvn_code_quality:
-          name: code-quality
-          java_version: "${MUNITOR_JAVA_VERSION}"
-          requires:
-            - build-and-test
-          filters:
-            branches:
-              only:
-                - /release\/.*/
-      - munitor/mvn_coverage:
-          name: coverage
-          java_version: "${MUNITOR_JAVA_VERSION}"
-          min_instruction: "${MUNITOR_COVERAGE_MIN}"
-          requires:
-            - build-and-test
           filters:
             branches:
               only:
@@ -176,7 +140,6 @@ workflows:
           sonar_project_key: ${MUNITOR_SONAR_PROJECT_KEY}
           requires:
             - build-and-test
-            - coverage
           context:
             - ${MUNITOR_CONTEXT_SONAR}
           filters:
@@ -197,8 +160,7 @@ workflows:
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
           requires:
-            - code-quality
-            - coverage
+            - build-and-test
             - secrets-scan
             - sast-scan
             - security-scan
@@ -221,8 +183,7 @@ workflows:
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
           requires:
-            - code-quality
-            - coverage
+            - build-and-test
             - secrets-scan
             - sast-scan
             - security-scan
@@ -277,7 +238,7 @@ workflows:
   production:
     jobs:
       - munitor/mvn_build_and_test:
-          name: build-and-test
+          name: production-build-and-test
           java_version: "${MUNITOR_JAVA_VERSION}"
           context:
             - ${MUNITOR_CONTEXT_GITHUB}
@@ -297,7 +258,7 @@ workflows:
           supplemental_images: '${MUNITOR_SUPPLEMENTAL_IMAGES_JSON}'
           ##ENDIF_SUPPLEMENTAL##
           requires:
-            - build-and-test
+            - production-build-and-test
           context:
             - ${MUNITOR_CONTEXT_REGISTRY}
           filters:

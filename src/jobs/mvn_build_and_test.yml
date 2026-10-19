@@ -3,6 +3,14 @@ description: >
   version, builds, tests, saves cache, and persists the workspace for
   downstream jobs.
 parameters:
+  quality_checks:
+    type: boolean
+    default: false
+    description: Run quality and coverage checks on the build worker before sharing artifacts.
+  min_instruction:
+    type: string
+    default: "70"
+    description: Minimum instruction coverage when quality_checks is enabled.
   java_version:
     type: string
     default: "21"
@@ -29,8 +37,20 @@ steps:
   - mvn_set_version
   - mvn_build
   - mvn_test
-  - store_test_results:
-      path: target/surefire-reports
+  - when:
+      condition: << parameters.quality_checks >>
+      steps:
+        - mvn_checkstyle
+        - mvn_spotbugs
+        - mvn_pmd
+        - mvn_jacoco:
+            min_instruction: << parameters.min_instruction >>
+        - store_artifacts:
+            path: target/checkstyle-result.xml
+            destination: checkstyle-result.xml
+        - store_artifacts:
+            path: target/site/jacoco
+            destination: coverage-report
   - run:
       name: Persist version metadata
       command: <<include(scripts/persist_version_metadata.sh)>>

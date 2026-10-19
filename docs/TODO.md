@@ -2,6 +2,8 @@
 
 ## Pending
 
+- [ ] Validate and publish fast Java CI patch, canary actual cache size/timings, then adopt stable orb (docs/PLAN-lean-java-ci.md).
+
 - [ ] Validate and release supplemental-image freshness fix, then adopt it in backend PR311 and verify all supplemental Trivy scans.
 
 - [ ] Release JVM runtime cache fix and adopt the stable orb in Website-Backend; verify fresh image Trivy before release.

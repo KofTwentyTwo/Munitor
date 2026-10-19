@@ -1,7 +1,12 @@
 description: >
-  Save the Maven local repository to cache for future builds.
+  Save the Maven repository under the same immutable key used at restore time.
 steps:
   - save_cache:
-      key: maven-v1-{{ checksum "pom.xml" }}
+      key: maven-v2-{{ checksum ".munitor-maven-cache-key" }}
       paths:
         - ~/.m2/repository
+  - run:
+      name: Preserve installed Maven artifacts for this workspace
+      environment:
+        MAVEN_WORKSPACE_ACTION: save
+      command: <<include(scripts/maven_workspace.sh)>>
