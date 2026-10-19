@@ -77,9 +77,9 @@ replace that repository's required-check list with the verified aggregate gate,
 preserving all other branch rules. A single adoption PR may update both orb pins
 and enable `ci.docs_only`: those config changes force full CI. Verify the gate
 and migrate required checks before merging it or opening a docs-only PR. Munitor's
-own native no-op gate is expected to report `ci/circleci: lint-pack/ci-ready`;
-verify its actual context before changing its rules. Release and real-context
-verification are still pending; see [the adoption plan](docs/PLAN-agile-ci.md).
+own native no-op gate reports `ci/circleci: lint-pack/ci-ready`. Both features
+ship in 0.3.10. Verify each consumer's actual successful context before changing
+its rules; see [the adoption record](docs/PLAN-agile-ci.md).
 
 Use native [Website-Backend Insights](https://app.circleci.com/insights/github/KofTwentyTwo/Website-Backend/workflows),
 [PR timings](https://app.circleci.com/insights/github/KofTwentyTwo/Website-Backend/workflows/pr-checks),

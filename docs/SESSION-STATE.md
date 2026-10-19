@@ -1,3 +1,22 @@
+## Verified agile CI rollout (2026-10-19)
+
+Munitor 0.3.10 is published from main 19192d07 (PR48 implementation, PR49 release,
+PR50 back-merge). Backend PR333 adopted it and passed the complete workflow:
+777 identical test identities, zero failures/errors, five skips, 15m33 elapsed.
+Its actual ci/circleci: ci-ready result now protects main/develop; Munitor uses
+ci/circleci: lint-pack/ci-ready. Only the required-check lists changed; other
+branch rules are unchanged. Published source and actual consumer compilation passed.
+
+Backend docs PR335 selected exactly secrets-scan plus ci-ready, without build,
+image or deployment jobs. Native auto-cancel canceled the first docs run after
+44 seconds when the final documentation commit arrived. No cancellation script
+or manual cancellation was used. The final docs run passed in 5m23 and merged as 8dda8339; main also selected only those two jobs.
+
+Native Insights supplies ongoing P50/P95 and flaky-test reporting. Historical
+windows lag current work; compare matching samples and keep docs-checks separate.
+Backend auto-cancel is enabled; Munitor remains off because its default develop
+would not exempt main release workflows. No new orchestration or reporting service.
+
 ## Release 0.3.10 (2026-10-19)
 
 PR48 merged as f9ef625 after all hosted checks passed on a56ef1d. Local make all,
