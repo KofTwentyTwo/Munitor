@@ -1,5 +1,17 @@
 # Munitor session state
 
+## JVM runtime package freshness (2026-10-19)
+
+Website-Backend release6258 and PR scans6266/6277 reused a cached apk upgrade
+layer containing vulnerable libexpat. The shared docker_build command now pulls
+the base and bypasses layer caching for generated Java/Gradle runtimes, while
+Node caching and all Trivy gates remain intact. Narrow behavioral tests cover
+both pipeline types, alternate/missing manifests, tags, provenance, and both
+PR/release job routes. All eight focused shell cases passed via the coordinating
+agent; ShellCheck and git diff --check passed. Full make/BATS/orb validation and
+real-image scanning remain pending. Stable release and consumer adoption remain
+pending; no unchanged vulnerable image should be retried.
+
 ## PR container scanning (2026-10-13)
 
 Uncommitted work on `feature/pr-image-scan` adds `docker_scan` after
@@ -84,3 +96,5 @@ after Java installation. APT now receives noninteractive debconf and automatic
 needrestart settings; a stubbed integration test verifies both APT invocations.
 These fixes require normal feature-to-develop review and stable tag publication
 from main before website consumers can select the new version. Nothing deployed.
+
+Runtime freshness validation: coordinating agent completed make all (lint, pack, orb validation, scripts,277template assertions) and all7BATS tests in Ubuntu. Real consumer image scan remains required after release.
