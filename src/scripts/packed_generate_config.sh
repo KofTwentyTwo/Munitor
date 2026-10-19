@@ -347,6 +347,54 @@ get_envsubst_vars() {
 }
 MUNITOR_EXTRACT_EOF
 
+cat > /tmp/munitor/docs_only.sh << 'MUNITOR_DOCS_EOF'
+#!/usr/bin/env bash
+# Source this helper. Any uncertainty keeps the full pipeline.
+munitor_docs_only() (
+  [[ -z "${CIRCLE_TAG:-}" ]] || return 1
+  local base paths path seen=0
+  case "${CIRCLE_BRANCH:-}" in
+    feature/*|hotfix/*)
+      git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main' >/dev/null 2>&1 || return 1
+      base=$(git merge-base HEAD refs/remotes/origin/main 2>/dev/null) || return 1
+      ;;
+    main)
+      base=$(git rev-parse --verify 'HEAD^1' 2>/dev/null) || return 1
+      ;;
+    *) return 1 ;;
+  esac
+  [[ "$(git rev-parse --is-shallow-repository 2>/dev/null)" == false ]] || return 1
+  paths=$(mktemp 2>/dev/null) || return 1
+  trap 'rm -f -- "$paths"' EXIT
+  git diff --no-ext-diff --no-renames --name-only -z "$base" HEAD >"$paths" 2>/dev/null || return 1
+  while IFS= read -r -d '' path; do
+    case "$path" in
+      README.md|CHANGELOG.md|CONTRIBUTING.md|docs/*.md) ;;
+      *) return 1 ;;
+    esac
+    seen=1
+  done <"$paths"
+  [[ "$seen" -eq 1 ]]
+)
+MUNITOR_DOCS_EOF
+
+cat > /tmp/munitor/templates/java-docs.yml.tpl << 'MUNITOR_TPL_EOF'
+version: 2.1
+
+orbs:
+  munitor: ${MUNITOR_ORB_SLUG}@${MUNITOR_ORB_VERSION}
+
+workflows:
+  docs-checks:
+    jobs:
+      - munitor/secrets_scan:
+          name: secrets-scan
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - secrets-scan
+MUNITOR_TPL_EOF
+
 cat > /tmp/munitor/templates/java-webapp.yml.tpl << 'MUNITOR_TPL_EOF'
 version: 2.1
 
@@ -426,6 +474,23 @@ workflows:
                 - /feature\/.*/
                 - /hotfix\/.*/
       ##ENDIF_E2E##
+
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - build-and-test
+            - image-scan
+            - secrets-scan
+            - sast-scan
+            - security-scan
+            ##IF_E2E##
+            - e2e-tests
+            ##ENDIF_E2E##
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - /hotfix\/.*/
 
   ##INCLUDE_DEPLOY java-webapp-deploy develop develop ${MUNITOR_CD_ENV_DEVELOP}##
   ##INCLUDE_DEPLOY java-webapp-deploy staging staging ${MUNITOR_CD_ENV_STAGING}##
@@ -585,6 +650,24 @@ workflows:
                 - /release\/.*/
       ##ENDIF_GITHUB_RELEASE##
 
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - docker-build-push
+            ##IF_SBOM##
+            - sbom
+            ##ENDIF_SBOM##
+            ##IF_CD_NON_PROD##
+            - update-cd-repo
+            ##ENDIF_CD_NON_PROD##
+            ##IF_GITHUB_RELEASE##
+            - github-release
+            ##ENDIF_GITHUB_RELEASE##
+          filters:
+            branches:
+              only:
+                - /release\/.*/
+
   production:
     jobs:
       - munitor/mvn_build_and_test:
@@ -648,6 +731,20 @@ workflows:
             branches:
               only: main
       ##ENDIF_GITHUB_RELEASE##
+
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - docker-build-push
+            ##IF_CD##
+            - update-cd-repo
+            ##ENDIF_CD##
+            ##IF_GITHUB_RELEASE##
+            - github-release
+            ##ENDIF_GITHUB_RELEASE##
+          filters:
+            branches:
+              only: main
 MUNITOR_TPL_EOF
 
 cat > /tmp/munitor/templates/gradle-webapp.yml.tpl << 'MUNITOR_TPL_EOF'
@@ -2660,6 +2757,20 @@ cat > /tmp/munitor/templates/partials/java-webapp-deploy.yml.tpl << 'MUNITOR_PAR
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_CD_NON_PROD##
+
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - docker-build-push
+            ##IF_SBOM##
+            - sbom
+            ##ENDIF_SBOM##
+            ##IF_CD_NON_PROD##
+            - update-cd-repo
+            ##ENDIF_CD_NON_PROD##
+          filters:
+            branches:
+              only: __BRANCH_FILTER__
 MUNITOR_PARTIAL_EOF
 
 cat > /tmp/munitor/templates/partials/gradle-webapp-deploy.yml.tpl << 'MUNITOR_PARTIAL_EOF'
@@ -3248,7 +3359,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version org image_name server_module java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths supplemental_images"
+KNOWN_KEYS="pipeline orb_version org image_name server_module java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths supplemental_images ci"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then
@@ -3260,6 +3371,17 @@ done
 # Select template
 # --------------------------------------------------------------------------
 TEMPLATE_FILE="${TEMPLATE_DIR}/${PIPELINE_TYPE}.yml.tpl"
+
+# Opt in only after the consumer requires ci-ready instead of individual build jobs.
+# Missing history or any non-documentation path keeps the complete pipeline.
+if [[ "${PIPELINE_TYPE}" == "java-webapp" && "$(yq '.ci.docs_only // false' "${CONFIG_FILE}")" == "true" ]]; then
+  # shellcheck source=docs_only.sh
+  source "${SCRIPT_DIR}/docs_only.sh"
+  if munitor_docs_only; then
+    TEMPLATE_FILE="${TEMPLATE_DIR}/java-docs.yml.tpl"
+    echo "Documentation-only change: retaining secret scanning; no application build or deployment."
+  fi
+fi
 
 if [[ ! -f "${TEMPLATE_FILE}" ]]; then
   echo "ERROR: No template found for pipeline type '${PIPELINE_TYPE}'."

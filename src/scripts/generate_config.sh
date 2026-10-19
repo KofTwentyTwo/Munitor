@@ -97,7 +97,7 @@ validate_required_fields "${PIPELINE_TYPE}" "${CONFIG_FILE}"
 # --------------------------------------------------------------------------
 # Warn about unknown top-level keys (catches typos like java_verion)
 # --------------------------------------------------------------------------
-KNOWN_KEYS="pipeline orb_version org image_name server_module java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths supplemental_images"
+KNOWN_KEYS="pipeline orb_version org image_name server_module java_version node_version sonar docker cd coverage e2e sbom owasp contexts npm node services test terraform sast health kustomize kube_linter_config package_manager yamllint_paths supplemental_images ci"
 ACTUAL_KEYS=$(yq 'keys | .[]' "${CONFIG_FILE}" 2>/dev/null || true)
 for key in ${ACTUAL_KEYS}; do
   if ! echo "${KNOWN_KEYS}" | grep -qw "${key}"; then
@@ -109,6 +109,17 @@ done
 # Select template
 # --------------------------------------------------------------------------
 TEMPLATE_FILE="${TEMPLATE_DIR}/${PIPELINE_TYPE}.yml.tpl"
+
+# Opt in only after the consumer requires ci-ready instead of individual build jobs.
+# Missing history or any non-documentation path keeps the complete pipeline.
+if [[ "${PIPELINE_TYPE}" == "java-webapp" && "$(yq '.ci.docs_only // false' "${CONFIG_FILE}")" == "true" ]]; then
+  # shellcheck source=docs_only.sh
+  source "${SCRIPT_DIR}/docs_only.sh"
+  if munitor_docs_only; then
+    TEMPLATE_FILE="${TEMPLATE_DIR}/java-docs.yml.tpl"
+    echo "Documentation-only change: retaining secret scanning; no application build or deployment."
+  fi
+fi
 
 if [[ ! -f "${TEMPLATE_FILE}" ]]; then
   echo "ERROR: No template found for pipeline type '${PIPELINE_TYPE}'."

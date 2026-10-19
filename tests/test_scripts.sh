@@ -843,8 +843,8 @@ echo ""
 echo "=== Error Handling Tests ==="
 
 echo -n "  TEST: all scripts use set -euo pipefail... "
-# munitor_helpers.sh is a sourced library, not a standalone script -- exclude it
-SCRIPTS_WITHOUT_STRICT=$(find "${SRC_SCRIPTS}" -name "*.sh" ! -name "munitor_helpers.sh" -exec grep -L 'set -euo pipefail' {} \;)
+# Sourced libraries must not change the caller shell options.
+SCRIPTS_WITHOUT_STRICT=$(find "${SRC_SCRIPTS}" -name "*.sh" ! -name "munitor_helpers.sh" ! -name "docs_only.sh" -exec grep -L 'set -euo pipefail' {} \;)
 if [[ -z "${SCRIPTS_WITHOUT_STRICT}" ]]; then
   pass
 else
@@ -901,8 +901,9 @@ echo "=== Munitor Helpers Integration Tests ==="
 # Scripts that are excluded from the munitor_header requirement:
 # - munitor_helpers.sh: the library itself
 # - extract_munitor_vars.sh: low-level helper, sourced by other scripts
+# - docs_only.sh: status-only predicate sourced by the generator
 # - packed_*: auto-generated, embed helpers differently
-EXCLUDED_PATTERN="munitor_helpers.sh|extract_munitor_vars.sh|packed_"
+EXCLUDED_PATTERN="munitor_helpers.sh|extract_munitor_vars.sh|docs_only.sh|packed_"
 
 echo -n "  TEST: all scripts source munitor_helpers... "
 MISSING_SOURCE=""
