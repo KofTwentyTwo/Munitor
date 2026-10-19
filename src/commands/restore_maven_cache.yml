@@ -1,7 +1,12 @@
 description: >
-  Restore the Maven local repository cache based on pom.xml checksum.
+  Restore only the cache for the checked-out Maven dependency definitions.
 steps:
+  - run:
+      name: Identify Maven dependency cache
+      command: <<include(scripts/maven_cache_key.sh)>>
   - restore_cache:
       keys:
-        - maven-v1-{{ checksum "pom.xml" }}
-        - maven-v1-
+        - maven-v2-{{ checksum ".munitor-maven-cache-key" }}
+  - run:
+      name: Restore this build's installed Maven artifacts
+      command: <<include(scripts/maven_workspace.sh)>>

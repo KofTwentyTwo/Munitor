@@ -1,3 +1,17 @@
+## Fast Java CI (2026-10-19)
+
+Active user priority: fast, agile, lightweight CI/CD; backend ticket goal paused.
+Measured48GiB Maven cache restored four times and saved once per backend PR.
+Work on feature/lean-java-ci: stable exact dependency cache keys with new namespace,
+conditional OWASP setup, single test-result upload, and one orb pack per pipeline.
+The first patch passed make all and15BATS. Further simplification combines quality
+and coverage with the build, renders fixtures once, and carries installed reactor
+artifacts in a small workspace archive. A real multi-module experiment proved this
+artifact handoff necessary, including snapshot/classifier coverage. Expanded make
+all and20BATS pass, including all277template assertions. Real consumer timing and
+stable publication/adoption remain pending. No deployed speedup claimed.
+See docs/PLAN-lean-java-ci.md.
+
 ## Supplemental runtime freshness (2026-10-19)
 
 Backend PR311 image scan6307 failed because db-backup reused a cached apk-upgrade layer (libexpat2.8.5-r0, fixed2.9.0-r0). Supplemental builds now use --pull --no-cache in both PR scan-only and release publishing paths. Trivy and immutable-tag guards remain unchanged. Targeted tests cover both Dockerfile forms, fresh-build flags, scan-before-push ordering and scan failure propagation. Validation pending; no release or consumer adoption yet.

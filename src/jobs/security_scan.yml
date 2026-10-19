@@ -23,12 +23,12 @@ executor:
 steps:
   - attach_workspace:
       at: .
-  - install_java:
-      version: << parameters.java_version >>
-  - restore_maven_cache
   - when:
       condition: << parameters.owasp >>
       steps:
+        - install_java:
+            version: << parameters.java_version >>
+        - restore_maven_cache
         - restore_cache:
             keys:
               - nvd-cache-v1-{{ .Branch }}

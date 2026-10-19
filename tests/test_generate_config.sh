@@ -8,8 +8,8 @@ PASS=0
 FAIL=0
 
 GENERATE_SCRIPT="${PROJECT_DIR}/src/scripts/generate_config.sh"
-GENERATED_CONFIG=$(mktemp)
-trap 'rm -f "${GENERATED_CONFIG}"' EXIT
+GENERATED_DIR=$(mktemp -d)
+trap 'rm -rf "${GENERATED_DIR}"' EXIT
 
 # --------------------------------------------------------------------------
 # Helper: render a fixture by calling the real generate_config.sh script
@@ -17,11 +17,15 @@ trap 'rm -f "${GENERATED_CONFIG}"' EXIT
 # --------------------------------------------------------------------------
 render_fixture() {
   local fixture="$1"
+  local generated_config="${GENERATED_DIR}/$(basename "${fixture}")"
 
-  # Run the real script; capture stderr for diagnostics, return generated YAML
-  MUNITOR_CONFIG="${fixture}" MUNITOR_OUTPUT_FILE="${GENERATED_CONFIG}" \
-    bash "${GENERATE_SCRIPT}" >/dev/null 2>&1
-  cat "${GENERATED_CONFIG}"
+  # Fixtures are immutable and uniquely named: render once, assert many times.
+  if [[ ! -f "${generated_config}" ]]; then
+    MUNITOR_CONFIG="${fixture}" MUNITOR_OUTPUT_FILE="${generated_config}.tmp" \
+      bash "${GENERATE_SCRIPT}" >/dev/null 2>&1 || return 1
+    mv "${generated_config}.tmp" "${generated_config}"
+  fi
+  cat "${generated_config}"
 }
 
 run_test() {
@@ -672,17 +676,17 @@ run_negative_context_test "java-webapp: production has no security-scan" \
   "security_scan"
 
 # java-webapp: release-candidate has quality gates
-run_context_test "java-webapp: release-candidate has code-quality" \
+run_context_test "java-webapp: release-candidate enables quality checks" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
   "release-candidate:" \
   "production:" \
-  "code-quality"
+  "quality_checks: true"
 
-run_context_test "java-webapp: release-candidate has coverage" \
+run_context_test "java-webapp: release-candidate forwards coverage threshold" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
   "release-candidate:" \
   "production:" \
-  "mvn_coverage"
+  'min_instruction: "80"'
 
 run_context_test "java-webapp: release-candidate has security-scan" \
   "${FIXTURES_DIR}/java-webapp.munitor.yml" \
