@@ -15,12 +15,13 @@ repository="${HOME}/.m2/repository"
 case "${MAVEN_WORKSPACE_ACTION:-restore}" in
   save)
     # Maven marks local installs with an empty repository ID (artifact>=).
-    # Carry those build outputs in the workspace, separately from cached dependencies.
+    # Carry build outputs and mutable SNAPSHOT dependencies separately from the cache.
     files=$(mktemp)
     trap 'rm -f "${files}"' EXIT
     cd "${repository}"
     while IFS= read -r -d '' tracking; do
-      if grep -qE '^[^#].*>=[[:space:]]*$' "${tracking}"; then
+      if [[ "${tracking}" == */*-SNAPSHOT/_remote.repositories ]] ||
+        grep -qE '^[^#].*>=[[:space:]]*$' "${tracking}"; then
         directory=$(dirname "${tracking}")
         printf '%s\0' "${directory}" >> "${files}"
         while [[ "${directory}" != . ]]; do

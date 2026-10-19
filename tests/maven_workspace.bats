@@ -18,10 +18,13 @@ setup() {
   printf 'plugin prefix metadata\n' > "$repo/example/maven-metadata-local.xml"
   printf 'dependency-1.jar>central=\n' > "$repo/vendor/dependency/1/_remote.repositories"
   printf 'remote dependency\n' > "$repo/vendor/dependency/1/dependency-1.jar"
+  mkdir -p "$repo/vendor/mutable/2-SNAPSHOT"
+  printf 'mutable-2-SNAPSHOT.jar>central=\n' > "$repo/vendor/mutable/2-SNAPSHOT/_remote.repositories"
+  printf 'updated snapshot\n' > "$repo/vendor/mutable/2-SNAPSHOT/mutable-2-SNAPSHOT.jar"
   MAVEN_WORKSPACE_ACTION=save bash "$SCRIPT"
   run tar -tzf .munitor-maven-installed.tgz
   [ "$status" -eq 0 ]
-  [[ "$output" != *vendor* ]]
+  [[ "$output" != *vendor/dependency* ]]
   export HOME="${BATS_TEST_TMPDIR}/downstream"
   bash "$SCRIPT"
   restored="$HOME/.m2/repository/example/library"
@@ -29,7 +32,8 @@ setup() {
   cmp "$repo/example/library/maven-metadata-local.xml" "$restored/maven-metadata-local.xml"
   cmp "$repo/example/maven-metadata-local.xml" "$restored/../maven-metadata-local.xml"
   [ -f "$restored/2-SNAPSHOT/library-2-SNAPSHOT-tests.jar" ]
-  [ ! -e "$HOME/.m2/repository/vendor" ]
+  [ ! -e "$HOME/.m2/repository/vendor/dependency" ]
+  cmp "$repo/vendor/mutable/2-SNAPSHOT/mutable-2-SNAPSHOT.jar" "$HOME/.m2/repository/vendor/mutable/2-SNAPSHOT/mutable-2-SNAPSHOT.jar"
 }
 
 @test "initial build without a workspace archive needs no overlay" {
