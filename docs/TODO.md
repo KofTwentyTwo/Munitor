@@ -2,6 +2,8 @@
 
 ## Pending
 
+- [ ] Release JVM runtime cache fix and adopt the stable orb in Website-Backend; verify fresh image Trivy before release.
+
 - [ ] Run PR image-scan script/template/BATS tests on Linux and verify a consumer PR with Docker/Trivy before publishing.
 - [x] Add PR-only image scans for the four application templates, supplemental scan-only mode, JSON artifacts, and regression tests (uncommitted).
 

@@ -372,7 +372,7 @@ contexts:
 
 **What runs:** Maven build/test, Checkstyle, SpotBugs, PMD, JaCoCo coverage, OWASP + Trivy security, Docker build/push (Dockerfile auto-generated), gitleaks. OWASP dependency check requires the `nvd` context; if omitted, the security scan runs without NVD database enrichment.
 
-**Dockerfile:** Auto-generated production-ready image using Eclipse Temurin JRE Alpine. Includes non-root user (uid 1001), JVM container tuning flags, Docker HEALTHCHECK, and configurable port via `health.port`. The pre-built JAR from CI is copied directly (no redundant Maven build stage).
+**Dockerfile:** Auto-generated production-ready image using Eclipse Temurin JRE Alpine. Includes non-root user (uid 1001), JVM container tuning flags, Docker HEALTHCHECK, and configurable port via `health.port`. The pre-built JAR from CI is copied directly (no redundant Maven build stage). PR and release image builds pull the current base and bypass Docker layer caching for generated Java/Gradle runtime images, ensuring the Alpine package upgrade runs on every build. Node builds retain their layer cache. Trivy gates remain required.
 
 ### `terraform`
 
