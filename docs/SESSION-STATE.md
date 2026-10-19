@@ -1,3 +1,11 @@
+## Release 0.3.11 (2026-10-19)
+
+PR52 passed all eight hosted checks on 18ea857 and merged as d76a46c.
+This release forwards configured Java migration images and smoke paths to develop
+and staging. Source and packed generator regressions, make all and 20 BATS pass.
+Release metadata is the only change from the verified implementation; stable
+publication and backend adoption follow. Production 0.1.138 remains healthy.
+
 ## Java deployment health parameter correction (2026-10-19)
 
 Backend develop job 6405 exposed missing migration/smoke configuration in the
