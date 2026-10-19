@@ -98,3 +98,6 @@ These fixes require normal feature-to-develop review and stable tag publication
 from main before website consumers can select the new version. Nothing deployed.
 
 Runtime freshness validation: coordinating agent completed make all (lint, pack, orb validation, scripts,277template assertions) and all7BATS tests in Ubuntu. Real consumer image scan remains required after release.
+
+## Release 0.3.7 preparation (2026-10-19)
+Includes merged PR38 (filesystem Trivy findings fail CI; current Semgrep image and zero-scan/configuration failures) and PR39 (pull fresh runtime bases and bypass cached JVM package-upgrade layers). Both feature PRs passed all CircleCI gates; PR39 also passed full local make all and seven BATS tests. Publish the stable orb only from a signed v0.3.7 tag on the reviewed main merge. Website-Backend must update both orb pins and pass real image/SAST scans before rollout. No vulnerability waiver or immutable-tag overwrite is part of this release.
