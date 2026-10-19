@@ -1,3 +1,16 @@
+## Java deployment health parameter correction (2026-10-19)
+
+Backend develop job 6405 exposed missing migration/smoke configuration in the
+shared Java deployment partial: startup failed because slack_template was absent.
+The partial now forwards health_migrations and health_smoke_paths just like the
+production and release workflows. No application or scan policy changes.
+
+tests/test_java_deploy_health.sh checks configured values and empty defaults in
+develop, staging, production and release-candidate using both source and packed
+generators. Full make all, 20 BATS tests, focused regression rerun and shell lint
+passed through WSL. Packed scripts are synchronized. Publication and consumer
+verification are pending.
+
 ## Verified agile CI rollout (2026-10-19)
 
 Munitor 0.3.10 is published from main 19192d07 (PR48 implementation, PR49 release,
