@@ -1,3 +1,11 @@
+## Release 0.3.10 (2026-10-19)
+
+PR48 merged as f9ef625 after all hosted checks passed on a56ef1d. Local make all,
+20 BATS, 31 classifier cases and eight source/packed generator cases passed.
+Munitor main/develop now require the verified native ci/circleci: lint-pack/ci-ready
+result; all other rules are unchanged. This release changes metadata only from
+that verified implementation. Stable publication and backend adoption follow.
+
 ## Agile CI (2026-10-19)
 
 Fast Java CI shipped as Munitor 0.3.9 and Website-Backend PR330. The warm
