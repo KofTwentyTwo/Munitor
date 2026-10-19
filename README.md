@@ -6,7 +6,7 @@ Latin: *munitor* (fortifier, protector) -- KofTwentyTwo's unified CircleCI orb f
 | --- | --- |
 | **Tier** | Internal until classified -- listed under *Awaiting classification* in the KofTwentyTwo standards [MAINTAINERS.md](https://github.com/KofTwentyTwo/standards/blob/main/MAINTAINERS.md); Product-tier requirements are being adopted |
 | **Standards** | Targets [KofTwentyTwo standards](https://github.com/KofTwentyTwo/standards) 1.0.0 |
-| **Orb** | [`kof22/munitor`](https://circleci.com/developer/orbs/orb/kof22/munitor), latest stable `0.3.6` |
+| **Orb** | [`kof22/munitor`](https://circleci.com/developer/orbs/orb/kof22/munitor), latest stable `0.3.7` |
 | **Security** | [SECURITY.md](SECURITY.md) |
 | **Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
@@ -70,16 +70,16 @@ Munitor validates branch names and will fail on non-conforming names.
 
 Munitor is a public CircleCI orb: any CircleCI organization can use it without forking. This checklist covers what a new consumer needs, for example a Java/Maven web service. A QQQ application should also read the [QQQ adoption checklist](https://github.com/QRun-IO/qqq/blob/develop/docs/migration/adoption-checklist.adoc) (section 7 covers release tooling).
 
-**Version.** Use `kof22/munitor@0.3.6` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
+**Version.** Use `kof22/munitor@0.3.7` (or `@0.3` to float on the 0.3 line) in `.circleci/config.yml`, and the same value as `orb_version` in `.munitor.yml`. Keep the setup orb and the generated pipeline on the same line.
 
 ### 1. Repository files
 
-- `.circleci/config.yml`: the setup config from [Quick Start](#quick-start), pinned to `kof22/munitor@0.3.6`.
+- `.circleci/config.yml`: the setup config from [Quick Start](#quick-start), pinned to `kof22/munitor@0.3.7`.
 - `.munitor.yml`: pick a [pipeline type](#pipeline-types). A Java service is `java-webapp`. KofTwentyTwo's Website-Backend is a working example; a generalized version:
 
 ```yaml
 pipeline: java-webapp
-orb_version: "0.3.6"
+orb_version: "0.3.7"
 image_name: my-service
 java_version: "21"
 docker:
@@ -372,7 +372,7 @@ contexts:
 
 **What runs:** Maven build/test, Checkstyle, SpotBugs, PMD, JaCoCo coverage, OWASP + Trivy security, Docker build/push (Dockerfile auto-generated), gitleaks. OWASP dependency check requires the `nvd` context; if omitted, the security scan runs without NVD database enrichment.
 
-**Dockerfile:** Auto-generated production-ready image using Eclipse Temurin JRE Alpine. Includes non-root user (uid 1001), JVM container tuning flags, Docker HEALTHCHECK, and configurable port via `health.port`. The pre-built JAR from CI is copied directly (no redundant Maven build stage).
+**Dockerfile:** Auto-generated production-ready image using Eclipse Temurin JRE Alpine. Includes non-root user (uid 1001), JVM container tuning flags, Docker HEALTHCHECK, and configurable port via `health.port`. The pre-built JAR from CI is copied directly (no redundant Maven build stage). PR and release image builds pull the current base and bypass Docker layer caching for generated Java/Gradle runtime images, ensuring the Alpine package upgrade runs on every build. Node builds retain their layer cache. Trivy gates remain required.
 
 ### `terraform`
 

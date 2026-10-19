@@ -3,8 +3,8 @@ description: >
 parameters:
   version:
     type: string
-    default: "1.61.1"
+    default: "1.181.0"
     description: Semgrep image version tag.
 docker:
-  - image: returntocorp/semgrep:<< parameters.version >>
+  - image: semgrep/semgrep:<< parameters.version >>
 resource_class: medium

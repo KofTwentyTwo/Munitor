@@ -36,13 +36,17 @@ fi
 
 echo "Running Trivy filesystem scan..."
 
+# --exit-code 1: without it trivy exits 0 even when it reports HIGH/CRITICAL
+# findings, so this job could never fail.
 trivy fs \
   --format json \
   --output /tmp/trivy-results.json \
   --severity HIGH,CRITICAL \
+  --exit-code 1 \
   . || {
     EXIT_CODE=$?
     echo "Trivy found vulnerabilities. See /tmp/trivy-results.json"
+    trivy fs --severity HIGH,CRITICAL . || true
     exit "${EXIT_CODE}"
   }
 

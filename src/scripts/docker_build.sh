@@ -23,7 +23,16 @@ munitor_header "docker_build (${FULL_IMAGE}:${VERSION})"
 munitor_check_tool docker --version
 
 # Build with version tag; add env tag when set (e.g., develop, staging)
-BUILD_CMD=(docker build -f "${DOCKERFILE}" -t "${FULL_IMAGE}:${VERSION}")
+BUILD_CMD=(docker build --pull -f "${DOCKERFILE}" -t "${FULL_IMAGE}:${VERSION}")
+# Generated JVM images only copy a prebuilt JAR. Re-run their package upgrades:
+# a cached apk upgrade layer can retain vulnerable packages indefinitely.
+CONFIG_FILE="${MUNITOR_CONFIG:-.munitor.yml}"
+if [[ -f "${CONFIG_FILE}" ]]; then
+  munitor_check_tool yq --version
+  case "$(yq -r '.pipeline' "${CONFIG_FILE}")" in
+    java-webapp|gradle-webapp) BUILD_CMD+=(--no-cache) ;;
+  esac
+fi
 if [[ -n "${ENV_TAG}" ]]; then
   BUILD_CMD+=(-t "${FULL_IMAGE}:${ENV_TAG}")
 fi
