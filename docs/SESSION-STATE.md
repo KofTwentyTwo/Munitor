@@ -125,3 +125,7 @@ Validation completed: focused scan tests12/12, full make all (lint, packed orb v
 ## Release candidate 0.3.8 (2026-10-19)
 
 Promotes PR42 supplemental build freshness fix (develop11d5704) to main. Full local make all and seven BATS passed; all PR42 CI checks passed. Release metadata changes only; source/tests match the verified feature. Stable publication still requires the approved main merge and signed v0.3.8 tag. Backend adoption and real supplemental scans remain pending.
+
+## Release candidate 0.3.9 (2026-10-19)
+
+Promotes PR45 (develop64831e8): consolidated Java quality/coverage, bounded dependency caches with current artifact/SNAPSHOT handoff, conditional OWASP setup, and deduplicated orb/test work. Source and tests are identical to verified77cdf93: make all and20BATS passed; actual CircleCI compiler preserves required build-and-test name. Cold backend canary PR330 passed every test/scan: combined build19m02s vs old build/test30m15s, Maven cache565MiB vs old48GiB. Stable publication and backend warm-cache adoption remain pending. Production build retains its prior operations under a distinct name to avoid PR check suffixes.
