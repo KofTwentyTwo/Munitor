@@ -129,3 +129,17 @@
             branches:
               only: __BRANCH_FILTER__
       ##ENDIF_CD_NON_PROD##
+
+      - munitor/ci_ready:
+          name: ci-ready
+          requires:
+            - docker-build-push
+            ##IF_SBOM##
+            - sbom
+            ##ENDIF_SBOM##
+            ##IF_CD_NON_PROD##
+            - update-cd-repo
+            ##ENDIF_CD_NON_PROD##
+          filters:
+            branches:
+              only: __BRANCH_FILTER__

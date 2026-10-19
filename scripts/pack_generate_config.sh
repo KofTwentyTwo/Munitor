@@ -38,8 +38,14 @@ echo "Packing generate_config.sh..."
   echo 'MUNITOR_EXTRACT_EOF'
   echo ''
 
+  # Embed conservative documentation-only classification.
+  echo "cat > /tmp/munitor/docs_only.sh << 'MUNITOR_DOCS_EOF'"
+  cat "${SRC}/docs_only.sh"
+  echo 'MUNITOR_DOCS_EOF'
+  echo ''
+
   # Embed each template
-  for tpl in java-webapp gradle-webapp node-api node-webapp terraform sdk-distribution validate-cd-repo argocd-apps obsidian-plugin; do
+  for tpl in java-docs java-webapp gradle-webapp node-api node-webapp terraform sdk-distribution validate-cd-repo argocd-apps obsidian-plugin; do
     echo "cat > /tmp/munitor/templates/${tpl}.yml.tpl << 'MUNITOR_TPL_EOF'"
     cat "${SRC}/templates/${tpl}.yml.tpl"
     echo 'MUNITOR_TPL_EOF'
